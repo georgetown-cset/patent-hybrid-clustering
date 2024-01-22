@@ -70,7 +70,7 @@ def test_multilingual_bert(patents):
 
 def save_embeddings(patents, embedded):
     with open("../data/embeddings.pkl", "wb") as out:
-        pickle.dump([{"patent_id": patent, "embeddings": embedded[i]} for i, patent in enumerate(patents)],
+        pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
                     out, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
