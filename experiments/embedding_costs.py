@@ -55,7 +55,7 @@ def get_test_embedding_set():
 def test_multilingual_bert(patents):
     print("Building tokenizer and model")
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-    model = BertModel.from_pretrained("bert-base-multilingual-cased")
+    model = BertModel.from_pretrained("bert-base-multilingual-cased").to("cuda")
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
