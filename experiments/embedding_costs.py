@@ -1,6 +1,7 @@
 from transformers import BertTokenizer, BertModel
 from google.cloud import bigquery
 import pickle
+import torch
 
 def get_test_embedding_set():
     """
@@ -53,14 +54,16 @@ def get_test_embedding_set():
 
 
 def test_multilingual_bert(patents):
+    device = torch.device("cuda")
     print("Building tokenizer and model")
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-    model = BertModel.from_pretrained("bert-base-multilingual-cased").to("cuda")
+    model = BertModel.from_pretrained("bert-base-multilingual-cased").to(device)
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
     print("Tokenizing")
     inputs = tokenizer(title_abs, padding=True, truncation=True, return_tensors="pt", max_length=512)
+    inputs = inputs.to(device)
     print("Running model")
     result = model(**inputs)
     print("Extracting embeddings")
