@@ -1,7 +1,11 @@
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertConfig,BertModel
 from google.cloud import bigquery
 import pickle
+from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_auto_device_map, Accelerator
 import torch
+from huggingface_hub import hf_hub_download, snapshot_download
+import os
+
 
 def get_test_embedding_set():
     """
@@ -36,7 +40,7 @@ def get_test_embedding_set():
                                 OR (title_original IS NOT NULL
                                   AND abstract_original IS NOT NULL) )
                             WHERE
-                              MOD(seqnum, CAST((cnt / 500) AS int64)) = 1"""
+                              MOD(seqnum, CAST((cnt / 100) AS int64)) = 1"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
@@ -52,18 +56,33 @@ def get_test_embedding_set():
     return to_embed
 
 
-
 def test_multilingual_bert(patents):
-    device = torch.device("cuda")
-    print("Building tokenizer and model")
-    tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-    model = BertModel.from_pretrained("bert-base-multilingual-cased").to(device)
+    if not os.path.exists("offload"):
+        os.mkdir("offload")
+    # device = torch.device("cuda")
+    print("Getting config")
+    # checkpoint = "bert-base-multilingual-cased"
+    config = BertConfig.from_pretrained("bert-base-multilingual-cased")
+    # weights_location = hf_hub_download(checkpoint, "pytorch_model.bin")
+    print("Building tokenizer")
+    tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
+    print("Building model")
+    if not os.path.exists("save"):
+        os.mkdir("save")
+        model = BertModel(config)
+        accelerator = Accelerator()
+        accelerator.save_model(model=model, save_directory="save", max_shard_size="50MB")
+    else:
+        with init_empty_weights():
+            model = BertModel(config)
+    model.tie_weights()
+    model = load_checkpoint_and_dispatch(model, checkpoint="save", device_map="auto",
+                                         max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
     print("Tokenizing")
     inputs = tokenizer(title_abs, padding=True, truncation=True, return_tensors="pt", max_length=512)
-    inputs = inputs.to(device)
     print("Running model")
     result = model(**inputs)
     print("Extracting embeddings")
@@ -71,10 +90,12 @@ def test_multilingual_bert(patents):
     embeddings = result.last_hidden_state[:, 0, :]
     return embeddings
 
+
 def save_embeddings(patents, embedded):
     with open("../data/embeddings.pkl", "wb") as out:
         pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
                     out, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 if __name__ == "__main__":
     print("Getting embedding set")
