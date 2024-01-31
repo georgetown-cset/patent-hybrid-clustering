@@ -76,6 +76,7 @@ def test_multilingual_bert(patents):
         with init_empty_weights():
             model = BertModel(config)
     model.tie_weights()
+    print(infer_auto_device_map(model))
     model = load_checkpoint_and_dispatch(model, checkpoint="save", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     print("Making text to embed")
