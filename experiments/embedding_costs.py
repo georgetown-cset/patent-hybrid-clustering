@@ -82,13 +82,21 @@ def test_multilingual_bert(patents):
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
+    # matched = list(zip(title_abs, [d.get("patent_id") for d in patents]))
+    batch_size = 16
+    batched = [[title_abs[i + j * batch_size] for i in range(batch_size)] for j in range(len(title_abs) // batch_size)]
     print("Tokenizing")
-    inputs = tokenizer(title_abs, padding=True, truncation=True, return_tensors="pt", max_length=512)
-    print("Running model")
-    result = model(**inputs)
-    print("Extracting embeddings")
-    # take the first token in the batch as the embedding
-    embeddings = result.last_hidden_state[:, 0, :]
+    for i, batch in enumerate(batched):
+        inputs = tokenizer(title_abs, padding=True, truncation=True, return_tensors="pt", max_length=512)
+        print("Running model")
+        result = model(**inputs)
+        print("Extracting embeddings")
+        # take the first token in the batch as the embedding
+        embeddings_batch = result.last_hidden_state[:, 0, :]
+        if i == 0:
+            embeddings = embeddings_batch
+        else:
+            embeddings = embeddings.cat((embeddings, embeddings_batch))
     return embeddings
 
 
