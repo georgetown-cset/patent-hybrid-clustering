@@ -40,7 +40,7 @@ def get_test_embedding_set():
                                 OR (title_original IS NOT NULL
                                   AND abstract_original IS NOT NULL) )
                             WHERE
-                              MOD(seqnum, CAST((cnt / 500) AS int64)) = 1"""
+                              MOD(seqnum, CAST((cnt / 1000) AS int64)) = 1"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
