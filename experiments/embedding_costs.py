@@ -87,10 +87,11 @@ def test_multilingual_bert(patents):
     batched = [[title_abs[i + j * batch_size] for i in range(batch_size)] for j in range(len(title_abs) // batch_size)]
     print("Tokenizing")
     for i, batch in enumerate(batched):
+        print(i)
         inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512)
-        print("Running model")
+        # print("Running model")
         result = model(**inputs)
-        print("Extracting embeddings")
+        # print("Extracting embeddings")
         # take the first token in the batch as the embedding
         embeddings_batch = result.last_hidden_state[:, 0, :]
         if i == 0:
