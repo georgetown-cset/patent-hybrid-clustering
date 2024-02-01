@@ -87,6 +87,9 @@ def test_multilingual_bert(patents):
     batch_size = 16
     batched = [[title_abs[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
                for j in range((len(title_abs) // batch_size) + 1)]
+    # our method here leaves an empty array at the end when values are even; annoying
+    if batched[-1] == []:
+        batched = batched[:-1]
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
