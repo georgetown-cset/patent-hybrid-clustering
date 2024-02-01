@@ -88,7 +88,7 @@ def test_multilingual_bert(patents):
     print("Tokenizing")
     for i, batch in enumerate(batched):
         print(i)
-        inputs = tokenizer(title_abs, padding=True, truncation=True, return_tensors="pt", max_length=512)
+        inputs = tokenizer(batched, padding=True, truncation=True, return_tensors="pt", max_length=512)
         print("Running model")
         result = model(**inputs)
         print("Extracting embeddings")
