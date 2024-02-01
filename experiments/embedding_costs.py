@@ -40,7 +40,7 @@ def get_test_embedding_set():
                                 OR (title_original IS NOT NULL
                                   AND abstract_original IS NOT NULL) )
                             WHERE
-                              MOD(seqnum, CAST((cnt / 100) AS int64)) = 1"""
+                              MOD(seqnum, CAST((cnt / 500) AS int64)) = 1"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
@@ -76,7 +76,7 @@ def test_multilingual_bert(patents):
         with init_empty_weights():
             model = BertModel(config)
     model.tie_weights()
-    print(infer_auto_device_map(model))
+    device_map = infer_auto_device_map(model, )
     model = load_checkpoint_and_dispatch(model, checkpoint="save", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     print("Making text to embed")
