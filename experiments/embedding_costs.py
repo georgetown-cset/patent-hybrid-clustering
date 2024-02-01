@@ -87,7 +87,6 @@ def test_multilingual_bert(patents):
     batched = [[title_abs[i + j * batch_size] for i in range(batch_size)] for j in range(len(title_abs) // batch_size)]
     print("Tokenizing")
     for i, batch in enumerate(batched):
-        print(i)
         inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512)
         print("Running model")
         result = model(**inputs)
@@ -97,7 +96,7 @@ def test_multilingual_bert(patents):
         if i == 0:
             embeddings = embeddings_batch
         else:
-            embeddings = embeddings.cat((embeddings, embeddings_batch))
+            embeddings = torch.cat((embeddings, embeddings_batch))
     return embeddings
 
 
