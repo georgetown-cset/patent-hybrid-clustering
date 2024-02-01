@@ -84,7 +84,8 @@ def test_multilingual_bert(patents):
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
     # matched = list(zip(title_abs, [d.get("patent_id") for d in patents]))
     batch_size = 16
-    batched = [[title_abs[i + j * batch_size] for i in range(batch_size)] for j in range(len(title_abs) // batch_size)]
+    batched = [[title_abs[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
+               for j in range((len(title_abs) // batch_size) + 1)]
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
