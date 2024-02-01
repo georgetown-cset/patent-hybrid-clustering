@@ -101,6 +101,7 @@ def test_multilingual_bert(patents):
             else:
                 embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
+        print(len(embeddings))
         return embeddings
 
 
