@@ -89,7 +89,6 @@ def test_multilingual_bert(patents):
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
-            print(i)
             inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512)
             # print("Running model")
 
@@ -102,7 +101,6 @@ def test_multilingual_bert(patents):
             else:
                 embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-        print(len(embeddings))
         return embeddings
 
 
