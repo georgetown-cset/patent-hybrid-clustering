@@ -5,9 +5,10 @@ from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_a
 import torch
 from huggingface_hub import hf_hub_download, snapshot_download
 import os
+import argparse
 
 
-def get_test_embedding_set():
+def get_test_embedding_set(patent_num: int):
     """
     We want an at least sort-of-representative test set of patents to embed.
     For this, useful stats to know -- as of January 19 2024:
@@ -19,7 +20,7 @@ def get_test_embedding_set():
     cost estimates would change significantly.
     :return:
     """
-    get_embedding_query = """SELECT
+    get_embedding_query = f"""SELECT
                               patent_id,
                               family_id,
                               title,
@@ -40,7 +41,7 @@ def get_test_embedding_set():
                                 OR (title_original IS NOT NULL
                                   AND abstract_original IS NOT NULL) )
                             WHERE
-                              MOD(seqnum, CAST((cnt / 2000) AS int64)) = 1"""
+                              MOD(seqnum, CAST((cnt / {patent_num}) AS int64)) = 1"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
@@ -111,8 +112,13 @@ def save_embeddings(patents, embedded):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("patent_num")
+    args = parser.parse_args()
+    if not args.patent_num:
+        parser.print_help()
     print("Getting embedding set")
-    data_to_embed = get_test_embedding_set()
+    data_to_embed = get_test_embedding_set(args.patent_num)
     print("Running Multilingual BERT")
     embedded = test_multilingual_bert(data_to_embed)
     print("Saving embeddings to pickle")
