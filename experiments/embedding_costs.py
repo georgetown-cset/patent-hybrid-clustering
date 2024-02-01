@@ -94,11 +94,11 @@ def test_multilingual_bert(patents):
         # print("Extracting embeddings")
         # take the first token in the batch as the embedding
         embeddings_batch = result.last_hidden_state[:, 0, :]
-        if i == 0:
-            embeddings = embeddings_batch
-        else:
-            embeddings = torch.cat((embeddings, embeddings_batch))
-    return embeddings
+        # if i == 0:
+        #     embeddings = embeddings_batch
+        # else:
+        #     embeddings = torch.cat((embeddings, embeddings_batch))
+    # return embeddings
 
 
 def save_embeddings(patents, embedded):
@@ -112,5 +112,5 @@ if __name__ == "__main__":
     data_to_embed = get_test_embedding_set()
     print("Running Multilingual BERT")
     embedded = test_multilingual_bert(data_to_embed)
-    print("Saving embeddings to pickle")
-    save_embeddings(data_to_embed, embedded)
+    # print("Saving embeddings to pickle")
+    # save_embeddings(data_to_embed, embedded)
