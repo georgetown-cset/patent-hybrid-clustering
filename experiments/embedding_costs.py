@@ -101,7 +101,7 @@ def test_multilingual_bert(patents):
             else:
                 embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-        # return embeddings
+        return embeddings
 
 
 def save_embeddings(patents, embedded):
@@ -115,5 +115,5 @@ if __name__ == "__main__":
     data_to_embed = get_test_embedding_set()
     print("Running Multilingual BERT")
     embedded = test_multilingual_bert(data_to_embed)
-    # print("Saving embeddings to pickle")
-    # save_embeddings(data_to_embed, embedded)
+    print("Saving embeddings to pickle")
+    save_embeddings(data_to_embed, embedded)
