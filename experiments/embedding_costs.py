@@ -3,7 +3,6 @@ from google.cloud import bigquery
 import pickle
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_auto_device_map, Accelerator
 import torch
-from huggingface_hub import hf_hub_download, snapshot_download
 import os
 import argparse
 
@@ -57,28 +56,26 @@ def get_test_embedding_set(patent_num: int):
     return to_embed
 
 
-def test_multilingual_bert(patents):
+def test_bert_model(patents, bert_model):
     if not os.path.exists("offload"):
         os.mkdir("offload")
     # device = torch.device("cuda")
     print("Getting config")
-    # checkpoint = "bert-base-multilingual-cased"
-    config = BertConfig.from_pretrained("bert-base-multilingual-cased")
-    # weights_location = hf_hub_download(checkpoint, "pytorch_model.bin")
+    config = BertConfig.from_pretrained(bert_model)
     print("Building tokenizer")
-    tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
+    tokenizer = BertTokenizer.from_pretrained(bert_model)
     print("Building model")
-    if not os.path.exists("save"):
-        os.mkdir("save")
+    if not os.path.exists(f"save_{bert_model[10:]}"):
+        os.mkdir(f"save_{bert_model[10:]}")
         model = BertModel(config)
         accelerator = Accelerator()
-        accelerator.save_model(model=model, save_directory="save", max_shard_size="50MB")
+        accelerator.save_model(model=model, save_directory=f"save_{bert_model[10:]}", max_shard_size="50MB")
     else:
         with init_empty_weights():
             model = BertModel(config)
     model.tie_weights()
     device_map = infer_auto_device_map(model, )
-    model = load_checkpoint_and_dispatch(model, checkpoint="save", device_map="auto",
+    model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model[10:]}", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
@@ -107,7 +104,6 @@ def test_multilingual_bert(patents):
             torch.cuda.empty_cache()
         return embeddings
 
-
 def save_embeddings(patents, embedded):
     with open("../data/embeddings.pkl", "wb") as out:
         pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
@@ -116,13 +112,20 @@ def save_embeddings(patents, embedded):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("model", help="The model to run; current options are multilingual and patents")
     parser.add_argument("patent_num")
     args = parser.parse_args()
     if not args.patent_num:
         parser.print_help()
     print("Getting embedding set")
     data_to_embed = get_test_embedding_set(args.patent_num)
-    print("Running Multilingual BERT")
-    embedded = test_multilingual_bert(data_to_embed)
+    if args.model == "multilingual":
+        print("Running Multilingual BERT")
+        embedded = test_bert_model(data_to_embed, "bert-base-multilingual-cased")
+    elif args.model == "patents":
+        print("Running BERT for patents")
+        embedded = test_bert_model(data_to_embed, "anferico/bert-for-patents")
+    else:
+        parser.print_help()
     print("Saving embeddings to pickle")
     save_embeddings(data_to_embed, embedded)
