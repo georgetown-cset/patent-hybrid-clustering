@@ -156,8 +156,8 @@ def save_embeddings(patents, embedded):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("model", help="The model to run; current options are multilingual, patents, and longformer")
-    parser.add_argument("patent_num")
-    parser.add_argument("--batch_size", default=16, help="The batch size")
+    parser.add_argument("patent_num", type=int)
+    parser.add_argument("--batch_size", type=int, default=16, help="The batch size")
     args = parser.parse_args()
     if not args.patent_num:
         parser.print_help()
