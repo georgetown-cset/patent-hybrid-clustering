@@ -91,7 +91,7 @@ def test_bert_model(patents, bert_model):
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     model = model.to_bettertransformer()
-    batched = batch_patents(tokenizer, patents, batch_size=16)
+    batched = batch_patents(tokenizer, patents, batch_size=32)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
@@ -126,12 +126,12 @@ def test_longformer_model(patents, longformer_model):
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{longformer_model.replace('/', '_')}",
                                          device_map="auto", max_memory={'mps': '50MB', 'cpu': '18000MB'},
                                          offload_folder="offload")
-    batched = batch_patents(tokenizer, patents, batch_size=16)
+    batched = batch_patents(tokenizer, patents, batch_size=32)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
-            max_len = len(max(batch, key=len))
-            pad_to = (512 * (max_len // 512)) + 1
+            # max_len = len(max(batch, key=len))
+            # pad_to = (512 * (max_len // 512)) + 1
             inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=pad_to)
             # print("Running model")
 
