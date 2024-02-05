@@ -130,7 +130,9 @@ def test_longformer_model(patents, longformer_model):
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
-            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=4096)
+            max_len = len(max(batch, key=len))
+            pad_to = (512 * (max_len // 512)) + 1
+            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=pad_to)
             # print("Running model")
 
             result = model(**inputs)
