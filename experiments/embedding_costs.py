@@ -1,10 +1,11 @@
-from transformers import BertTokenizer, BertConfig,BertModel
+from transformers import BertTokenizer, BertConfig,BertModel, LongformerModel, LongformerConfig, LongformerTokenizer
 from google.cloud import bigquery
 import pickle
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_auto_device_map, Accelerator
 import torch
 import os
 import argparse
+
 
 
 def get_test_embedding_set(patent_num: int):
@@ -55,6 +56,17 @@ def get_test_embedding_set(patent_num: int):
                          "language": result["language"]})
     return to_embed
 
+def batch_patents(tokenizer, patents, batch_size):
+    print("Making text to embed")
+    title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
+                 + (d.get('abstract') or d.get("abstract_original")) for d in patents]
+    # matched = list(zip(title_abs, [d.get("patent_id") for d in patents]))
+    batched = [[title_abs[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
+               for j in range((len(title_abs) // batch_size) + 1)]
+    # our method here leaves an empty array at the end when values are even; annoying
+    if batched[-1] == []:
+        batched = batched[:-1]
+    return batched
 
 def test_bert_model(patents, bert_model):
     if not os.path.exists("offload"):
@@ -65,28 +77,20 @@ def test_bert_model(patents, bert_model):
     print("Building tokenizer")
     tokenizer = BertTokenizer.from_pretrained(bert_model)
     print("Building model")
-    if not os.path.exists(f"save_{bert_model[10:]}"):
-        os.mkdir(f"save_{bert_model[10:]}")
+    if not os.path.exists(f"save_{bert_model.replace('/', '_')}"):
+        os.mkdir(f"save_{bert_model.replace('/', '_')}")
         model = BertModel(config)
         accelerator = Accelerator()
-        accelerator.save_model(model=model, save_directory=f"save_{bert_model[10:]}", max_shard_size="50MB")
+        accelerator.save_model(model=model, save_directory=f"save_{bert_model.replace('/', '_')}", max_shard_size="50MB")
     else:
         with init_empty_weights():
             model = BertModel(config)
     model.tie_weights()
     device_map = infer_auto_device_map(model, )
-    model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model[10:]}", device_map="auto",
+    model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     print("Making text to embed")
-    title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
-                 + (d.get('abstract') or d.get("abstract_original")) for d in patents]
-    # matched = list(zip(title_abs, [d.get("patent_id") for d in patents]))
-    batch_size = 16
-    batched = [[title_abs[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
-               for j in range((len(title_abs) // batch_size) + 1)]
-    # our method here leaves an empty array at the end when values are even; annoying
-    if batched[-1] == []:
-        batched = batched[:-1]
+    batched = batch_patents(tokenizer, patents, batch_size=16)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
@@ -104,6 +108,42 @@ def test_bert_model(patents, bert_model):
             torch.cuda.empty_cache()
         return embeddings
 
+def test_longformer_model(patents, longformer_model):
+    print("Getting config")
+    config = LongformerConfig.from_pretrained(longformer_model)
+    print("Building tokenizer")
+    tokenizer = LongformerTokenizer.from_pretrained(longformer_model)
+    if not os.path.exists(f"save_{longformer_model.replace('/', '_')}"):
+        os.mkdir(f"save_{longformer_model.replace('/', '_')}")
+        model = LongformerModel(config)
+        accelerator = Accelerator()
+        accelerator.save_model(model=model, save_directory=f"save_{longformer_model.replace('/', '_')}",
+                               max_shard_size="50MB")
+    else:
+        with init_empty_weights():
+            model = LongformerModel(config)
+    model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{longformer_model.replace('/', '_')}",
+                                         device_map="auto", max_memory={'mps': '50MB', 'cpu': '18000MB'},
+                                         offload_folder="offload")
+    batched = batch_patents(tokenizer, patents, batch_size=16)
+    print("Tokenizing")
+    with torch.no_grad():
+        for i, batch in enumerate(batched):
+            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=4096)
+            # print("Running model")
+
+            result = model(**inputs)
+            # print("Extracting embeddings")
+            # take the first token in the batch as the embedding
+            embeddings_batch = result.last_hidden_state[:, 0, :]
+            if i == 0:
+                embeddings = embeddings_batch
+            else:
+                embeddings = torch.cat((embeddings, embeddings_batch))
+            torch.cuda.empty_cache()
+        return embeddings
+
+
 def save_embeddings(patents, embedded):
     with open("../data/embeddings.pkl", "wb") as out:
         pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
@@ -112,7 +152,7 @@ def save_embeddings(patents, embedded):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("model", help="The model to run; current options are multilingual and patents")
+    parser.add_argument("model", help="The model to run; current options are multilingual, patents, and longformer")
     parser.add_argument("patent_num")
     args = parser.parse_args()
     if not args.patent_num:
@@ -125,6 +165,9 @@ if __name__ == "__main__":
     elif args.model == "patents":
         print("Running BERT for patents")
         embedded = test_bert_model(data_to_embed, "anferico/bert-for-patents")
+    elif args.model == "longformer":
+        print("Running Longformer")
+        embedded = test_longformer_model(data_to_embed, "allenai/longformer-base-4096")
     else:
         parser.print_help()
     print("Saving embeddings to pickle")
