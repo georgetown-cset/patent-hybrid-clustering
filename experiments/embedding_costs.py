@@ -91,7 +91,7 @@ def test_bert_model(patents, bert_model):
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
     model = model.to_bettertransformer()
-    batched = batch_patents(tokenizer, patents, batch_size=32)
+    batched = batch_patents(tokenizer, patents, batch_size=64)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
