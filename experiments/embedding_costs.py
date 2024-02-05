@@ -42,8 +42,7 @@ def get_test_embedding_set(patent_num: int):
                                   AND abstract_original IS NOT NULL) )
                             WHERE
                               MOD(seqnum, CAST((cnt / {patent_num}) AS int64)) = 1
-                              ORDER BY IF(length(title) + length(abstract) > 0, length(title) + length(abstract), 
-                              length(title_original) + length(abstract_original))"""
+                              ORDER BY LENGTH(COALESCE(title || abstract, title_original || abstract_original))"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
@@ -131,7 +130,7 @@ def test_longformer_model(patents, longformer_model):
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
-            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=4096)
+            inputs = tokenizer(batch, padding=False, truncation=True, return_tensors="pt", max_length=4096)
             # print("Running model")
 
             result = model(**inputs)
