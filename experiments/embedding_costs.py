@@ -41,7 +41,9 @@ def get_test_embedding_set(patent_num: int):
                                 OR (title_original IS NOT NULL
                                   AND abstract_original IS NOT NULL) )
                             WHERE
-                              MOD(seqnum, CAST((cnt / {patent_num}) AS int64)) = 1"""
+                              MOD(seqnum, CAST((cnt / {patent_num}) AS int64)) = 1
+                              ORDER BY IF(length(title) + length(abstract) > 0, length(title) + length(abstract), 
+                              length(title_original) + length(abstract_original))"""
     client = bigquery.Client()
     query_job = client.query(get_embedding_query)
     results = query_job.result()
@@ -89,6 +91,7 @@ def test_bert_model(patents, bert_model):
     device_map = infer_auto_device_map(model, )
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
                                          max_memory={'mps': '50MB', 'cpu': '18000MB'}, offload_folder="offload")
+    # model = model.to_bettertransformer()
     print("Making text to embed")
     batched = batch_patents(tokenizer, patents, batch_size=16)
     print("Tokenizing")
