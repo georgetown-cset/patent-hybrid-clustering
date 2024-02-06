@@ -1,4 +1,4 @@
-WITH test AS (
+WITH refactor AS (
   SELECT 
     ref.patent_id, 
     md.family_id AS family_id, 
@@ -10,11 +10,11 @@ WITH test AS (
 ), totals AS (
   SELECT 
     COUNT(DISTINCT family_id) AS total_families
-  FROM test
+  FROM refactor
 ), counts AS (
   SELECT 
     COUNT(DISTINCT family_id) AS total_outside_reference_families
-  FROM test
+  FROM refactor
   WHERE reference_family != family_id
 )
 SELECT 
