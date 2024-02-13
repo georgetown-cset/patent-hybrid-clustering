@@ -89,7 +89,7 @@ def test_bert_model(patents, bert_model, batch_size):
     model.tie_weights()
     device_map = infer_auto_device_map(model, )
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
-                                         max_memory={'mps': '50MB', 'cpu': '18000MB', 'gpu': '13GB'}, offload_folder="offload")
+                                         max_memory={'mps': '50MB', 'cpu': '18000MB', 0: '13GB'}, offload_folder="offload")
     model = model.to_bettertransformer()
     model = model.to('cuda:0')
     batched = batch_patents(tokenizer, patents, batch_size=batch_size)
