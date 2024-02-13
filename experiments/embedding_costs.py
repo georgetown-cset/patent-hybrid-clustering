@@ -97,6 +97,7 @@ def test_bert_model(patents, bert_model, batch_size):
     with torch.no_grad():
         for i, batch in enumerate(batched):
             inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512)
+            inputs.to('cuda:0')
             # print("Running model")
 
             result = model(**inputs)
