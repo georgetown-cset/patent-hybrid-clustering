@@ -135,7 +135,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
         for i, batch in enumerate(batched):
             # max_len = len(max(batch, key=len))
             # pad_to = (512 * (max_len // 512)) + 1
-            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=pad_to)
+            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=4096)
             inputs.to('cuda:0')
             # print("Running model")
 
