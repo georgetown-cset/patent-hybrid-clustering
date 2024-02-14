@@ -165,6 +165,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if not args.patent_num:
         parser.print_help()
+    if args.model not in ["multilingual", "patents", "longformer"]:
+        parser.print_help()
+        exit()
     print("Getting embedding set")
     data_to_embed = get_test_embedding_set(args.patent_num)
     if args.model == "multilingual":
@@ -176,7 +179,5 @@ if __name__ == "__main__":
     elif args.model == "longformer":
         print("Running Longformer")
         embedded = test_longformer_model(data_to_embed, "allenai/longformer-base-4096", args.batch_size)
-    else:
-        parser.print_help()
     print("Saving embeddings to pickle")
     save_embeddings(data_to_embed, embedded)
