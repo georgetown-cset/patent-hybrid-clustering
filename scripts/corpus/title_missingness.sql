@@ -1,12 +1,12 @@
 WITH totals AS (
   SELECT 
     COUNT(DISTINCT family_id) AS total_families
-  FROM `unified_patents.metadata` 
+  FROM `staging_patent_clusters.metadata_d_p_removed` 
 ), aggregation AS (
   SELECT 
     family_id,
     ARRAY_AGG(title IGNORE NULLS) AS titles,
-  FROM `unified_patents.metadata`
+  FROM `staging_patent_clusters.metadata_d_p_removed`
   GROUP BY family_id
 ), counts AS (
   SELECT 
