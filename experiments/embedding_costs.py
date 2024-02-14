@@ -128,6 +128,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{longformer_model.replace('/', '_')}",
                                          device_map="auto", max_memory={'mps': '50MB', 'cpu': '18000MB'},
                                          offload_folder="offload")
+    model = model.to('cuda:0')
     batched = batch_patents(tokenizer, patents, batch_size=batch_size)
     print("Tokenizing")
     with torch.no_grad():
@@ -135,6 +136,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
             # max_len = len(max(batch, key=len))
             # pad_to = (512 * (max_len // 512)) + 1
             inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=pad_to)
+            inputs.to('cuda:0')
             # print("Running model")
 
             result = model(**inputs)
