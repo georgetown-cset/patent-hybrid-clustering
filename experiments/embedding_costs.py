@@ -1,11 +1,11 @@
-from transformers import BertTokenizer, BertConfig,BertModel, LongformerModel, LongformerConfig, LongformerTokenizer
+from transformers import BertTokenizer, BertConfig, BertModel, LongformerModel, LongformerConfig, LongformerTokenizer
 from google.cloud import bigquery
 import pickle
+import json
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_auto_device_map, Accelerator
 import torch
 import os
 import argparse
-
 
 
 def get_test_embedding_set(patent_num: int):
@@ -57,17 +57,22 @@ def get_test_embedding_set(patent_num: int):
                          "language": result["language"]})
     return to_embed
 
+
 def batch_patents(tokenizer, patents, batch_size):
     print("Making text to embed")
     title_abs = [(d.get("title") or d.get("title_original")) + tokenizer.sep_token
                  + (d.get('abstract') or d.get("abstract_original")) for d in patents]
-    # matched = list(zip(title_abs, [d.get("patent_id") for d in patents]))
+    pat_ids = [d.get("patent_id") for d in patents]
     batched = [[title_abs[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
+               for j in range((len(title_abs) // batch_size) + 1)]
+    patents = [[pat_ids[i + j * batch_size] for i in range(batch_size) if (i + j * batch_size) < len(title_abs)]
                for j in range((len(title_abs) // batch_size) + 1)]
     # our method here leaves an empty array at the end when values are even; annoying
     if batched[-1] == []:
         batched = batched[:-1]
-    return batched
+        patents = patents[:-1]
+    return batched, patents
+
 
 def test_bert_model(patents, bert_model, batch_size):
     if not os.path.exists("offload"):
@@ -82,17 +87,19 @@ def test_bert_model(patents, bert_model, batch_size):
         os.mkdir(f"save_{bert_model.replace('/', '_')}")
         model = BertModel(config)
         accelerator = Accelerator()
-        accelerator.save_model(model=model, save_directory=f"save_{bert_model.replace('/', '_')}", max_shard_size="50MB")
+        accelerator.save_model(model=model, save_directory=f"save_{bert_model.replace('/', '_')}",
+                               max_shard_size="50MB")
     else:
         with init_empty_weights():
             model = BertModel(config)
     model.tie_weights()
     device_map = infer_auto_device_map(model, )
     model = load_checkpoint_and_dispatch(model, checkpoint=f"save_{bert_model.replace('/', '_')}", device_map="auto",
-                                         max_memory={'mps': '50MB', 'cpu': '18000MB', 0: '13GB'}, offload_folder="offload")
+                                         max_memory={'mps': '50MB', 'cpu': '18000MB', 0: '13GB'},
+                                         offload_folder="offload")
     model = model.to_bettertransformer()
     model = model.to('cuda:0')
-    batched = batch_patents(tokenizer, patents, batch_size=batch_size)
+    batched, patent_ids = batch_patents(tokenizer, patents, batch_size=batch_size)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
@@ -109,7 +116,8 @@ def test_bert_model(patents, bert_model, batch_size):
             else:
                 embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-        return embeddings
+            save_embeddings(patent_ids[i], embeddings)
+
 
 def test_longformer_model(patents, longformer_model, batch_size):
     print("Getting config")
@@ -152,9 +160,12 @@ def test_longformer_model(patents, longformer_model, batch_size):
 
 
 def save_embeddings(patents, embedded):
-    with open("../data/embeddings.pkl", "wb") as out:
-        pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
-                    out, protocol=pickle.HIGHEST_PROTOCOL)
+    for i, embedding in enumerate(embedded):
+        with open(f"data/{patents[i]}", "w") as out:
+            out.write(json.dumps({"patent_id": patents[i]["patent_id"], "embeddings": embedding}))
+    # with open("../data/embeddings.pkl", "wb") as out:
+    #     pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
+    #                 out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
