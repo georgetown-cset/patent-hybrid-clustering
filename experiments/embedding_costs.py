@@ -162,7 +162,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
 def save_embeddings(patents, embedded):
     for i, embedding in enumerate(embedded):
         with open(f"../data/{patents[i]}.jsonl", "w") as out:
-            out.write(json.dumps({"patent_id": patents[i]["patent_id"], "embeddings": embedding}))
+            out.write(json.dumps({"patent_id": patents[i], "embeddings": embedding}))
     # with open("../data/embeddings.pkl", "wb") as out:
     #     pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
     #                 out, protocol=pickle.HIGHEST_PROTOCOL)
