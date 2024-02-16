@@ -111,12 +111,12 @@ def test_bert_model(patents, bert_model, batch_size):
             # print("Extracting embeddings")
             # take the first token in the batch as the embedding
             embeddings_batch = result.last_hidden_state[:, 0, :]
-            if i == 0:
-                embeddings = embeddings_batch
-            else:
-                embeddings = torch.cat((embeddings, embeddings_batch))
+            # if i == 0:
+            #     embeddings = embeddings_batch
+            # else:
+            #     embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-            save_embeddings(patent_ids[i], embeddings)
+            save_embeddings(patent_ids[i], embeddings_batch)
 
 
 def test_longformer_model(patents, longformer_model, batch_size):
