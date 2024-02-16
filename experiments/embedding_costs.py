@@ -101,7 +101,7 @@ def test_bert_model(patents, bert_model: str, batch_size: int, model_name: str):
     model = model.to_bettertransformer()
     model = model.to('cuda:0')
     batched, patent_ids = batch_patents(tokenizer, patents, batch_size=batch_size)
-    print("Tokenizing")
+    print("Tokenizing and Running Model")
     with torch.no_grad():
         for i, batch in enumerate(batched):
             inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt", max_length=512)
@@ -135,7 +135,7 @@ def test_longformer_model(patents, longformer_model, batch_size, model_name):
                                          offload_folder="offload")
     model = model.to('cuda:0')
     batched, patent_ids = batch_patents(tokenizer, patents, batch_size=batch_size)
-    print("Tokenizing")
+    print("Tokenizing and Running Model")
     with torch.no_grad():
         for i, batch in enumerate(batched):
             # max_len = len(max(batch, key=len))
