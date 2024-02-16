@@ -192,5 +192,5 @@ if __name__ == "__main__":
     elif args.model == "longformer":
         print("Running Longformer")
         embedded = test_longformer_model(data_to_embed, "allenai/longformer-base-4096", args.batch_size)
-    print("Saving embeddings to pickle")
-    save_embeddings(data_to_embed, embedded)
+    # print("Saving embeddings to pickle")
+    # save_embeddings(data_to_embed, embedded)
