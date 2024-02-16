@@ -160,7 +160,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
 
 
 def save_embeddings(patents, embedded):
-    print(len(embedded, len(patents)))
+    print(len(embedded), len(patents))
     for i, embedding in enumerate(embedded):
         torch.save(embedded[i], f"../data/{patents[i]}.pt")
     # with open("../data/embeddings.pkl", "wb") as out:
