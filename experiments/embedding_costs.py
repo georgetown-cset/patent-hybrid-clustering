@@ -74,7 +74,7 @@ def batch_patents(tokenizer, patents, batch_size):
     return batched, patents
 
 
-def test_bert_model(patents, bert_model, batch_size):
+def test_bert_model(patents, bert_model: str, batch_size: int, model_name: str):
     if not os.path.exists("offload"):
         os.mkdir("offload")
     # device = torch.device("cuda")
@@ -111,15 +111,11 @@ def test_bert_model(patents, bert_model, batch_size):
             # print("Extracting embeddings")
             # take the first token in the batch as the embedding
             embeddings_batch = result.last_hidden_state[:, 0, :]
-            # if i == 0:
-            #     embeddings = embeddings_batch
-            # else:
-            #     embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-            save_embeddings(patent_ids[i], embeddings_batch)
+            save_embeddings(patent_ids[i], embeddings_batch, model_name)
 
 
-def test_longformer_model(patents, longformer_model, batch_size):
+def test_longformer_model(patents, longformer_model, batch_size, model_name):
     print("Getting config")
     config = LongformerConfig.from_pretrained(longformer_model)
     print("Building tokenizer")
@@ -137,7 +133,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
                                          device_map="auto", max_memory={'mps': '50MB', 'cpu': '18000MB'},
                                          offload_folder="offload")
     model = model.to('cuda:0')
-    batched = batch_patents(tokenizer, patents, batch_size=batch_size)
+    batched, patent_ids = batch_patents(tokenizer, patents, batch_size=batch_size)
     print("Tokenizing")
     with torch.no_grad():
         for i, batch in enumerate(batched):
@@ -151,23 +147,13 @@ def test_longformer_model(patents, longformer_model, batch_size):
             # print("Extracting embeddings")
             # take the first token in the batch as the embedding
             embeddings_batch = result.last_hidden_state[:, 0, :]
-            if i == 0:
-                embeddings = embeddings_batch
-            else:
-                embeddings = torch.cat((embeddings, embeddings_batch))
             torch.cuda.empty_cache()
-        return embeddings
+            save_embeddings(patent_ids[i], embeddings_batch, model_name)
 
 
-def save_embeddings(patents, embedded):
-    if embedded is None or not patents:
-        print(embedded)
-        print(patents)
+def save_embeddings(patents: list, embedded, model: str):
     for i, embedding in enumerate(embedded):
-        torch.save(embedded[i], f"../data/{patents[i]}.pt")
-    # with open("../data/embeddings.pkl", "wb") as out:
-    #     pickle.dump([{"patent_id": patent["patent_id"], "embeddings": embedded[i]} for i, patent in enumerate(patents)],
-    #                 out, protocol=pickle.HIGHEST_PROTOCOL)
+        torch.save(embedded[i], f"../data/{model}/{patents[i]}.pt")
 
 
 if __name__ == "__main__":
@@ -185,12 +171,10 @@ if __name__ == "__main__":
     data_to_embed = get_test_embedding_set(args.patent_num)
     if args.model == "multilingual":
         print("Running Multilingual BERT")
-        embedded = test_bert_model(data_to_embed, "bert-base-multilingual-cased", args.batch_size)
+        embedded = test_bert_model(data_to_embed, "bert-base-multilingual-cased", args.batch_size, args.model)
     elif args.model == "patents":
         print("Running BERT for patents")
-        embedded = test_bert_model(data_to_embed, "anferico/bert-for-patents", args.batch_size)
+        embedded = test_bert_model(data_to_embed, "anferico/bert-for-patents", args.batch_size, args.model)
     elif args.model == "longformer":
         print("Running Longformer")
-        embedded = test_longformer_model(data_to_embed, "allenai/longformer-base-4096", args.batch_size)
-    # print("Saving embeddings to pickle")
-    # save_embeddings(data_to_embed, embedded)
+        embedded = test_longformer_model(data_to_embed, "allenai/longformer-base-4096", args.batch_size, args.model)
