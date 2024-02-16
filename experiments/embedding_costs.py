@@ -160,7 +160,7 @@ def test_longformer_model(patents, longformer_model, batch_size):
 
 
 def save_embeddings(patents, embedded):
-    if not embedded:
+    if embedded is None or not patents:
         print(embedded)
         print(patents)
     for i, embedding in enumerate(embedded):
