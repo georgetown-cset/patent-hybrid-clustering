@@ -6,6 +6,7 @@ from accelerate import init_empty_weights, load_checkpoint_and_dispatch, infer_a
 import torch
 import os
 import argparse
+import os
 
 
 def get_test_embedding_set(patent_num: int):
@@ -169,6 +170,10 @@ if __name__ == "__main__":
         exit()
     print("Getting embedding set")
     data_to_embed = get_test_embedding_set(args.patent_num)
+    if not os.path.exists("../data"):
+        os.mkdir("../data")
+    if not os.path.exists(f"../data/{args.model}"):
+        os.mkdir(f"../data/{args.model}")
     if args.model == "multilingual":
         print("Running Multilingual BERT")
         embedded = test_bert_model(data_to_embed, "bert-base-multilingual-cased", args.batch_size, args.model)
