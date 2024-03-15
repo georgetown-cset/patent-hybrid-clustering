@@ -25,22 +25,10 @@ content = [
     {'x': "Should I sign up for Medicare Part B if I have Veterans' Benefits?"}
 ]
 
-text_embedding_model_name = 'sentence-transformers/sentence-t5-large'
-
-
-# helper function that returns a dict containing only first
-# ten elements of generated embeddings
-def truncate_embeddings(d):
-  for key in d.keys():
-    d[key] = d[key][:10]
-  return d
-
-artifact_location_t5 = tempfile.mkdtemp(prefix='huggingface_')
-
 
 def run(model_name: str):
-    embedding_transform = SentenceTransformerEmbeddings(
-        model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2", columns=['x'])
+    artifact_location_t5 = tempfile.mkdtemp(prefix='huggingface_')
+    embedding_transform = SentenceTransformerEmbeddings(model_name=model_name, columns=['x'])
     with beam.Pipeline() as pipeline:
         data_pcoll = (
                 pipeline
@@ -50,14 +38,14 @@ def run(model_name: str):
                 | "MLTransform" >> MLTransform(write_artifact_location=artifact_location_t5).with_transform(
             embedding_transform))
 
-        transformed_pcoll | beam.Map(truncate_embeddings) | 'LogOutput' >> beam.Map(print)
+        transformed_pcoll | 'LogOutput' >> beam.Map(print)
 
         transformed_pcoll | "PrintEmbeddingShape" >> beam.Map(lambda x: print(f"Embedding shape: {len(x['x'])}"))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="google-bert/bert-base-multilingual-cased")
+    parser.add_argument("--model", default="sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
     args = parser.parse_args()
 
     run(args.model)
