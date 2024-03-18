@@ -20,4 +20,3 @@ At this point, you can run:
 ```time python3 embedding_costs.py```
 
 This will give you amount of time embedding takes.
-

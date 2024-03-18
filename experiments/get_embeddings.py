@@ -10,9 +10,12 @@ python3 get_embeddings.py --project gcp-cset-projects --runner DataflowRunner --
 import argparse
 import json
 import tempfile
+
 import apache_beam as beam
 from apache_beam.ml.transforms.base import MLTransform
-from apache_beam.ml.transforms.embeddings.huggingface import SentenceTransformerEmbeddings
+from apache_beam.ml.transforms.embeddings.huggingface import (
+    SentenceTransformerEmbeddings,
+)
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
@@ -39,22 +42,34 @@ def run(input_data: str, output_data: str, model_name: str, pipeline_args: dict)
     """
     options = PipelineOptions(pipeline_args)
     artifact_location_t5 = tempfile.mkdtemp(prefix="huggingface_")
-    embedding_transform = SentenceTransformerEmbeddings(model_name=model_name, columns=["text"])
+    embedding_transform = SentenceTransformerEmbeddings(
+        model_name=model_name, columns=["text"]
+    )
     with beam.Pipeline(options=options) as pipeline:
-        (pipeline | "Read Data" >> beam.io.ReadFromText(input_data)
-                  | "JSONify" >> beam.Map(lambda x: json.loads(x))
-                  | "MLTransform" >> MLTransform(write_artifact_location=artifact_location_t5).with_transform(
-            embedding_transform)
-                  | "Stringify" >> beam.Map(lambda x: json.dumps(x))
-                  | "Write Data" >> beam.io.WriteToText(output_data)
+        (
+            pipeline
+            | "Read Data" >> beam.io.ReadFromText(input_data)
+            | "JSONify" >> beam.Map(lambda x: json.loads(x))
+            | "MLTransform"
+            >> MLTransform(write_artifact_location=artifact_location_t5).with_transform(
+                embedding_transform
+            )
+            | "Stringify" >> beam.Map(lambda x: json.dumps(x))
+            | "Write Data" >> beam.io.WriteToText(output_data)
         )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_data", default="gs://jtm23/patent_embedding_test_input/data*")
-    parser.add_argument("--output_data", default="gs://jtm23/patent_embedding_output/data")
-    parser.add_argument("--model", default="sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
+    parser.add_argument(
+        "--input_data", default="gs://jtm23/patent_embedding_test_input/data*"
+    )
+    parser.add_argument(
+        "--output_data", default="gs://jtm23/patent_embedding_output/data"
+    )
+    parser.add_argument(
+        "--model", default="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+    )
     args, pipeline_args = parser.parse_known_args()
 
     run(args.input_data, args.output_data, args.model, pipeline_args)
