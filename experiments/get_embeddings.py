@@ -1,51 +1,60 @@
 """
 Adapted from https://cloud.google.com/dataflow/docs/notebooks/huggingface_text_embeddings
+
+Sample Dataflow params:
+python3 get_embeddings.py --project gcp-cset-projects --runner DataflowRunner --disk_size_gb 30
+  --job_name patent-embeddings-test --save_main_session --region us-east1
+  --temp_location gs://cset-dataflow-test/example-tmps/ --requirements_file get_embeddings_requirements.txt
 """
 
 import argparse
+import json
 import tempfile
 import apache_beam as beam
 from apache_beam.ml.transforms.base import MLTransform
 from apache_beam.ml.transforms.embeddings.huggingface import SentenceTransformerEmbeddings
+from apache_beam.options.pipeline_options import PipelineOptions
 
 
-content = [
-    {'x': 'How do I get a replacement Medicare card?'},
-    {'x': 'What is the monthly premium for Medicare Part B?'},
-    {'x': 'How do I terminate my Medicare Part B (medical insurance)?'},
-    {'x': 'How do I sign up for Medicare?'},
-    {'x': 'Can I sign up for Medicare Part B if I am working and have health insurance through an employer?'},
-    {'x': 'How do I sign up for Medicare Part B if I already have Part A?'},
-    {'x': 'What are Medicare late enrollment penalties?'},
-    {'x': 'What is Medicare and who can get it?'},
-    {'x': 'How can I get help with my Medicare Part A and Part B premiums?'},
-    {'x': 'What are the different parts of Medicare?'},
-    {'x': 'Will my Medicare premiums be higher because of my higher income?'},
-    {'x': 'What is TRICARE ?'},
-    {'x': "Should I sign up for Medicare Part B if I have Veterans' Benefits?"}
-]
+def run(input_data: str, output_data: str, model_name: str, pipeline_args: dict):
+    """
+    Use the specified model to generate embeddings for `input_data`, and write them to `output_data`.
+    The default input directory contains the results of this query, exported to JSONL
 
+    create or replace table tmp.patent_embeding_test_input as
+    select distinct
+      family_id,
+      CONCAT(COALESCE(title, ""), " ", COALESCE(abstract, "")) as text
+    from
+      unified_patents.metadata
+    where family_id is not null
+    limit 10000
 
-def run(model_name: str):
-    artifact_location_t5 = tempfile.mkdtemp(prefix='huggingface_')
-    embedding_transform = SentenceTransformerEmbeddings(model_name=model_name, columns=['x'])
-    with beam.Pipeline() as pipeline:
-        data_pcoll = (
-                pipeline
-                | "CreateData" >> beam.Create(content))
-        transformed_pcoll = (
-                data_pcoll
-                | "MLTransform" >> MLTransform(write_artifact_location=artifact_location_t5).with_transform(
-            embedding_transform))
-
-        transformed_pcoll | 'LogOutput' >> beam.Map(print)
-
-        transformed_pcoll | "PrintEmbeddingShape" >> beam.Map(lambda x: print(f"Embedding shape: {len(x['x'])}"))
+    :input_data: A GCS directory of JSONL inputs, with a "text" column we want to extract embeddings from
+    :output_data: Location on GCS where outputs should be written. The "text" column will contain the embeddings
+      of the input "text" column
+    :param model_name: Name of the sentence transformers model to use
+    :param pipeline_args: Args that control e.g. beam runner
+    :return: None
+    """
+    options = PipelineOptions(pipeline_args)
+    artifact_location_t5 = tempfile.mkdtemp(prefix="huggingface_")
+    embedding_transform = SentenceTransformerEmbeddings(model_name=model_name, columns=["text"])
+    with beam.Pipeline(options=options) as pipeline:
+        (pipeline | "Read Data" >> beam.io.ReadFromText(input_data)
+                  | "JSONify" >> beam.Map(lambda x: json.loads(x))
+                  | "MLTransform" >> MLTransform(write_artifact_location=artifact_location_t5).with_transform(
+            embedding_transform)
+                  | "Stringify" >> beam.Map(lambda x: json.dumps(x))
+                  | "Write Data" >> beam.io.WriteToText(output_data)
+        )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--input_data", default="gs://jtm23/patent_embedding_test_input/data*")
+    parser.add_argument("--output_data", default="gs://jtm23/patent_embedding_output/data")
     parser.add_argument("--model", default="sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
-    args = parser.parse_args()
+    args, pipeline_args = parser.parse_known_args()
 
-    run(args.model)
+    run(args.input_data, args.output_data, args.model, pipeline_args)
