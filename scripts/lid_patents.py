@@ -9,7 +9,7 @@ from alive_progress import alive_bar
 RE_BAD_CHARS = regex.compile(r"[\p{Cc}\p{Cs}]+")
 
 client = bigquery.Client()
-table_id = "gcp-cset-projects.staging_patent_clusters.translation_test"
+table_id = "gcp-cset-projects.staging_patent_clusters.patents_lid"
 
 def remove_bad_chars(text):
     return RE_BAD_CHARS.sub("", text)
