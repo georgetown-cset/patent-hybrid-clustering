@@ -1,5 +1,7 @@
 node_modules/*
 *.DS_Store
+evaluation_metrics/data/*.json
+evaluation_metrics/data/*.pckl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
