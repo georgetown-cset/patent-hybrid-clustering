@@ -12,25 +12,22 @@ CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate AS (
     FROM `staging_patent_clusters.metadata_d_p_removed`
     WHERE 
       language IN ('bs', 'is', 'no', 'ot', 'sh')
-  ), english_check_stage AS (
-    # For non-LID, we need to make sure there isn't an English-version available.
+  ), language_check_stage AS (
+    # Ensured the same number of family IDs in this subquery as above. 
     SELECT
       family_id, 
-      ARRAY_AGG(language) AS langs, 
+      ARRAY_AGG(language IGNORE NULLS) AS langs, 
       STRING_AGG(title_original) AS titles_original, 
       STRING_AGG(abstract_original) AS abstracts_original
     FROM UP_patents
     JOIN `staging_patent_clusters.metadata_d_p_removed` USING(family_id)
-    WHERE 
-      # We deal with null language in the LID queries. 
-      language IS NOT NULL 
     GROUP BY family_id
   )
   SELECT 
-    family_id, 
+    DISTINCT family_id, 
     titles_original, 
     abstracts_original 
-  FROM english_check_stage 
-  # Check for English in a patent family's aggregated languages.
-  WHERE 'en' NOT IN UNNEST(langs)
+  FROM language_check_stage 
+  # Check for model coverage in a patent family's aggregated languages.
+  WHERE staging_patent_clusters.checkLanguages(langs) IS FALSE
 )

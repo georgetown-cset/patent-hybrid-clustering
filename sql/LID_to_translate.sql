@@ -11,26 +11,33 @@ For LID:
 CREATE OR REPLACE TABLE staging_patent_clusters.LID_to_translate AS (
   WITH LID_patents AS (
     # We need family ID's from the metadata table.
-    # No English check is needed because these patents don't have any language code. 
     SELECT  
-      family_id,
-      STRING_AGG(title_original) AS titles_original, 
-      STRING_AGG(abstract_original) AS abstracts_original
+      family_id, 
     FROM `staging_patent_clusters.patents_lid` lid
-    JOIN `staging_patent_clusters.metadata_d_p_removed` USING(patent_id)
+    JOIN `staging_patent_clusters.metadata_d_p_removed` md USING(patent_id)
     WHERE 
       lid.language IN ('aa', 'ab', 'af', 'az', 'bs', 'co', 'cy', 
                   'eo', 'eu', 'fy', 'gn', 'ia', 'ie', 'la', 
                   'lb', 'ln', 'nn', 'no', 'oc', 'qu', 'sw',
                   'tk', 'tl', 'tt', 'vo', 'war')
+  ), language_check_stage AS (
+    # Ensured the same number of family IDs in this subquery as above. 
+    SELECT 
+      family_id, 
+      ARRAY_AGG(md.language IGNORE NULLS) AS langs, 
+      STRING_AGG(md.title_original) AS titles_original, 
+      STRING_AGG(md.abstract_original) AS abstracts_original
+    FROM LID_patents
+    JOIN `staging_patent_clusters.metadata_d_p_removed` md USING(family_id)
     GROUP BY family_id
   )
   SELECT 
-    family_id, 
+    DISTINCT family_id, 
     titles_original, 
     abstracts_original 
-  FROM LID_patents 
+  FROM language_check_stage 
   WHERE 
+    staging_patent_clusters.checkLanguages(langs) IS FALSE
     # Just make sure we're not double-counting families/characters. 
-    family_id NOT IN (SELECT family_id FROM `staging_patent_clusters.UP_to_translate`)
+    AND family_id NOT IN (SELECT family_id FROM `staging_patent_clusters.UP_to_translate`)
 )
