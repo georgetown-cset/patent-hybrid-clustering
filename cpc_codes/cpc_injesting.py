@@ -1,0 +1,96 @@
+from google.cloud import bigquery
+import xml.etree.ElementTree as ET
+import os
+import argparse
+from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
+
+"""
+This script parses the xml files for cpc codes downloaded from https://www.cooperativepatentclassification.org/cpcSchemeAndDefinitions/bulk
+Considered are files from "Complete CPC Definitions in XML format"
+
+To extract the files, make sure to:
+(1) Downlaoad and unzip the required xml data files.
+(2) Make sure the table you want to create in BQ isn't the exact same between runs (or at least give it a 2h break between creating and overwriting the same table)
+(3) Run the script.
+
+"""
+
+def find_cpc_files(xml_dir):
+    """
+    Function which finds all the xml files in a directory and returns a list of them for use in parsing later.
+    :param :xml_dir: String for the directory of interest
+    :return: list of strings representing the files
+    """
+    print('Finding files')
+    xml_files = os.listdir('../cpc_codes/'+xml_dir)
+    xml_files.sort()
+    xml_files = [fil for fil in xml_files if fil.endswith(".xml")]
+    return(xml_files)
+
+def parse_xml_file(xml_dir, xml_file):
+    """
+    Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding description.
+    :param xml_dir: String type, directory where the xml files are
+    :param xml_file: String type, name of the actual file
+    :return: List of dictionaries, where each item in the list is a dictionary with the cpc code and corresponding description
+    """
+    tree = ET.parse(xml_dir + '/' + xml_file) #parse the xml file
+    root = tree.getroot() #get the xml tree
+    code_descriptions = []
+    for item in root.findall('definition-item'): #look at each cpc item in the file
+        for symbol in item.findall('classification-symbol'): #find the cpc name
+            code = symbol.text
+        description = ''
+        for text in item.findall('definition-title'): #find the cpc description
+            description += text.text
+            for child in text: #for annoying reasons there are often links to other codes, in the form of nested children
+                if child.text is not None:
+                    description += child.text
+                if child.tail is not None:
+                    description += child.tail
+        code_descriptions.append({'code':code, 'description':description})
+    return code_descriptions
+
+def get_cpc_descriptions(xml_directory):
+    xml_files = find_cpc_files(xml_directory)
+    code_descriptions = []
+    print('Loading files')
+    for fil in xml_files:
+        code_descriptions.extend(parse_xml_file(xml_directory, fil))
+    return code_descriptions
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("xml_directory", help="The directory with all the xml files to import.")
+    parser.add_argument("bq_table", help="The name of the BQ table to use (as 'dataset.table_id')")
+    args = parser.parse_args()
+    if not args.xml_directory:
+        parser.print_help()
+        exit()
+    print('Finding code descriptions')
+    code_descriptions = get_cpc_descriptions(args.xml_directory)
+    print('Saving results to BQ')
+
+    client = bigquery.Client()
+
+    schema = [
+        bigquery.SchemaField("code", "STRING", mode='REQUIRED', description="CPC code"),
+        bigquery.SchemaField("description", 'STRING', mode='REQUIRED', description="Full description of CPC code")
+    ]
+    table_id = 'gcp-cset-projects.' + args.bq_table
+
+    try:
+        table = client.delete_table(table_id)
+    except NotFound:
+        pass
+
+    table = bigquery.Table(table_id, schema=schema)
+    table = client.create_table(table)
+
+    errors = client.insert_rows_json(table_id, code_descriptions)
+    if errors == []:
+        print('Done!')
+    else:
+        print('Errors from inserting rows: {}'.format(errors))
+
