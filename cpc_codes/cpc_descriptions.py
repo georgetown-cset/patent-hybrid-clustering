@@ -62,12 +62,9 @@ def get_cpc_descriptions(xml_directory):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("xml_directory", help="The directory with all the xml files to import.")
-    parser.add_argument("bq_table", help="The name of the BQ table to use (as 'dataset.table_id')")
+    parser.add_argument("xml_directory")
+    parser.add_argument("bq_table")
     args = parser.parse_args()
-    if not args.xml_directory:
-        parser.print_help()
-        exit()
     print('Finding code descriptions')
     code_descriptions = get_cpc_descriptions(args.xml_directory)
     print('Saving results to BQ')
