@@ -2,3 +2,5 @@ coverage
 linkchecker
 pre-commit
 pytest
+apache-beam[gcp]>=2.53
+sentence-transformers
