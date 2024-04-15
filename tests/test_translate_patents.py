@@ -1,5 +1,5 @@
 import unittest
-import translate_patents
+import scripts.translate_patents as translate_patents
 import regex
 
 class TestTranslate(unittest.TestCase):
