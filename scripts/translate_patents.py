@@ -1,11 +1,12 @@
-from google.cloud import bigquery, translate_v2 as translate
+import json
+
 import pycld2 as cld2
 import regex
-import json
+from google.cloud import bigquery
+from google.cloud import translate_v2 as translate
 
 
 class Translator:
-
     def __init__(self, output_file):
         self.bigquery_client = bigquery.Client()
         self.translate_client = translate.Client()
@@ -18,7 +19,7 @@ class Translator:
         self.num_chars_translated = 0
 
     def get_patents_to_translate(self):
-        query = """SELECT DISTINCT 
+        query = """SELECT DISTINCT
                       patent_id,
                       family_id,
                       title_original,
