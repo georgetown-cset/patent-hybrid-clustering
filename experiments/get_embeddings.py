@@ -68,7 +68,7 @@ if __name__ == "__main__":
         "--output_data", default="gs://jtm23/patent_embedding_output/data"
     )
     parser.add_argument(
-        "--model", default="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+        "--model", default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
     args, pipeline_args = parser.parse_known_args()
 
