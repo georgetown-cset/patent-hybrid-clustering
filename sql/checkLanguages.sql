@@ -1,5 +1,5 @@
-CREATE FUNCTION staging_patent_clusters.checkLanguages(langs ANY TYPE) 
-RETURNS BOOLEAN 
+CREATE FUNCTION staging_patent_clusters.CHECKLANGUAGES(langs ANY TYPE)
+RETURNS BOOLEAN
 AS (
   'multilingual' IN UNNEST(langs)
   OR 'ar' IN UNNEST(langs)
@@ -55,4 +55,4 @@ AS (
   OR 'fr-ca' IN UNNEST(langs)
   OR 'pt-br' IN UNNEST(langs)
   OR 'zh-tw' IN UNNEST(langs)
-); 
+);
