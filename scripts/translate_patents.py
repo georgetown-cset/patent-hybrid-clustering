@@ -10,8 +10,9 @@ class Translator:
     def __init__(self, output_file):
         self.bigquery_client = bigquery.Client()
         self.translate_client = translate.Client()
-        # for testing let's limit ourselves to $20 worth of text
-        self.max_chars_to_translate = 10**6
+        # let's limit ourselves to $500 worth of text
+        # which should be more than enough based on our calculations
+        self.max_chars_to_translate = 25 * 10**6
         self.patents = []
         # https://github.com/aboSamoor/polyglot/issues/71
         self.re_bad_chars = regex.compile(r"[\p{Cc}\p{Cs}]+")
@@ -28,10 +29,12 @@ class Translator:
                       staging_patent_clusters.patents_to_translate
                 """
         result = self.bigquery_client.query(query)
-        for row in result:
+        for i, row in enumerate(result):
+            if i % 100 == 0:
+                print(f"On patent {i}")
             translated_title = self.translate_text(row["title_original"])
             translated_abstract = self.translate_text(row["abstract_original"])
-            if self.validate_translation(translated_abstract):
+            if translated_abstract and self.validate_translation(translated_abstract):
                 self.patents.append(
                     {
                         "patent_id": row["patent_id"],
@@ -77,7 +80,7 @@ class Translator:
 
 
 def main():
-    translate = Translator("translated_patents.jsonl")
+    translate = Translator("../data/translated_patents.jsonl")
     translate.get_patents_to_translate()
     translate.write_output()
 
