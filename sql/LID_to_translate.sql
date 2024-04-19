@@ -12,10 +12,10 @@ CREATE OR REPLACE TABLE staging_patent_clusters.LID_to_translate AS (
   WITH LID_patents AS (
     # We need family ID's from the metadata table.
     SELECT family_id
- FROM `staging_patent_clusters.patents_lid`
+    FROM `staging_patent_clusters.patents_lid`
     INNER JOIN `staging_patent_clusters.metadata_d_p_removed` USING (patent_id)
     WHERE
-      `staging_patent_clusters.patents_lid`.language IN ('aa', 'ab', 'af', 'az', 'bs', 'co', 'cy',
+      staging_patent_clusters.patents_lid.language IN ('aa', 'ab', 'af', 'az', 'bs', 'co', 'cy',
         'eo', 'eu', 'fy', 'gn', 'ia', 'ie', 'la',
         'lb', 'ln', 'nn', 'no', 'oc', 'qu', 'sw',
         'tk', 'tl', 'tt', 'vo', 'war')
@@ -25,7 +25,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.LID_to_translate AS (
     # Ensured the same number of family IDs in this subquery as above.
     SELECT
       family_id,
-      ARRAY_AGG(`staging_patent_clusters.metadata_d_p_removed`.language IGNORE NULLS) AS langs
+      ARRAY_AGG(staging_patent_clusters.metadata_d_p_removed.language IGNORE NULLS) AS langs
     FROM LID_patents
     INNER JOIN `staging_patent_clusters.metadata_d_p_removed` USING (family_id)
     GROUP BY family_id
@@ -33,7 +33,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.LID_to_translate AS (
 
   model_check AS (
     SELECT DISTINCT family_id
- FROM model_check_stage
+    FROM model_check_stage
     WHERE
       staging_patent_clusters.CHECKLANGUAGES(langs) IS FALSE
       # Just make sure we're not double-counting families/characters.

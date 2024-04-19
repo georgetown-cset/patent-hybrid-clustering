@@ -8,7 +8,7 @@ For UP:
 CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate AS (
   WITH UP_patents AS (
     SELECT family_id
- FROM `staging_patent_clusters.metadata_d_p_removed`
+    FROM `staging_patent_clusters.metadata_d_p_removed`
     WHERE
       language IN ('bs', 'is', 'no', 'ot', 'sh')
   ),
@@ -25,7 +25,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate AS (
 
   model_check AS (
     SELECT DISTINCT family_id
- FROM model_check_stage
+    FROM model_check_stage
     # Check for model coverage in a patent family's aggregated languages.
     WHERE staging_patent_clusters.CHECKLANGUAGES(langs) IS FALSE
   )
