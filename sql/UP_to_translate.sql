@@ -5,7 +5,7 @@ Goal:
 For UP: 
  - ['bs', 'is', 'no', 'ot', 'sh']
 */
-CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate_test AS (
+CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate AS (
   WITH UP_patents AS (
     SELECT  
       family_id
