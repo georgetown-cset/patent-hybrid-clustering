@@ -8,7 +8,7 @@ import scripts.translate_patents as translate_patents
 class TestTranslate(unittest.TestCase):
     def test_init(self):
         translate = translate_patents.Translator("../data/test_translated.jsonl")
-        self.assertEqual(translate.max_chars_to_translate, 10**6)
+        self.assertEqual(translate.max_chars_to_translate, 25 * 10**6)
         self.assertEqual(translate.patents, [])
         self.assertEqual(translate.re_bad_chars, regex.compile(r"[\p{Cc}\p{Cs}]+"))
         self.assertEqual(translate.output_file, "../data/test_translated.jsonl")
