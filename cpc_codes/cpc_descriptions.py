@@ -3,9 +3,6 @@ import json
 import os
 import xml.etree.ElementTree as ET
 
-from google.cloud import bigquery
-from google.cloud.exceptions import NotFound
-
 """
 This script parses the xml files for cpc codes downloaded from https://www.cooperativepatentclassification.org/cpcSchemeAndDefinitions/bulk
 Considered are files from "Complete CPC Definitions in XML format"
@@ -116,7 +113,6 @@ if __name__ == "__main__":
     parser.add_argument("title_directory")
     parser.add_argument("description_directory")
     parser.add_argument("local_output_file")
-    parser.add_argument("bq_table")
     args = parser.parse_args()
 
     print("Finding code titles")
@@ -168,36 +164,3 @@ if __name__ == "__main__":
         for d in all_cpc_codes_json:
             json.dump(d, f)
             f.write("\n")
-
-    print("Saving results to BQ")
-
-    client = bigquery.Client()
-
-    schema = [
-        bigquery.SchemaField("code", "STRING", mode="REQUIRED", description="CPC code"),
-        bigquery.SchemaField(
-            "title", "STRING", mode="NULLABLE", description="Title of CPC code"
-        ),
-        bigquery.SchemaField(
-            "description",
-            "STRING",
-            mode="NULLABLE",
-            description="Full description of CPC code",
-        ),
-    ]
-
-    table_id = "gcp-cset-projects." + args.bq_table
-
-    try:
-        table = client.delete_table(table_id)
-    except NotFound:
-        pass
-
-    table = bigquery.Table(table_id, schema=schema)
-    table = client.create_table(table)
-
-    errors = client.insert_rows_json(table_id, all_cpc_codes_json)
-    if errors == []:
-        print("Done!")
-    else:
-        print("Errors from inserting rows: {}".format(errors))
