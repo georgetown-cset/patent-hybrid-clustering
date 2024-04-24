@@ -16,7 +16,7 @@ translation_not_needed AS (
       (patent_id,
         family_id)
   WHERE
-    patents_to_translate.family_id IS NULL),
+    patents_to_translate.patent_id IS NULL),
 
 -- Get the patents that were translated
 translated AS (
