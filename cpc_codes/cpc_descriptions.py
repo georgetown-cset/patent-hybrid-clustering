@@ -15,7 +15,7 @@ To extract the files, make sure to:
 """
 
 
-def find_cpc_files(xml_dir):
+def find_cpc_files(xml_dir: str):
     """
     Function which finds all the xml files in a directory and returns a list of them for use in parsing later.
     :param :xml_dir: String for the directory of interest
@@ -23,12 +23,12 @@ def find_cpc_files(xml_dir):
     """
     print("Finding files")
     xml_files = os.listdir("../cpc_codes/" + xml_dir)
-    xml_files.sort()
     xml_files = [fil for fil in xml_files if fil.endswith(".xml")]
+    xml_files.sort()
     return xml_files
 
 
-def parse_xml_descritption_file(xml_dir, xml_file):
+def parse_xml_descritption_file(xml_dir: str, xml_file: str):
     """
     Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding DESCRIPTION.
     :param xml_dir: String type, directory where the xml files are
@@ -38,17 +38,17 @@ def parse_xml_descritption_file(xml_dir, xml_file):
     tree = ET.parse(xml_dir + "/" + xml_file)  # parse the xml file
     root = tree.getroot()  # get the xml tree
     code_descriptions = []
-    for item in root.findall(".//definition-item"):  # look at each cpc item in the file
-        for symbol in item.findall("classification-symbol"):  # find the cpc name
+    # look at each cpc item in the file
+    for item in root.findall(".//definition-item"):
+        # find the cpc name
+        for symbol in item.findall("classification-symbol"):
             code = symbol.text
         description = ""
-        for text in item.findall("definition-title"):  # find the cpc description
+        # find the cpc description
+        for text in item.findall("definition-title"):
             description += text.text
-            for (
-                child
-            ) in (
-                text
-            ):  # for annoying reasons there are often links to other codes, in the form of nested children
+            for child in text:
+                # for annoying reasons there are often links to other codes, in the form of nested children
                 if child.text is not None:
                     description += child.text
                 if child.tail is not None:
@@ -57,7 +57,7 @@ def parse_xml_descritption_file(xml_dir, xml_file):
     return code_descriptions
 
 
-def parse_xml_title_file(xml_dir, xml_file):
+def parse_xml_title_file(xml_dir: str, xml_file: str):
     """
     Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding TITLES.
     :param xml_dir: String type, directory where the xml files are
@@ -90,7 +90,7 @@ def parse_xml_title_file(xml_dir, xml_file):
     return code_titles
 
 
-def get_cpc_descriptions(xml_directory):
+def get_cpc_descriptions(xml_directory: str):
     xml_files = find_cpc_files(xml_directory)
     code_descriptions = []
     print("Loading description files")
@@ -99,7 +99,7 @@ def get_cpc_descriptions(xml_directory):
     return code_descriptions
 
 
-def get_cpc_titles(xml_directory):
+def get_cpc_titles(xml_directory: str):
     xml_files = find_cpc_files(xml_directory)
     code_titles = []
     print("Loading title files")
