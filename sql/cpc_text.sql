@@ -19,8 +19,8 @@ CREATE OR REPLACE TABLE staging_patent_clusters.family_cpc_text AS (
   text_join AS (
     SELECT
       family_id,
-      CONCAT(COALESCE(cpc_td.title, ''), " ", COALESCE(cpc_td.description, '')) AS cpc_text,
-      CONCAT(COALESCE(ipc_td.title, ''), " ", COALESCE(ipc_td.description, '')) AS ipc_text
+      CONCAT(COALESCE(TRIM(cpc_td.title), ''), " ", COALESCE(TRIM(cpc_td.description), '')) AS cpc_text,
+      CONCAT(COALESCE(TRIM(ipc_td.title), ''), " ", COALESCE(TRIM(ipc_td.description), '')) AS ipc_text
     FROM stage
     LEFT JOIN `cpc_codes.cpc_title_descriptions` AS cpc_td ON(cpcs = cpc_td.code)
     LEFT JOIN `cpc_codes.cpc_title_descriptions` AS ipc_td ON(ipcs = ipc_td.code)
