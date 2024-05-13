@@ -1,7 +1,10 @@
 import argparse
+import copy
 import json
 import os
 import xml.etree.ElementTree as ET
+from collections import defaultdict
+import copy
 
 """
 This script parses the xml files for cpc codes downloaded from https://www.cooperativepatentclassification.org/cpcSchemeAndDefinitions/bulk
@@ -28,139 +31,145 @@ def find_cpc_files(xml_dir: str):
     return xml_files
 
 
-def parse_xml_descritption_file(xml_dir: str, xml_file: str):
-    """
-    Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding DESCRIPTION.
-    :param xml_dir: String type, directory where the xml files are
-    :param xml_file: String type, name of the actual file
-    :return: List of dictionaries, where each item in the list is a dictionary with the cpc code and corresponding DESCRIPTION
-    """
-    tree = ET.parse(xml_dir + "/" + xml_file)  # parse the xml file
-    root = tree.getroot()  # get the xml tree
-    code_descriptions = []
-    # look at each cpc item in the file
-    for item in root.findall(".//definition-item"):
-        # find the cpc name
-        for symbol in item.findall("classification-symbol"):
-            code = symbol.text
-        description = ""
-        # find the cpc description
-        for text in item.findall("definition-title"):
-            description += text.text
-            for child in text:
-                # for annoying reasons there are often links to other codes, in the form of nested children
-                if child.text is not None:
-                    description += child.text
-                if child.tail is not None:
-                    description += child.tail
-        code_descriptions.append({"code": code, "description": description})
-    return code_descriptions
-
-
-def parse_xml_title_file(xml_dir: str, xml_file: str):
+def parse_xml_title_file(xml_dir: str, xml_file: str, levels: dict, hierarchy: defaultdict, code_titles: dict):
     """
     Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding TITLES.
     :param xml_dir: String type, directory where the xml files are
     :param xml_file: String type, name of the actual file
-    :return: List of dictionaries, where each item in the list is a dictionary with the cpc code and corresponding TITLE
+    :param levels: Dict type, the most recent code at each hierarchy level
+    :param: hierarchy: Default dict of list type, a mapping of each parent code to all of its child codes
+    :param: code_titles: Dict type, the code linked to the lowest-level text of that code
+    :return: List of any codes at the base level of the hierarchy
     """
+    initial_level = 1
     tree = ET.parse(xml_dir + "/" + xml_file)  # parse the xml file
     root = tree.getroot()  # get the xml tree
+    base_levels = []
 
-    code_titles = []
-
-    for item in root.findall(".//classification-item"):
+    for i, item in enumerate(root.findall(".//classification-item")):
         code = ""
+        level = int(item.attrib["level"])
         for symbol in item.findall("classification-symbol"):
             code = symbol.text
+        if i == 0:
+            initial_level = level
+            if initial_level == 2:
+                base_levels.append((code, level))
+        if level > initial_level:
+            parent_code = levels[level - 1]
+            hierarchy[(parent_code, level - 1)].append((code, level))
+        levels[level] = code
         title = ""
         for text in item.findall("class-title"):  # find the cpc description
             for title_part in text.findall("title-part"):
+                for ref in title_part.findall("reference"):
+                    pass
                 for sub_text in title_part.findall("text"):
                     if sub_text.text is not None:
                         title += sub_text.text + "; "
-                    for emph in sub_text.findall("u"):
-                        if emph.text is not None:
-                            title += emph.text + "; "
                 for cpc_specific_text in title_part.findall("CPC-specific-text"):
+                    for cpc_ref in cpc_specific_text.findall("reference"):
+                        pass
                     for sub_text in cpc_specific_text.findall("text"):
                         if sub_text.text is not None:
                             title += sub_text.text + "; "
-        code_titles.append({"code": code, "title": title.rstrip("; ")})
-    return code_titles
+        code_titles[(code, level)] = title.rstrip("; ")
+    return base_levels
 
 
-def get_cpc_descriptions(xml_directory: str):
-    xml_files = find_cpc_files(xml_directory)
-    code_descriptions = []
-    print("Loading description files")
-    for fil in xml_files:
-        code_descriptions.extend(parse_xml_descritption_file(xml_directory, fil))
-    return code_descriptions
+def combine_xml_titles(current_level: list, level_index: int, text_dict: dict, final_text: dict, previous_levels: dict,
+                       hierarchy: defaultdict, code_titles: dict):
+    """
+    Recursive function to combine the hierarchical CPC titles across the levels
+    :param current_level: List type, all the current codes at the level we're evaluating
+    :param level_index: Integer type, index of where we are in the list we're evaluating
+    :param text_dict: Dictionary type, maps codes to their gradually expanding hierarchical text pair
+    :param final_text: Dictionary type, maps codes to what we want to write out in our jsonl file
+    :param previous_levels: Dictionary type, maps codes at the current level to codes at the previous level
+    :param hierarchy: Dictionary type, maps codes at the current level to a list of codes at the next level
+    :param code_titles: Dictionary type, maps codes to their non-hierarchical text pair
+    :return: None
+    """
+    while current_level:
+        for i in range(level_index, len(current_level)):
+            code_tuple = current_level[i]
+            text = f"{text_dict[previous_levels[code_tuple]]}; {code_titles[code_tuple]}".strip("; ")
+            final_text[code_tuple] = ({"code": code_tuple[0], "text": text, "level": code_tuple[1]})
+            text_dict[code_tuple] = text
+            if code_tuple not in hierarchy:
+                return None
+            else:
+                next_level = hierarchy[code_tuple]
+                previous_levels.update({code_string: code_tuple for code_string in next_level})
+                for next_level_index, current_tuple in enumerate(next_level):
+                    combine_xml_titles(next_level, next_level_index, text_dict, final_text, previous_levels, hierarchy, code_titles)
+        return
+
+
+def setup_combine_xml_titles(hierarchy: defaultdict, code_titles: dict, current_level: list):
+    """
+    Do setup for combining xml titles; basically, do everything that's needed before jumping into
+    recursion
+    :param hierarchy: Dictionary type, maps codes at the current level to a list of codes at the next level
+    :param code_titles: Dictionary type, maps codes to their non-hierarchical text pair
+    :param current_level: List type, all the current codes at the top level of the hierarchy
+    :return: Dictionary type, maps codes to the jsonl text to print out
+    """
+    final_text = {}
+    text_dict = {}
+    previous_levels = {}
+    for base_code in current_level:
+        previous_levels[base_code] = "0"
+    text_dict["0"] = ""
+    combine_xml_titles(current_level, 0, text_dict, final_text, previous_levels, hierarchy, code_titles)
+    return final_text
 
 
 def get_cpc_titles(xml_directory: str):
+    """
+    Run all code to get CPC titles
+    First we parse the title file and build a hierarchy
+    Then we recurse through the hierarchy to build out our text
+    :param xml_directory: String type, the directory where the CPC title XML lives
+    :return: Dictionary type, maps codes to the jsonl text to print out
+    """
     xml_files = find_cpc_files(xml_directory)
-    code_titles = []
+    code_titles = {}
     print("Loading title files")
+    levels = {}
+    hierarchy = defaultdict(list)
+    initial_levels = []
     for fil in xml_files:
-        code_titles.extend(parse_xml_title_file(xml_directory, fil))
-    return code_titles
+        top_levels = parse_xml_title_file(xml_directory, fil, levels, hierarchy, code_titles)
+        if top_levels:
+            initial_levels.extend(top_levels)
+    initial_levels = list(set(initial_levels))
+    return setup_combine_xml_titles(hierarchy, code_titles, initial_levels)
 
+
+def save_data(filename: str, data: dict):
+    """
+    Save the jsonl data to file
+    :param filename: String type, filename to write output to
+    :param data: Dictionary type, maps codes to the jsonl text to print out
+    :return:
+    """
+    print("Saving json file at: " + filename + ".jsonl")
+
+    with open(filename + ".jsonl", "w") as f:
+        for d in data:
+            json.dump(data[d], f)
+            f.write("\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("title_directory")
-    parser.add_argument("description_directory")
     parser.add_argument("local_output_file")
     args = parser.parse_args()
 
     print("Finding code titles")
     code_titles = get_cpc_titles(args.title_directory)
 
-    print("Finding code descriptions")
-    code_descriptions = get_cpc_descriptions(args.description_directory)
+    save_data(args.local_output_file, code_titles)
 
-    cpc_title_dict = {}
-    for row in code_titles:
-        code = row["code"]
-        title = row["title"]
-        if code in cpc_title_dict.keys():
-            if cpc_title_dict[code] != "":
-                cpc_title_dict[code] += "; " + title
-            else:
-                cpc_title_dict[code] = title
-        else:
-            cpc_title_dict[code] = title
 
-    cpc_description_dict = {}
-    for row in code_descriptions:
-        cpc_description_dict[row["code"]] = row["description"]
-
-    all_cpc_codes = {
-        k: {"title": cpc_title_dict[k], "description": None}
-        for k in cpc_title_dict.keys()
-    }
-    for key in cpc_description_dict.keys():
-        code = key
-        description = cpc_description_dict[key]
-        try:
-            all_cpc_codes[key]["description"] = description
-        except KeyError:
-            all_cpc_codes[key] = {"title": None, "description": description}
-
-    all_cpc_codes_json = [
-        {
-            "code": k,
-            "title": all_cpc_codes[k]["title"],
-            "description": all_cpc_codes[k]["description"],
-        }
-        for k in all_cpc_codes.keys()
-    ]
-
-    print("Saving json file at: " + args.local_output_file + ".jsonl")
-
-    with open(args.local_output_file + ".jsonl", "w") as f:
-        for d in all_cpc_codes_json:
-            json.dump(d, f)
-            f.write("\n")

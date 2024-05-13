@@ -62,14 +62,17 @@ def run(input_data: str, output_data: str, model_name: str, pipeline_args: dict)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input_data", default="gs://jtm23/patent_embedding_test_input/data*"
+        "--input_data", default="gs://patent-clustering/cpc_embedding/to_embed_*"
     )
     parser.add_argument(
-        "--output_data", default="gs://jtm23/patent_embedding_output/data"
+        "--output_data", default="gs://patent-clustering/cpc_embedding_output/embedded"
     )
     parser.add_argument(
-        "--model", default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        "--model", default="sentence-transformers/all-mpnet-base-v2"
     )
+    # parser.add_argument(
+    #     "--model", default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    # )
     args, pipeline_args = parser.parse_known_args()
 
     run(args.input_data, args.output_data, args.model, pipeline_args)
