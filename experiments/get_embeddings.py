@@ -67,9 +67,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_data", default="gs://patent-clustering/cpc_embedding_output/embedded"
     )
-    parser.add_argument(
-        "--model", default="sentence-transformers/all-mpnet-base-v2"
-    )
+    parser.add_argument("--model", default="sentence-transformers/all-mpnet-base-v2")
     # parser.add_argument(
     #     "--model", default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     # )

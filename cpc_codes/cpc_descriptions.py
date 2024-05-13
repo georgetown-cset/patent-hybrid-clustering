@@ -4,7 +4,6 @@ import json
 import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-import copy
 
 """
 This script parses the xml files for cpc codes downloaded from https://www.cooperativepatentclassification.org/cpcSchemeAndDefinitions/bulk
@@ -31,7 +30,9 @@ def find_cpc_files(xml_dir: str):
     return xml_files
 
 
-def parse_xml_title_file(xml_dir: str, xml_file: str, levels: dict, hierarchy: defaultdict, code_titles: dict):
+def parse_xml_title_file(
+    xml_dir: str, xml_file: str, levels: dict, hierarchy: defaultdict, code_titles: dict
+):
     """
     Reads in an xml file and returns a list of dictionary items, with the cpc code and corresponding TITLES.
     :param xml_dir: String type, directory where the xml files are
@@ -77,8 +78,15 @@ def parse_xml_title_file(xml_dir: str, xml_file: str, levels: dict, hierarchy: d
     return base_levels
 
 
-def combine_xml_titles(current_level: list, level_index: int, text_dict: dict, final_text: dict, previous_levels: dict,
-                       hierarchy: defaultdict, code_titles: dict):
+def combine_xml_titles(
+    current_level: list,
+    level_index: int,
+    text_dict: dict,
+    final_text: dict,
+    previous_levels: dict,
+    hierarchy: defaultdict,
+    code_titles: dict,
+):
     """
     Recursive function to combine the hierarchical CPC titles across the levels
     :param current_level: List type, all the current codes at the level we're evaluating
@@ -93,20 +101,38 @@ def combine_xml_titles(current_level: list, level_index: int, text_dict: dict, f
     while current_level:
         for i in range(level_index, len(current_level)):
             code_tuple = current_level[i]
-            text = f"{text_dict[previous_levels[code_tuple]]}; {code_titles[code_tuple]}".strip("; ")
-            final_text[code_tuple] = ({"code": code_tuple[0], "text": text, "level": code_tuple[1]})
+            text = f"{text_dict[previous_levels[code_tuple]]}; {code_titles[code_tuple]}".strip(
+                "; "
+            )
+            final_text[code_tuple] = {
+                "code": code_tuple[0],
+                "text": text,
+                "level": code_tuple[1],
+            }
             text_dict[code_tuple] = text
             if code_tuple not in hierarchy:
                 return None
             else:
                 next_level = hierarchy[code_tuple]
-                previous_levels.update({code_string: code_tuple for code_string in next_level})
+                previous_levels.update(
+                    {code_string: code_tuple for code_string in next_level}
+                )
                 for next_level_index, current_tuple in enumerate(next_level):
-                    combine_xml_titles(next_level, next_level_index, text_dict, final_text, previous_levels, hierarchy, code_titles)
+                    combine_xml_titles(
+                        next_level,
+                        next_level_index,
+                        text_dict,
+                        final_text,
+                        previous_levels,
+                        hierarchy,
+                        code_titles,
+                    )
         return
 
 
-def setup_combine_xml_titles(hierarchy: defaultdict, code_titles: dict, current_level: list):
+def setup_combine_xml_titles(
+    hierarchy: defaultdict, code_titles: dict, current_level: list
+):
     """
     Do setup for combining xml titles; basically, do everything that's needed before jumping into
     recursion
@@ -121,7 +147,9 @@ def setup_combine_xml_titles(hierarchy: defaultdict, code_titles: dict, current_
     for base_code in current_level:
         previous_levels[base_code] = "0"
     text_dict["0"] = ""
-    combine_xml_titles(current_level, 0, text_dict, final_text, previous_levels, hierarchy, code_titles)
+    combine_xml_titles(
+        current_level, 0, text_dict, final_text, previous_levels, hierarchy, code_titles
+    )
     return final_text
 
 
@@ -140,7 +168,9 @@ def get_cpc_titles(xml_directory: str):
     hierarchy = defaultdict(list)
     initial_levels = []
     for fil in xml_files:
-        top_levels = parse_xml_title_file(xml_directory, fil, levels, hierarchy, code_titles)
+        top_levels = parse_xml_title_file(
+            xml_directory, fil, levels, hierarchy, code_titles
+        )
         if top_levels:
             initial_levels.extend(top_levels)
     initial_levels = list(set(initial_levels))
@@ -161,6 +191,7 @@ def save_data(filename: str, data: dict):
             json.dump(data[d], f)
             f.write("\n")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("title_directory")
@@ -171,5 +202,3 @@ if __name__ == "__main__":
     code_titles = get_cpc_titles(args.title_directory)
 
     save_data(args.local_output_file, code_titles)
-
-
