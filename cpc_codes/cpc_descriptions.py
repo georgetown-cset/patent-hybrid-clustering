@@ -10,7 +10,7 @@ This script parses the xml files for cpc codes downloaded from https://www.coope
 Considered are files from "Complete CPC Definitions in XML format"
 
 To extract the files, make sure to:
-(1) Downlaoad and unzip the required xml data files.
+(1) Download and unzip the required xml data files.
 (2) Make sure the table you want to create in BQ isn't the exact same between runs (or at least give it a 2h break between creating and overwriting the same table)
 (3) Run the script.
 
@@ -147,6 +147,9 @@ def setup_combine_xml_titles(
     for base_code in current_level:
         previous_levels[base_code] = "0"
     text_dict["0"] = ""
+    combine_xml_titles(
+        current_level, 0, text_dict, final_text, previous_levels, hierarchy, code_titles
+    )
     combine_xml_titles(
         current_level, 0, text_dict, final_text, previous_levels, hierarchy, code_titles
     )

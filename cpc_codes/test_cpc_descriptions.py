@@ -31,7 +31,6 @@ class TestCpcDescriptions(unittest.TestCase):
             ("B01D", 5): "SEPARATION",
             ("B01F", 5): "MIXING, e.g. DISSOLVING, EMULSIFYING OR DISPERSING",
         }
-
         hierarchy = defaultdict(list)
         hierarchy[("A", 2)] = [("A01", 3), ("A21", 3)]
         hierarchy[("A01", 3)] = [("A01", 4)]
