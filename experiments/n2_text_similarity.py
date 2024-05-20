@@ -40,11 +40,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 class CosineSimilarity(beam.DoFn):
     def process(self, js):
         similarity = cosine_similarity([js["text1"]], [js["text2"]])[0][0]
-        yield js["family_id1"], {"family_id": js["family_id2"], "similarity": similarity}
-        yield js["family_id2"], {"family_id": js["family_id1"], "similarity": similarity}
+        yield js["family_id1"], {
+            "family_id": js["family_id2"],
+            "similarity": similarity,
+        }
+        yield js["family_id2"], {
+            "family_id": js["family_id1"],
+            "similarity": similarity,
+        }
 
 
-def run(input_data: str, output_data: str,  pipeline_args: dict):
+def run(input_data: str, output_data: str, pipeline_args: dict):
     """
     Generate text similarity of precomputed pairs of patent families, outputting top 10 most similar patent families
     for each
@@ -63,7 +69,15 @@ def run(input_data: str, output_data: str,  pipeline_args: dict):
             | "JSONify" >> beam.Map(lambda x: json.loads(x))
             | "Cosine similarity" >> beam.ParDo(CosineSimilarity())
             | "Group by key" >> beam.GroupByKey()
-            | "Top 10" >> beam.Map(lambda x: {"family_id": x[0], "top_10": sorted(x[1], key=lambda f: f["similarity"], reverse=True)[:10]})
+            | "Top 10"
+            >> beam.Map(
+                lambda x: {
+                    "family_id": x[0],
+                    "top_10": sorted(x[1], key=lambda f: f["similarity"], reverse=True)[
+                        :10
+                    ],
+                }
+            )
             | "Stringify" >> beam.Map(lambda x: json.dumps(x))
             | "Write Data" >> beam.io.WriteToText(output_data)
         )
