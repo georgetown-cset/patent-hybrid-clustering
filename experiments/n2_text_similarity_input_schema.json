@@ -1,0 +1,12 @@
+[
+  {
+    "name": "family_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "text",
+    "type": "FLOAT",
+    "mode": "REPEATED"
+  }
+]
