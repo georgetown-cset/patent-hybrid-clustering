@@ -24,8 +24,8 @@
 5. The resulting job https://console.cloud.google.com/dataflow/jobs/us-east1/2024-05-20_13_48_24-11470885542461538291;step=;mainTab=JOB_GRAPH;graphView=0?project=gcp-cset-projects&pageState=(%22dfTime%22:(%22l%22:%22dfJobMaxTime%22))
    ran in 13 min 39 sec on 10 cpus (Beam can scale up far more than this). Using the pricing here:
    https://cloud.google.com/dataflow/pricing I get a cost of $0.056*1.235+$0.003557*4.633+$0.011*0.8065 (assuming
-   our discount is exceeded) = $0.0945 to run similarity for 1,124,250 pairs. We will have to run this on ~80M^2/2
-   pairs, so we would expect a cost of $0.0945*80M^2/(2*1,124,250) = ~$269M. Even if this is an overestimate
+   our discount is exceeded) = $0.0945 to run similarity for 1,124,250 pairs. We will have to run this on 80M*(80M-1)/2
+   pairs, so we would expect a cost of $0.0945*80M*(80M-1)/(2*1,124,250) = ~$269M. Even if this is an overestimate
    by several orders of magnitude, we can't use this method on the full corpus.
 """
 
