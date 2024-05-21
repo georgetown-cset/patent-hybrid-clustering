@@ -1,0 +1,45 @@
+Indexing 241980 text embeddings
+Wrote profile results to flat_ip_index.py.lprof
+Timer unit: 1 s
+
+Total time: 83.7734 s
+File: flat_ip_index.py
+Function: run at line 11
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    11                                           @profile
+    12                                           def run(input_dir: str, output_dir: str):
+    13                                               # 384 is the embedding vector size
+    14         1          0.0      0.0      0.0      index = faiss.IndexFlatIP(384)
+    15         1          0.0      0.0      0.0      numeric_to_family_id = {}
+    16         1          0.0      0.0      0.0      embeddings = []
+    17         1          0.0      0.0      0.0      curr_id = 0
+    18       101          0.0      0.0      0.0      for fi in tqdm(os.listdir(input_dir)):
+    19       200          0.0      0.0      0.0          with open(os.path.join(input_dir, fi)) as f:
+    20    242080          2.4      0.0      2.9              for line in f:
+    21    241980         37.4      0.0     44.7                  js = json.loads(line)
+    22    241980          5.6      0.0      6.6                  embeddings.append(np.array(js["text"]))
+    23    241980          0.1      0.0      0.1                  numeric_to_family_id[curr_id] = js["family_id"]
+    24    241980          0.1      0.0      0.1                  curr_id += 1
+    25         1          0.0      0.0      0.0      print(f"Indexing {len(embeddings)} text embeddings")
+    26                                               # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in this index in the order they are added. If we needed to, we could use the numeric_to_family_id dict defined above to turn these ids back into family ids
+    27         1          0.6      0.6      0.7      np_embeddings = np.array(embeddings)
+    28         1          0.5      0.5      0.6      index.add(np_embeddings)
+    29                                               # Get top 10 most similar ids for all embeddings
+    30         1         29.4     29.4     35.1      similarities, ids = index.search(np_embeddings, 10)
+    31                                               # Write out results in a human-readable form
+    32         1          0.0      0.0      0.0      if os.path.exists(output_dir):
+    33         1          0.1      0.1      0.2          shutil.rmtree(output_dir)
+    34         1          0.0      0.0      0.0      os.mkdir(output_dir)
+    35                                               # Start a new file after we've written this many records
+    36         1          0.0      0.0      0.0      file_length = 100
+    37         1          0.0      0.0      0.0      curr_file = None
+    38    241981          0.5      0.0      0.6      for num_id, (sims, sim_ids) in enumerate(zip(similarities.tolist(), ids.tolist())):
+    39    241980          0.1      0.0      0.1          if num_id % file_length == 0:
+    40      2420          0.0      0.0      0.0              if curr_file: curr_file.close()
+    41      2420          0.1      0.0      0.2              curr_file = open(os.path.join(output_dir, f"top_10_{num_id / file_length}.jsonl"), mode="w")
+    42    241980          0.2      0.0      0.2          row = {"family_id": numeric_to_family_id[num_id]}
+    43   2661780          1.8      0.0      2.1          row["most_similar"] = [{"family_id": numeric_to_family_id[sim_id], "similarity": sim} for sim, sim_id in zip(sims, sim_ids)]
+    44    241980          4.8      0.0      5.7          curr_file.write(json.dumps(row)+"\n")
+    45         1          0.0      0.0      0.0      curr_file.close()
