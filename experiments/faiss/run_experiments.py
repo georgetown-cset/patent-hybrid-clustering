@@ -42,7 +42,7 @@ def get_IndexFlatIP(np_embeddings):
 def get_IndexIVFFlat(np_embeddings):
     quantizer = faiss.IndexFlatIP(EMBEDDING_SIZE)
     total_cells = 100
-    index = faiss.IndexFlatL2(quantizer, EMBEDDING_SIZE, total_cells)
+    index = faiss.IndexIVFFlat(quantizer, EMBEDDING_SIZE, total_cells)
     index.train(np_embeddings)
     index.add(np_embeddings)
     return index
