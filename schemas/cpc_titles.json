@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "code",
+    "type": "STRING",
+    "description": "The CPC code."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "text",
+    "type": "STRING",
+    "description": "The full text string of the code."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "level",
+    "type": "INTEGER",
+    "description": "The code level."
+  }
+]
