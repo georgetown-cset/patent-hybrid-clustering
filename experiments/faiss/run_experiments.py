@@ -8,7 +8,7 @@ kernprof -l -v --unit 1 run_experiments.py --input_dir medium_embedding_sample -
 
 This script used https://github.com/facebookresearch/faiss/blob/main/tutorial/python/1-Flat.py and
 https://github.com/facebookresearch/faiss/blob/main/tutorial/python/2-IVFFlat.py as a starting point.
-It calculates the brute-force cosine similarities (IndexFlatIP). The difference in time to calculate the top 10 between
+It calculates the brute-force inner products (IndexFlatIP). The difference in time to calculate the top 10 between
 the two sample sizes scales exactly as we would expect.
 
 It also calculates "Inverted file with exact post-verification" similarities (IndexIVFFlat) - see
@@ -29,6 +29,14 @@ EMBEDDING_SIZE = 384
 
 
 @profile  # noqa: F821
+def get_IndexFlatL2(np_embeddings):
+    index = faiss.IndexFlatL2(EMBEDDING_SIZE)
+    index.add(np_embeddings)
+    return index
+
+
+
+@profile  # noqa: F821
 def get_IndexFlatIP(np_embeddings):
     index = faiss.IndexFlatIP(EMBEDDING_SIZE)
     # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in this index in
@@ -40,7 +48,7 @@ def get_IndexFlatIP(np_embeddings):
 
 @profile  # noqa: F821
 def get_IndexIVFFlat(np_embeddings):
-    quantizer = faiss.IndexFlatIP(EMBEDDING_SIZE)
+    quantizer = faiss.IndexFlatL2(EMBEDDING_SIZE)
     total_cells = 100
     index = faiss.IndexIVFFlat(quantizer, EMBEDDING_SIZE, total_cells)
     index.train(np_embeddings)
@@ -80,6 +88,8 @@ def run(input_dir: str, output_dir: str, index_name: str):
     np_embeddings = np.array(embeddings)
     if index_name == "IndexFlatIP":
         index = get_IndexFlatIP(np_embeddings)
+    if index_name == "IndexFlatL2":
+        index = get_IndexFlatL2(np_embeddings)
     elif index_name == "IndexIVFFlat":
         index = get_IndexIVFFlat(np_embeddings)
     elif index_name == "IndexHNSWFlat":
@@ -105,6 +115,7 @@ def run(input_dir: str, output_dir: str, index_name: str):
         row["most_similar"] = [
             {"family_id": numeric_to_family_id[sim_id], "similarity": sim}
             for sim, sim_id in zip(sims, sim_ids)
+            if sim_id != -1
         ]
         curr_file.write(json.dumps(row) + "\n")
     curr_file.close()
@@ -115,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--input_dir", default="small_embedding_sample")
     parser.add_argument("--output_dir", default="small_embedding_sample_out")
     parser.add_argument("--index_name", default="IndexFlatIP",
-                        choices=["IndexFlatIP", "IndexIVFFlat", "IndexHNSWFlat"])
+                        choices=["IndexFlatIP", "IndexFlatL2", "IndexIVFFlat", "IndexHNSWFlat"])
     args = parser.parse_args()
 
     run(args.input_dir, args.output_dir, args.index_name)
