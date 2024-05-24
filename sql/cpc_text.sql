@@ -15,7 +15,9 @@ WITH stage AS (
     REPLACE(cpcs, ' ', '') AS cpcs,
     REPLACE(ipcs, ' ', '') AS ipcs
   FROM staging_patent_clusters.metadata_d_p_removed
-  INNER JOIN unified_patents.classifications USING (patent_id), UNNEST(cpcs) AS cpcs, UNNEST(ipcs) AS ipcs
+  INNER JOIN unified_patents.classifications USING (patent_id)
+  LEFT JOIN UNNEST(cpcs) AS cpcs
+  LEFT JOIN UNNEST(ipcs) AS ipcs
 ),
 
 text_join AS (
