@@ -48,6 +48,22 @@ def get_IndexIVFFlat(np_embeddings):
     return index
 
 
+@profile
+def get_IndexHNSWFlat(np_embeddings):
+    # From https://www.pinecone.io/learn/series/faiss/vector-indexes/
+    num_connections = 64  # number of connections each vertex will have
+    ef_search = 32  # depth of layers explored during search
+    ef_construction = 64  # depth of layers explored during index construction
+    # initialize index
+    index = faiss.IndexHNSWFlat(EMBEDDING_SIZE, num_connections)
+    # set efConstruction and efSearch parameters
+    index.hnsw.efConstruction = ef_construction
+    index.hnsw.efSearch = ef_search
+    # add data to index
+    index.add(np_embeddings)
+    return index
+
+
 @profile  # noqa: F821
 def run(input_dir: str, output_dir: str, index_name: str):
     numeric_to_family_id = {}
@@ -64,8 +80,10 @@ def run(input_dir: str, output_dir: str, index_name: str):
     np_embeddings = np.array(embeddings)
     if index_name == "IndexFlatIP":
         index = get_IndexFlatIP(np_embeddings)
-    else:
+    elif index_name == "IndexIVFFlat":
         index = get_IndexIVFFlat(np_embeddings)
+    elif index_name == "IndexHNSWFlat":
+        index = get_IndexHNSWFlat(np_embeddings)
     # Get top 10 most similar ids for all embeddings
     similarities, ids = index.search(np_embeddings, 10)
     # Write out results in a human-readable form
@@ -73,7 +91,7 @@ def run(input_dir: str, output_dir: str, index_name: str):
         shutil.rmtree(output_dir)
     os.mkdir(output_dir)
     # Start a new file after we've written this many records
-    file_length = 100
+    file_length = 1000
     curr_file = None
     for num_id, (sims, sim_ids) in enumerate(zip(similarities.tolist(), ids.tolist())):
         if num_id % file_length == 0:
@@ -96,7 +114,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", default="small_embedding_sample")
     parser.add_argument("--output_dir", default="small_embedding_sample_out")
-    parser.add_argument("--index_name", default="IndexFlatIP")
+    parser.add_argument("--index_name", default="IndexFlatIP",
+                        choices=["IndexFlatIP", "IndexIVFFlat", "IndexHNSWFlat"])
     args = parser.parse_args()
 
     run(args.input_dir, args.output_dir, args.index_name)
