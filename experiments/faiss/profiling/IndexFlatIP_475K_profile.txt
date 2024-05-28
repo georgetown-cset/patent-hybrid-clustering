@@ -80,4 +80,3 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     85                                                   ]
     86    474741          9.6      0.0      4.3          curr_file.write(json.dumps(row) + "\n")
     87         1          0.0      0.0      0.0      curr_file.close()
-

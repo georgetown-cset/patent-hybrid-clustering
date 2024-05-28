@@ -1,18 +1,13 @@
 """
-Results from brute-force runs with a ~242K and ~475K sample are in `profiling`, generated like this:
+Results from runs with various indexes and datasets are in `profiling`, generated like this:
 kernprof -l -v --unit 1 run_experiments.py --input_dir small_embedding_sample --output_dir small_embedding_sample_out
   --index_name IndexFlatIP > IndexFlatIP_242K_profile.txt
-kernprof -l -v --unit 1 run_experiments.py --input_dir medium_embedding_sample --output_dir medium_embedding_sample_out
-  --index_name IndexFlatIP > IndexFlatIP_475K_profile.txt
 
 
-This script used https://github.com/facebookresearch/faiss/blob/main/tutorial/python/1-Flat.py and
-https://github.com/facebookresearch/faiss/blob/main/tutorial/python/2-IVFFlat.py as a starting point.
-It calculates the brute-force inner products (IndexFlatIP). The difference in time to calculate the top 10 between
-the two sample sizes scales exactly as we would expect.
-
-It also calculates "Inverted file with exact post-verification" similarities (IndexIVFFlat) - see
-https://github.com/facebookresearch/faiss/wiki/Faiss-indexes
+This script used these starting points:
+https://github.com/facebookresearch/faiss/blob/main/tutorial/python/1-Flat.py and
+https://github.com/facebookresearch/faiss/blob/main/tutorial/python/2-IVFFlat.py
+https://www.pinecone.io/learn/series/faiss/vector-indexes/
 """
 
 import argparse
@@ -26,28 +21,40 @@ import numpy as np
 from tqdm import tqdm
 
 EMBEDDING_SIZE = 384
+TOP_N = 11
 
 
 @profile  # noqa: F821
 def get_IndexFlatL2(np_embeddings):
+    """
+    Generates a faiss IndexFlatL2
+    :param np_embeddings: Embeddings to generate the index from
+    :return: an IndexFlatL2
+    """
     index = faiss.IndexFlatL2(EMBEDDING_SIZE)
     index.add(np_embeddings)
     return index
 
 
-
 @profile  # noqa: F821
 def get_IndexFlatIP(np_embeddings):
+    """
+    Generates a faiss IndexFlatIP
+    :param np_embeddings: Embeddings to generate the index from
+    :return: an IndexFlatIP
+    """
     index = faiss.IndexFlatIP(EMBEDDING_SIZE)
-    # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in this index in
-    # the order they are added. If we needed to, we could use the numeric_to_family_id dict defined in `run` to turn
-    # these ids back into family ids
     index.add(np_embeddings)
     return index
 
 
 @profile  # noqa: F821
 def get_IndexIVFFlat(np_embeddings):
+    """
+    Generates a faiss IndexIVFFlat
+    :param np_embeddings: Embeddings to generate the index from
+    :return: an IndexIVFFlat
+    """
     quantizer = faiss.IndexFlatL2(EMBEDDING_SIZE)
     total_cells = 100
     index = faiss.IndexIVFFlat(quantizer, EMBEDDING_SIZE, total_cells)
@@ -56,8 +63,13 @@ def get_IndexIVFFlat(np_embeddings):
     return index
 
 
-@profile
+@profile  # noqa: F821
 def get_IndexHNSWFlat(np_embeddings):
+    """
+    Generates a faiss IndexHNSWFlat
+    :param np_embeddings: Embeddings to generate the index from
+    :return: an IndexHNSWFlat
+    """
     # From https://www.pinecone.io/learn/series/faiss/vector-indexes/
     num_connections = 64  # number of connections each vertex will have
     ef_search = 32  # depth of layers explored during search
@@ -73,7 +85,18 @@ def get_IndexHNSWFlat(np_embeddings):
 
 
 @profile  # noqa: F821
-def run(input_dir: str, output_dir: str, index_name: str):
+def run(input_dir: str, output_dir: str, index_name: str) -> None:
+    """
+    Reads a directory of JSONL files containing patent embeddings, generates the specified faiss index, and writes the
+    top `TOP_N` most similar patent families to the output directory in JSONL form
+    :param input_dir: directory of JSONL files containing patent embeddings
+    :param output_dir: directory where output JSONL files containing most similar patents should be written
+    :param index_name: Name of the faiss index to use
+    :return: None
+    """
+    # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in these indexes in
+    # the order they are added. This dict will record the mapping between the order a family id was added to the index
+    # and the family id
     numeric_to_family_id = {}
     embeddings = []
     curr_id = 0
@@ -94,8 +117,8 @@ def run(input_dir: str, output_dir: str, index_name: str):
         index = get_IndexIVFFlat(np_embeddings)
     elif index_name == "IndexHNSWFlat":
         index = get_IndexHNSWFlat(np_embeddings)
-    # Get top 10 most similar ids for all embeddings
-    similarities, ids = index.search(np_embeddings, 10)
+    # Get top n most similar ids for all embeddings
+    similarities, ids = index.search(np_embeddings, TOP_N)
     # Write out results in a human-readable form
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -108,7 +131,7 @@ def run(input_dir: str, output_dir: str, index_name: str):
             if curr_file:
                 curr_file.close()
             curr_file = open(
-                os.path.join(output_dir, f"top_10_{num_id / file_length}.jsonl"),
+                os.path.join(output_dir, f"top_{TOP_N}_{num_id / file_length}.jsonl"),
                 mode="w",
             )
         row = {"family_id": numeric_to_family_id[num_id]}
@@ -125,8 +148,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", default="small_embedding_sample")
     parser.add_argument("--output_dir", default="small_embedding_sample_out")
-    parser.add_argument("--index_name", default="IndexFlatIP",
-                        choices=["IndexFlatIP", "IndexFlatL2", "IndexIVFFlat", "IndexHNSWFlat"])
+    parser.add_argument(
+        "--index_name",
+        default="IndexFlatIP",
+        choices=["IndexFlatIP", "IndexFlatL2", "IndexIVFFlat", "IndexHNSWFlat"],
+    )
     args = parser.parse_args()
 
     run(args.input_dir, args.output_dir, args.index_name)

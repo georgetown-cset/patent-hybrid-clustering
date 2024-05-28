@@ -6,12 +6,18 @@
 | ------------ | ------ |----------------|
 | 242K | IndexFlatIP | 29.5s          |
 | 242K | IndexIVFFlat | 11.4s          |
+| 242K | IndexHNSWFlat | 16.7s          |
 | 475K | IndexFlatIP | 113.7s         |
 | 475K | IndexIVFFlat | 56.8s          |
+| 475K | IndexHNSWFlat | 41.9s          |
+
+A top-11 run with IndexHNSWFlat on all title + abstract embeddings finished in about 20 hours - see breakdown
+in `profiling/IndexHNSWFlat_full_top11_profile.txt`.
 
 ## Search accuracy
 
-Pretty poor so far for IndexIVFFlat. Includes an experiment where I increased the number of probes to 10, which didn't have much effect.
+Pretty poor so far for IndexIVFFlat. We can increase nprobes but if IndexHNSWFlat works for us we might as well
+just start there.
 
 ```
 jm3312@patent-clustering-faiss:~$ python3 score.py --ground_truth small_embedding_sample_IndexFlatL2_out --comparison small_embedding_sample_IndexIVFFlat_out
@@ -36,6 +42,3 @@ Median top n overlap: 100%
 Median top n overlap, excluding first result: 100%
 
 ```
-
-I'm not yet clear on how to choose the best number of cells. I should also try to run the test on the artificial
-dataset in the tutorial.
