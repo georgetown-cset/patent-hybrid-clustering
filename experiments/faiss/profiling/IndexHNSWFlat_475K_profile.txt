@@ -1,0 +1,105 @@
+Indexing 474741 text embeddings
+Wrote profile results to run_experiments.py.lprof
+Timer unit: 1 s
+
+Total time: 0 s
+File: run_experiments.py
+Function: get_IndexFlatIP at line 31
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    31                                           @profile  # noqa: F821
+    32                                           def get_IndexFlatIP(np_embeddings):
+    33                                               index = faiss.IndexFlatIP(EMBEDDING_SIZE)
+    34                                               # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in this index in
+    35                                               # the order they are added. If we needed to, we could use the numeric_to_family_id dict defined in `run` to turn
+    36                                               # these ids back into family ids
+    37                                               index.add(np_embeddings)
+    38                                               return index
+
+Total time: 0 s
+File: run_experiments.py
+Function: get_IndexIVFFlat at line 41
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    41                                           @profile  # noqa: F821
+    42                                           def get_IndexIVFFlat(np_embeddings):
+    43                                               quantizer = faiss.IndexFlatIP(EMBEDDING_SIZE)
+    44                                               total_cells = 100
+    45                                               index = faiss.IndexIVFFlat(quantizer, EMBEDDING_SIZE, total_cells)
+    46                                               index.train(np_embeddings)
+    47                                               index.add(np_embeddings)
+    48                                               return index
+
+Total time: 79.2632 s
+File: run_experiments.py
+Function: get_IndexHNSWFlat at line 51
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    51                                           @profile
+    52                                           def get_IndexHNSWFlat(np_embeddings):
+    53                                               # From https://www.pinecone.io/learn/series/faiss/vector-indexes/
+    54         1          0.0      0.0      0.0      num_connections = 64  # number of connections each vertex will have
+    55         1          0.0      0.0      0.0      ef_search = 32  # depth of layers explored during search
+    56         1          0.0      0.0      0.0      ef_construction = 64  # depth of layers explored during index construction
+    57                                               # initialize index
+    58         1          0.0      0.0      0.0      index = faiss.IndexHNSWFlat(EMBEDDING_SIZE, num_connections)
+    59                                               # set efConstruction and efSearch parameters
+    60         1          0.0      0.0      0.0      index.hnsw.efConstruction = ef_construction
+    61         1          0.0      0.0      0.0      index.hnsw.efSearch = ef_search
+    62                                               # add data to index
+    63         1         79.3     79.3    100.0      index.add(np_embeddings)
+    64         1          0.0      0.0      0.0      return index
+
+Total time: 230.055 s
+File: run_experiments.py
+Function: run at line 67
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    67                                           @profile  # noqa: F821
+    68                                           def run(input_dir: str, output_dir: str, index_name: str):
+    69         1          0.0      0.0      0.0      numeric_to_family_id = {}
+    70         1          0.0      0.0      0.0      embeddings = []
+    71         1          0.0      0.0      0.0      curr_id = 0
+    72       201          0.0      0.0      0.0      for fi in tqdm(os.listdir(input_dir)):
+    73       400          0.0      0.0      0.0          with open(os.path.join(input_dir, fi)) as f:
+    74    474941          4.8      0.0      2.1              for line in f:
+    75    474741         73.7      0.0     32.0                  js = json.loads(line)
+    76    474741         10.9      0.0      4.8                  embeddings.append(np.array(js["text"]))
+    77    474741          0.2      0.0      0.1                  numeric_to_family_id[curr_id] = js["family_id"]
+    78    474741          0.1      0.0      0.1                  curr_id += 1
+    79         1          0.0      0.0      0.0      print(f"Indexing {len(embeddings)} text embeddings")
+    80         1          1.2      1.2      0.5      np_embeddings = np.array(embeddings)
+    81         1          0.0      0.0      0.0      if index_name == "IndexFlatIP":
+    82                                                   index = get_IndexFlatIP(np_embeddings)
+    83         1          0.0      0.0      0.0      elif index_name == "IndexIVFFlat":
+    84                                                   index = get_IndexIVFFlat(np_embeddings)
+    85         1          0.0      0.0      0.0      elif index_name == "IndexHNSWFlat":
+    86         1         79.3     79.3     34.5          index = get_IndexHNSWFlat(np_embeddings)
+    87                                               # Get top 10 most similar ids for all embeddings
+    88         1         41.9     41.9     18.2      similarities, ids = index.search(np_embeddings, 10)
+    89                                               # Write out results in a human-readable form
+    90         1          0.0      0.0      0.0      if os.path.exists(output_dir):
+    91                                                   shutil.rmtree(output_dir)
+    92         1          0.0      0.0      0.0      os.mkdir(output_dir)
+    93                                               # Start a new file after we've written this many records
+    94         1          0.0      0.0      0.0      file_length = 1000
+    95         1          0.0      0.0      0.0      curr_file = None
+    96    474742          1.1      0.0      0.5      for num_id, (sims, sim_ids) in enumerate(zip(similarities.tolist(), ids.tolist())):
+    97    474741          0.2      0.0      0.1          if num_id % file_length == 0:
+    98       475          0.0      0.0      0.0              if curr_file:
+    99       474          0.0      0.0      0.0                  curr_file.close()
+   100       950          0.0      0.0      0.0              curr_file = open(
+   101       475          0.0      0.0      0.0                  os.path.join(output_dir, f"top_10_{num_id / file_length}.jsonl"),
+   102       475          0.0      0.0      0.0                  mode="w",
+   103                                                       )
+   104    474741          0.3      0.0      0.1          row = {"family_id": numeric_to_family_id[num_id]}
+   105   5222151          1.9      0.0      0.8          row["most_similar"] = [
+   106   4747410          3.3      0.0      1.4              {"family_id": numeric_to_family_id[sim_id], "similarity": sim}
+   107   5222151          1.4      0.0      0.6              for sim, sim_id in zip(sims, sim_ids)
+   108                                                   ]
+   109    474741          9.5      0.0      4.1          curr_file.write(json.dumps(row) + "\n")
+   110         1          0.0      0.0      0.0      curr_file.close()
