@@ -10,7 +10,7 @@ Notes:
 CREATE OR REPLACE TABLE staging_patent_clusters.family_cpc_text AS
 WITH stage AS (
   SELECT
-    metadata_d_p_removed.family_id AS family_id,
+    COALESCE(metadata_d_p_removed.family_id, "X-" || patent_id) AS family_id,
     patent_id,
     REPLACE(cpcs, ' ', '') AS cpcs,
     REPLACE(ipcs, ' ', '') AS ipcs
