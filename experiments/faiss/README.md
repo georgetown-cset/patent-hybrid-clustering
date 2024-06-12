@@ -30,6 +30,15 @@ Average top n overlap: 98%
 Average top n overlap, excluding first result: 98%
 Median top n overlap: 100.0%
 Median top n overlap, excluding first result: 100.0%
+
+In this experiment I normalized the vectors to have a magnitude of 1 and switched to an inner product metric in IndexHNSWFlat to calculate cosine similarities
+
+(base) jm3312@patent-clustering-faiss:~$ python3 score.py --ground_truth small_embedding_sample_IndexFlatIP_out --comparison small_embedding_sample_IndexHNSWFlat_out
+Average top n overlap: 99%
+Average top n overlap, excluding first result: 99%
+Median top n overlap: 100.0%
+Median top n overlap, excluding first result: 100.0%
+
 jm3312@patent-clustering-faiss:~$ python3 score.py --ground_truth medium_embedding_sample_IndexFlatL2_out --comparison medium_embedding_sample_IndexIVFFlat_out
 Average top n overlap: 57%
 Average top n overlap, excluding first result: 52%

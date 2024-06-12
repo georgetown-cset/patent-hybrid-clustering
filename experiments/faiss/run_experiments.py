@@ -3,7 +3,6 @@ Results from runs with various indexes and datasets are in `profiling`, generate
 kernprof -l -v --unit 1 run_experiments.py --input_dir small_embedding_sample --output_dir small_embedding_sample_out
   --index_name IndexFlatIP > IndexFlatIP_242K_profile.txt
 
-
 This script used these starting points:
 https://github.com/facebookresearch/faiss/blob/main/tutorial/python/1-Flat.py and
 https://github.com/facebookresearch/faiss/blob/main/tutorial/python/2-IVFFlat.py
@@ -75,7 +74,9 @@ def get_IndexHNSWFlat(np_embeddings):
     ef_search = 32  # depth of layers explored during search
     ef_construction = 64  # depth of layers explored during index construction
     # initialize index
-    index = faiss.IndexHNSWFlat(EMBEDDING_SIZE, num_connections)
+    index = faiss.IndexHNSWFlat(
+        EMBEDDING_SIZE, num_connections, faiss.METRIC_INNER_PRODUCT
+    )
     # set efConstruction and efSearch parameters
     index.hnsw.efConstruction = ef_construction
     index.hnsw.efSearch = ef_search
@@ -98,13 +99,20 @@ def run(input_dir: str, output_dir: str, index_name: str) -> None:
     # the order they are added. This dict will record the mapping between the order a family id was added to the index
     # and the family id
     numeric_to_family_id = {}
+    seen_family_ids = set()
     embeddings = []
     curr_id = 0
     for fi in tqdm(os.listdir(input_dir)):
         with open(os.path.join(input_dir, fi)) as f:
             for line in f:
                 js = json.loads(line)
-                embeddings.append(np.array(js["text"]))
+                if js["family_id"] in seen_family_ids:
+                    print("warning, duplicate family_id: " + js["family_id"])
+                    continue
+                seen_family_ids.add(js["family_id"])
+                norm = np.linalg.norm(js["text"])
+                norm_vec = [i / norm for i in js["text"]]
+                embeddings.append(norm_vec)
                 numeric_to_family_id[curr_id] = js["family_id"]
                 curr_id += 1
     print(f"Indexing {len(embeddings)} text embeddings")
