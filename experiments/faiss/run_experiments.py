@@ -112,7 +112,7 @@ def run(input_dir: str, output_dir: str, index_name: str) -> None:
                 seen_family_ids.add(js["family_id"])
                 norm = np.linalg.norm(js["text"])
                 norm_vec = [i / norm for i in js["text"]]
-                embeddings.append(norm_vec)
+                embeddings.append(np.array(norm_vec))
                 numeric_to_family_id[curr_id] = js["family_id"]
                 curr_id += 1
     print(f"Indexing {len(embeddings)} text embeddings")
