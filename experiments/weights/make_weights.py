@@ -56,13 +56,13 @@ WHERE
 """
 
 
-def get_weights(client, query):
+def get_weights(client, query, step):
     result = client.query(query)
 
     weights = []
     for i, row in enumerate(result):
         if i % 1000000 == 0:
-            print(i)
+            print(step, i)
         weights.append({'family_id': row['family_id'], 'family_link': row['family_reference'], 'weight': row['weight']})
 
     return weights
@@ -133,11 +133,11 @@ def save_results(weights, directory, filename):
 if __name__ == "__main__":
     bigquery_client = bigquery.Client()
     print("Get citation weights")
-    citations = get_weights(bigquery_client, citation_query)
+    citations = get_weights(bigquery_client, citation_query, "citation")
     print("Get text weights")
-    text = get_weights(bigquery_client, text_query)
+    text = get_weights(bigquery_client, text_query, "text")
     print("Get cpc weights")
-    cpc = get_weights(bigquery_client, cpc_query)
+    cpc = get_weights(bigquery_client, cpc_query, "cpc")
     print("Combine weights")
     weights = combine_weights(citations, text, cpc)
     print("Scale weights")
