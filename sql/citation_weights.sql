@@ -3,7 +3,7 @@ weights AS (
   SELECT
     family_id,
     1 / COUNT(DISTINCT family_reference) AS weight
-  FROM staging_patent_clusters.family_refererences
+  FROM staging_patent_clusters.family_references
   GROUP BY family_id
 ),
 
