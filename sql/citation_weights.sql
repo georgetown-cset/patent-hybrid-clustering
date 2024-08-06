@@ -13,7 +13,7 @@ network AS (
     family_reference,
     weight
   FROM weights
-  LEFT JOIN staging_patent_clusters.family_refererences USING (family_id)
+  LEFT JOIN staging_patent_clusters.family_references USING (family_id)
 )
 
 SELECT * FROM network
