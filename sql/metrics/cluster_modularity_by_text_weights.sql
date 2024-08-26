@@ -1,6 +1,6 @@
 /* calculate modularity index for each cluster. Modularity generally varies between 0 and 1
 (0 is random, 1 super-cohesive cluster, less than 0 worse than random)*/
-CREATE OR REPLACE TABLE patent_clustering_metrics.cluster_modularity AS (
+CREATE OR REPLACE TABLE patent_clustering_metrics.cluster_modularity_by_text_weights AS (
 WITH
   /* assign cluster IDs to citations */
   cluster_ref_tab AS (
@@ -15,7 +15,7 @@ WITH
         family_id as id,
         family_reference as ref_id
       FROM
-        staging_patent_clusters.family_references) r
+        staging_patent_clusters.text_weights) r
     INNER JOIN (
       SELECT
         cluster_id,
