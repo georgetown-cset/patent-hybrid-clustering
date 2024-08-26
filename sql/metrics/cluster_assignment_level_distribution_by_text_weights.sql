@@ -10,12 +10,12 @@ CREATE OR REPLACE TABLE patent_clustering_metrics.cluster_assignment_level_distr
     GROUP BY cluster_id
   )
 
--- Histogram of average distribution
-SELECT
-  FLOOR(cluster_assignment_level * 25)/25 AS bin_floor,
-  COUNT(cluster_id) AS n_new_clusters
-FROM cluster_assignment_levels
-GROUP BY bin_floor
-ORDER BY bin_floor
+  -- Histogram of average distribution
+  SELECT
+    FLOOR(cluster_assignment_level * 25) / 25 AS bin_floor,
+    COUNT(cluster_id) AS n_new_clusters
+  FROM cluster_assignment_levels
+  GROUP BY bin_floor
+  ORDER BY bin_floor
 
 )

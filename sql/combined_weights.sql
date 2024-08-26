@@ -1,5 +1,5 @@
 -- In this updated version of combined weights, we filter out any patents from the map with no text
-with get_clean_weights as (
+WITH get_clean_weights AS (
   SELECT
     family_id,
     family_reference,
@@ -20,5 +20,5 @@ SELECT
   weight_text,
   weight_cpc
 FROM get_clean_weights
-  LEFT JOIN staging_patent_clusters.patents_to_embed ON family_reference = patents_to_embed.family_id
-  WHERE text IS NOT NULL
+LEFT JOIN staging_patent_clusters.patents_to_embed ON family_reference = patents_to_embed.family_id
+WHERE text IS NOT NULL
