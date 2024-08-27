@@ -1,3 +1,4 @@
+-- Reweighting to halve the weight of CPCs and split the new weight between citations and text
 WITH sums AS (
   SELECT
     sum(weight_citation) AS sum_DC,
@@ -16,5 +17,7 @@ get_alpha_beta AS (
 SELECT
   family_id AS id,
   family_reference AS ref_id,
-  alpha * weight_citation + beta * weight_text + (1 - alpha - beta) * weight_cpc AS weight
+  (alpha + ((1 - alpha - beta) / 4)) * weight_citation
+  + (beta + ((1 - alpha - beta) / 4)) * weight_text
+  + ((1 - alpha - beta) / 2) * weight_cpc AS weight
 FROM staging_patent_clusters.combined_weights, get_alpha_beta
