@@ -9,7 +9,7 @@ CREATE OR REPLACE TABLE patent_clustering_metrics.cluster_modularity AS (
       cluster_ref_id,
       IF(cluster_id = cluster_ref_id, 1, 0) AS internal_link,
       COUNT(*) OVER() AS N_links_network
-    FROM ( /* assign cluster IDs to referencing papers */
+    FROM ( /* assign cluster IDs to referencing patents */
       SELECT
         family_id AS id,
         family_reference AS ref_id
