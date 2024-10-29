@@ -1,7 +1,13 @@
 """
-Results from runs with various indexes and datasets are in `profiling`, generated like this:
+Generates similarity scores using FAISS. Run like
+`python3 run_experiments.py --input_dir test_set --output_dir test_set_hnsw --index_name IndexHNSWFlat`
+See README for configuration details.
+
+Profiling results from runs with various indexes and datasets are in `profiling`, generated like this:
 kernprof -l -v --unit 1 run_experiments.py --input_dir small_embedding_sample --output_dir small_embedding_sample_out
   --index_name IndexFlatIP > IndexFlatIP_242K_profile.txt
+To generate comparable profiling results, uncomment the `line_profiler` import and the
+`@profile` decorators
 
 This script used these starting points:
 https://github.com/facebookresearch/faiss/blob/main/tutorial/python/1-Flat.py and
@@ -15,7 +21,8 @@ import os
 import shutil
 
 import faiss
-import line_profiler
+
+# import line_profiler
 import numpy as np
 from tqdm import tqdm
 
@@ -23,7 +30,7 @@ EMBEDDING_SIZE = 384
 TOP_N = 11
 
 
-@profile  # noqa: F821
+# @profile  # noqa: F821
 def get_IndexFlatL2(np_embeddings):
     """
     Generates a faiss IndexFlatL2
@@ -35,7 +42,7 @@ def get_IndexFlatL2(np_embeddings):
     return index
 
 
-@profile  # noqa: F821
+# @profile  # noqa: F821
 def get_IndexFlatIP(np_embeddings):
     """
     Generates a faiss IndexFlatIP
@@ -47,7 +54,7 @@ def get_IndexFlatIP(np_embeddings):
     return index
 
 
-@profile  # noqa: F821
+# @profile  # noqa: F821
 def get_IndexIVFFlat(np_embeddings):
     """
     Generates a faiss IndexIVFFlat
@@ -62,7 +69,7 @@ def get_IndexIVFFlat(np_embeddings):
     return index
 
 
-@profile  # noqa: F821
+# @profile  # noqa: F821
 def get_IndexHNSWFlat(np_embeddings):
     """
     Generates a faiss IndexHNSWFlat
@@ -85,7 +92,7 @@ def get_IndexHNSWFlat(np_embeddings):
     return index
 
 
-@profile  # noqa: F821
+# @profile  # noqa: F821
 def run(input_dir: str, output_dir: str, index_name: str) -> None:
     """
     Reads a directory of JSONL files containing patent embeddings, generates the specified faiss index, and writes the
