@@ -6,17 +6,17 @@ CREATE OR REPLACE TABLE patent_clustering_metrics.cluster_links_fractions AS (
   -- Finding all links in the patent corpus and connecting each patent and reference to their assigned clusters
   cluster_links AS (
     SELECT
-      staging_patent_clusters.family_references.family_id AS document_id,
+      family_references.family_id AS document_id,
       family_reference AS ref_id,
       c1.cluster_id AS document_cluster,
       c2.cluster_id AS ref_cluster
     FROM staging_patent_clusters.family_references
     LEFT JOIN
       patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240726_best_clusters_mapped AS c1 ON
-        staging_patent_clusters.family_references.family_id = c1.family_id
+        family_references.family_id = c1.family_id
     LEFT JOIN
       patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240726_best_clusters_mapped AS c2 ON
-        staging_patent_clusters.family_references.family_reference = c2.family_id
+        family_references.family_reference = c2.family_id
   ),
 
   -- Counting all references for each of the clusters, as well as within-cluster references

@@ -1,21 +1,21 @@
 -- Finding the patent assignment level for patents in the new clusters,
 -- based on each patent's total number of within-cluster links
 -- as well as the fraction of patent links that connect within-cluster.
-CREATE OR REPLACE TABLE patent_clustering_metrics.patent_assignment_level AS (
+CREATE OR REPLACE TABLE patent_clustering_metrics.new_clusters_patent_assignment_level_by_text_weights AS (
   WITH
   -- Finding links that connect patents within the same cluster
   new_within_cluster_links AS (
     SELECT
-      staging_patent_clusters.family_references.family_id AS family_id,
-      staging_patent_clusters.family_references.family_reference AS ref_id,
+      text_weights.family_id AS family_id,
+      text_weights.family_reference AS ref_id,
       c1.cluster_id AS cluster_id
-    FROM staging_patent_clusters.family_references
+    FROM staging_patent_clusters.text_weights
     LEFT JOIN
-      patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240726_best_clusters_mapped AS c1 ON
-        staging_patent_clusters.family_references.family_id = c1.family_id
+      patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240827_best_clusters_mapped AS c1 ON
+        text_weights.family_id = c1.family_id
     LEFT JOIN
-      patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240726_best_clusters_mapped AS c2 ON
-        staging_patent_clusters.family_references.family_reference = c2.family_id
+      patent_cluster_experiments.patent_cluster_intial_experiement_sts_scaling_20240827_best_clusters_mapped AS c2 ON
+        text_weights.family_reference = c2.family_id
     WHERE c1.cluster_id = c2.cluster_id
   ),
 
@@ -44,7 +44,7 @@ CREATE OR REPLACE TABLE patent_clustering_metrics.patent_assignment_level AS (
     SELECT
       family_id AS document_id,
       COUNT(DISTINCT family_reference) AS n_references_total
-    FROM staging_patent_clusters.family_references
+    FROM staging_patent_clusters.text_weights
     GROUP BY family_id
   ),
 
@@ -53,7 +53,7 @@ CREATE OR REPLACE TABLE patent_clustering_metrics.patent_assignment_level AS (
     SELECT
       family_reference AS document_id,
       COUNT(DISTINCT family_id) AS n_citations_total
-    FROM staging_patent_clusters.family_references
+    FROM staging_patent_clusters.text_weights
     GROUP BY family_reference
   ),
 
