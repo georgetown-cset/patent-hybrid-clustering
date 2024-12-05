@@ -1,10 +1,10 @@
 CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassigned AS (
-WITH
-all_clusters AS (
-SELECT
-*
-FROM
-staging_clustering_experiments.patent_cluster_pruning_experiment_sts_scaling_20241111_best_clusters_mapped_from_cset
+  WITH
+  all_clusters AS (
+    SELECT
+      *
+    FROM
+      staging_clustering_experiments.pruning_experiment_sts_scaling_20241111_best_clusters_mapped_from_cset_copy
   ),
 
   cluster_sizes AS (
