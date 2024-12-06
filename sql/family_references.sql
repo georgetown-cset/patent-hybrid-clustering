@@ -1,11 +1,28 @@
+WITH dummy_references AS (
+  SELECT DISTINCT
+    patent_id,
+    COALESCE(family_id, "X-" || patent_id) AS family_id,
+    patent_reference
+  FROM
+    unified_patents.references
+),
+
+dummy_links AS (
+  SELECT DISTINCT
+    patent_id,
+    COALESCE(family_id, "X-" || patent_id) AS family_id
+  FROM
+    unified_patents.links
+)
+
 SELECT DISTINCT
-  references.family_id,
-  links.family_id AS family_reference
+  dummy_references.family_id,
+  dummy_links.family_id AS family_reference
 FROM
-  unified_patents.references
+  dummy_references
 LEFT JOIN
-  unified_patents.links
+  dummy_links
   ON
-    references.patent_reference = links.patent_id
+    dummy_references.patent_reference = dummy_links.patent_id
 WHERE
-  references.family_id != links.family_id
+  dummy_references.family_id != dummy_links.family_id
