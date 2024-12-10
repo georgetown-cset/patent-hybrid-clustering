@@ -1,6 +1,6 @@
 -- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -29,7 +29,7 @@ biotech_tab AS (
     patent_id,
     family_id,
     -- If the patent is in the biotech table, it's biotech
-    1 as biotech,
+    1 AS biotech,
     CAST(Diagnosis_Sequencing_Bioinformatics AS INT64) AS Diagnosis_Sequencing_Bioinformatics,
     CAST(Product_Extraction_Purification_Synthesis AS INT64) AS Product_Extraction_Purification_Synthesis,
     CAST(Gene_Editing_Engineering AS INT64) AS Gene_Editing_Engineering,
@@ -48,12 +48,12 @@ biotech_tab AS (
     staging_unified_patents.biotech_patents
 ),
 
-/* Merge clusters and robotics predictions, including each only once per family id */ merged AS (
-  SELECT
-    DISTINCT
+/* Merge clusters and robotics predictions, including each only once per family id */
+merged AS (
+  SELECT DISTINCT
     clusters.family_id,
     cluster_id,
-    COALESCE(biotech, 0) as biotech,
+    COALESCE(biotech, 0) AS biotech,
     Diagnosis_Sequencing_Bioinformatics,
     Product_Extraction_Purification_Synthesis,
     Gene_Editing_Engineering,
@@ -72,27 +72,29 @@ biotech_tab AS (
     clusters
   LEFT JOIN
     biotech_tab
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 )
 
 SELECT
   cluster_id,
-  SUM(biotech)/NULLIF(COUNT(family_id), 0) AS pred_biotech,
-  SUM(Diagnosis_Sequencing_Bioinformatics)/NULLIF(COUNT(family_id), 0) AS Diagnosis_Sequencing_Bioinformatics_pred,
-  SUM(Product_Extraction_Purification_Synthesis)/NULLIF(COUNT(family_id), 0) AS Product_Extraction_Purification_Synthesis_pred,
-  SUM(Gene_Editing_Engineering)/NULLIF(COUNT(family_id), 0) AS Gene_Editing_Engineering_pred,
-  SUM(Physical_Apparatus_Robotics)/NULLIF(COUNT(family_id), 0) AS Physical_Apparatus_Robotics_pred,
-  SUM(Microorganisms_Bacteria_Viruses)/NULLIF(COUNT(family_id), 0) AS Microorganisms_Bacteria_Viruses_pred,
-  SUM(Tissues_Cells)/NULLIF(COUNT(family_id), 0) AS Tissues_Cells_pred,
-  SUM(Compounds)/NULLIF(COUNT(family_id), 0) AS Compounds_pred,
-  SUM(Genes_and_Genomes)/NULLIF(COUNT(family_id), 0) AS Genes_and_Genomes_pred,
-  SUM(Health)/NULLIF(COUNT(family_id), 0) AS Health_pred,
-  SUM(Industrial)/NULLIF(COUNT(family_id), 0) AS Industrial_pred,
-  SUM(Agriculture)/NULLIF(COUNT(family_id), 0) AS Agriculture_pred,
-  SUM(Food)/NULLIF(COUNT(family_id), 0) AS Food_pred,
-  SUM(Energy)/NULLIF(COUNT(family_id), 0) AS Energy_pred,
-  SUM(Military_Defense)/NULLIF(COUNT(family_id), 0) AS Military_Defense_pred
+  SUM(biotech) / NULLIF(COUNT(family_id), 0) AS pred_biotech,
+  SUM(Diagnosis_Sequencing_Bioinformatics) / NULLIF(COUNT(family_id), 0) AS Diagnosis_Sequencing_Bioinformatics_pred,
+  SUM(
+    Product_Extraction_Purification_Synthesis
+  ) / NULLIF(COUNT(family_id), 0) AS Product_Extraction_Purification_Synthesis_pred,
+  SUM(Gene_Editing_Engineering) / NULLIF(COUNT(family_id), 0) AS Gene_Editing_Engineering_pred,
+  SUM(Physical_Apparatus_Robotics) / NULLIF(COUNT(family_id), 0) AS Physical_Apparatus_Robotics_pred,
+  SUM(Microorganisms_Bacteria_Viruses) / NULLIF(COUNT(family_id), 0) AS Microorganisms_Bacteria_Viruses_pred,
+  SUM(Tissues_Cells) / NULLIF(COUNT(family_id), 0) AS Tissues_Cells_pred,
+  SUM(Compounds) / NULLIF(COUNT(family_id), 0) AS Compounds_pred,
+  SUM(Genes_and_Genomes) / NULLIF(COUNT(family_id), 0) AS Genes_and_Genomes_pred,
+  SUM(Health) / NULLIF(COUNT(family_id), 0) AS Health_pred,
+  SUM(Industrial) / NULLIF(COUNT(family_id), 0) AS Industrial_pred,
+  SUM(Agriculture) / NULLIF(COUNT(family_id), 0) AS Agriculture_pred,
+  SUM(Food) / NULLIF(COUNT(family_id), 0) AS Food_pred,
+  SUM(Energy) / NULLIF(COUNT(family_id), 0) AS Energy_pred,
+  SUM(Military_Defense) / NULLIF(COUNT(family_id), 0) AS Military_Defense_pred
 FROM
   merged
 GROUP BY

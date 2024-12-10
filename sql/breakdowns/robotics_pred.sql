@@ -1,6 +1,6 @@
 -- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -29,7 +29,7 @@ robotics_tab AS (
     patent_id,
     family_id,
     -- If the patent is in the robotics table, it's robotics
-    1 as robotics,
+    1 AS robotics,
     CAST(Robot_Type__Aerospace AS INT64) AS Robot_Type__Aerospace,
     CAST(Robot_Type__Agriculture AS INT64) AS Robot_Type__Agriculture,
     CAST(Robot_Type__Consumer AS INT64) AS Robot_Type__Consumer,
@@ -52,12 +52,12 @@ robotics_tab AS (
     unified_patents.robotics_patents
 ),
 
-/* Merge clusters and robotics predictions, including each only once per family id */ merged AS (
-  SELECT
-    DISTINCT
+/* Merge clusters and robotics predictions, including each only once per family id */
+merged AS (
+  SELECT DISTINCT
     clusters.family_id,
     cluster_id,
-    COALESCE(robotics, 0) as robotics,
+    COALESCE(robotics, 0) AS robotics,
     Robot_Type__Aerospace,
     Robot_Type__Agriculture,
     Robot_Type__Consumer,
@@ -80,30 +80,32 @@ robotics_tab AS (
     clusters
   LEFT JOIN
     robotics_tab
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 )
+
 SELECT
   cluster_id,
-  SUM(robotics)/NULLIF(COUNT(family_id), 0) AS pred_robotics,
-  SUM(Robot_Type__Aerospace)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Aerospace_pred,
-  SUM(Robot_Type__Agriculture)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Agriculture_pred,
-  SUM(Robot_Type__Consumer)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Consumer_pred,
-  SUM(Robot_Type__Education)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Education_pred,
-  SUM(Robot_Type__Entertainment)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Entertainment_pred,
-  SUM(Robot_Type__Humanoid_Exoskeleton)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Humanoid_Exoskeleton_pred,
-  SUM(Robot_Type__Industrial)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Industrial_pred,
-  SUM(Robot_Type__Medical)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Medical_pred,
-  SUM(Robot_Type__Military_Security)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Military_Security_pred,
-  SUM(Robot_Type__Telepresence)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Telepresence_pred,
-  SUM(Robot_Type__Transportation)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Transportation_pred,
-  SUM(Robot_Type__Underwater)/NULLIF(COUNT(family_id), 0) AS Robot_Type__Underwater_pred,
-  SUM(Robot_Feature__Artificial_Intelligence)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Artificial_Intelligence_pred,
-  SUM(Robot_Feature__Physical_Components)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Physical_Components_pred,
-  SUM(Robot_Feature__Control_Systems)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Control_Systems_pred,
-  SUM(Robot_Feature__Sensors_Measurement)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Sensors_Measurement_pred,
-  SUM(Robot_Feature__Speech)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Speech_pred,
-  SUM(Robot_Feature__Vision)/NULLIF(COUNT(family_id), 0) AS Robot_Feature__Vision_pred
+  SUM(robotics) / NULLIF(COUNT(family_id), 0) AS pred_robotics,
+  SUM(Robot_Type__Aerospace) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Aerospace_pred,
+  SUM(Robot_Type__Agriculture) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Agriculture_pred,
+  SUM(Robot_Type__Consumer) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Consumer_pred,
+  SUM(Robot_Type__Education) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Education_pred,
+  SUM(Robot_Type__Entertainment) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Entertainment_pred,
+  SUM(Robot_Type__Humanoid_Exoskeleton) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Humanoid_Exoskeleton_pred,
+  SUM(Robot_Type__Industrial) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Industrial_pred,
+  SUM(Robot_Type__Medical) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Medical_pred,
+  SUM(Robot_Type__Military_Security) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Military_Security_pred,
+  SUM(Robot_Type__Telepresence) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Telepresence_pred,
+  SUM(Robot_Type__Transportation) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Transportation_pred,
+  SUM(Robot_Type__Underwater) / NULLIF(COUNT(family_id), 0) AS Robot_Type__Underwater_pred,
+  SUM(Robot_Feature__Artificial_Intelligence) / NULLIF(COUNT(family_id), 0)
+  AS Robot_Feature__Artificial_Intelligence_pred,
+  SUM(Robot_Feature__Physical_Components) / NULLIF(COUNT(family_id), 0) AS Robot_Feature__Physical_Components_pred,
+  SUM(Robot_Feature__Control_Systems) / NULLIF(COUNT(family_id), 0) AS Robot_Feature__Control_Systems_pred,
+  SUM(Robot_Feature__Sensors_Measurement) / NULLIF(COUNT(family_id), 0) AS Robot_Feature__Sensors_Measurement_pred,
+  SUM(Robot_Feature__Speech) / NULLIF(COUNT(family_id), 0) AS Robot_Feature__Speech_pred,
+  SUM(Robot_Feature__Vision) / NULLIF(COUNT(family_id), 0) AS Robot_Feature__Vision_pred
 FROM
   merged
 GROUP BY

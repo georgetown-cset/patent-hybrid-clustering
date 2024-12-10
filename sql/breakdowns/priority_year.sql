@@ -1,6 +1,6 @@
 -- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -26,8 +26,8 @@ clusters AS (
 -- get priority date and age (now is 0 years)
 patent_dates AS (
   SELECT
-    EXTRACT(year
-    FROM
+    EXTRACT(YEAR
+      FROM
       first_priority_date) AS year,
     patent_id,
     family_id
@@ -45,11 +45,11 @@ merged_yr AS (
     clusters
   LEFT JOIN
     patent_dates
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 )
 
-SELECT DISTINCT
+SELECT
   cluster_id,
   COUNT(family_id) AS NPF_cluster,
   year

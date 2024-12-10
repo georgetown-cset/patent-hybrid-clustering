@@ -121,7 +121,7 @@ miss_country_tab AS (
     cluster_id,
     SUM(miss_org) AS NPF_missing_all_countries
   FROM (
-    SELECT DISTINCT
+    SELECT
       cluster_id,
       family_id,
       MIN(

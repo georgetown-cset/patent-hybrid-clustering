@@ -1,6 +1,6 @@
-  -- Get dummy families
+-- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -45,8 +45,8 @@ family_assignees AS (
     clusters
   LEFT JOIN
     unified_patents.assignees_normalized
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 ),
 
 -- find backup priority date
@@ -58,8 +58,8 @@ backup_date AS (
     family_assignees
   LEFT JOIN
     unified_patents.dates
-  USING
-    (patent_id)
+    USING
+      (patent_id)
   GROUP BY
     family_id
 ),
@@ -70,17 +70,17 @@ priority_assignees AS (
     patent_id,
     family_assignees.family_id,
     assignee,
-    ror_id,
+    ror_id
   FROM
     family_assignees
   LEFT JOIN
     unified_patents.dates
-  USING
-    (patent_id)
+    USING
+      (patent_id)
   LEFT JOIN
     backup_date
-  ON
-    (family_assignees.family_id = backup_date.family_id)
+    ON
+      (family_assignees.family_id = backup_date.family_id)
   WHERE
     application_date = first_priority_date
     OR application_date = priority_date
@@ -98,8 +98,8 @@ assignees AS (
     clusters
   LEFT JOIN
     priority_assignees
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 ),
 
 -- Aggregate.
@@ -141,9 +141,9 @@ top10_tab AS (
     WHERE
       assignee_rank <= 10
     )
-  USING
-    (cluster_id,
-      assignee)
+    USING
+      (cluster_id,
+        assignee)
   GROUP BY
     cluster_id
 ),
@@ -155,11 +155,10 @@ miss_assignee_tab AS (
     SUM(miss_org) AS NPF_missing_all_assignees
   FROM (
     SELECT
-      DISTINCT cluster_id,
+      cluster_id,
       family_id,
       MIN(
-      IF
-        (assignee IS NULL, 1, 0)) AS miss_org
+        IF(assignee IS NULL, 1, 0)) AS miss_org
     FROM
       assignees
     GROUP BY
@@ -191,18 +190,18 @@ FROM (
         *
       FROM
         assignee_rank_tab)
-    USING
-      (cluster_id)
+      USING
+        (cluster_id)
     )
   LEFT JOIN
     top10_tab
-  USING
-    (cluster_id)
+    USING
+      (cluster_id)
   )
 LEFT JOIN
   miss_assignee_tab
-USING
-  (cluster_id)
+  USING
+    (cluster_id)
 ORDER BY
   cluster_id,
   assignee_rank

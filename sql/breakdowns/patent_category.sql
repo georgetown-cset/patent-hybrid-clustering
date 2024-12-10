@@ -1,6 +1,6 @@
 /* aggregate patent category names and percentages into a string for presentation */
 WITH
-  ca_tab AS (
+ca_tab AS (
   SELECT
     *
   FROM
@@ -10,11 +10,11 @@ WITH
     category_rank
 )
 
-SELECT DISTINCT
+SELECT
   cluster_id,
   MAX(class_cat) AS main_category,
   STRING_AGG(CONCAT(category, ' (',
-  ROUND(percentage * 100,1), '%)'), ', ') AS top_categories,
+    ROUND(percentage * 100, 1), '%)'), ', ') AS top_categories
 FROM
   ca_tab
 GROUP BY

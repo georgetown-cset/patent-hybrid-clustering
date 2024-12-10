@@ -1,6 +1,6 @@
 -- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -23,12 +23,13 @@ clusters AS (
       (family_id)
 ),
 
-/* AI prediction */ ai_tab AS (
+/* AI prediction */
+ai_tab AS (
   SELECT
     patent_id,
     family_id,
     -- If the patent is in the AI table, it's AI
-    1 as ai,
+    1 AS ai,
     CAST(Physical_Sciences_and_Engineering AS INT64) AS Physical_Sciences_and_Engineering,
     CAST(Life_Sciences AS INT64) AS Life_Sciences,
     CAST(Security__eg_cybersecurity AS INT64) AS Security__eg_cybersecurity,
@@ -70,11 +71,10 @@ clusters AS (
 
 /* Merge clusters and AI predictions, including each only once per family id */
 merged AS (
-  SELECT
-    DISTINCT
+  SELECT DISTINCT
     clusters.family_id,
     cluster_id,
-    COALESCE(ai, 0) as ai,
+    COALESCE(ai, 0) AS ai,
     Physical_Sciences_and_Engineering,
     Life_Sciences,
     Security__eg_cybersecurity,
@@ -114,48 +114,48 @@ merged AS (
     clusters
   LEFT JOIN
     ai_tab
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 )
 
 SELECT
   cluster_id,
-  SUM(ai)/NULLIF(COUNT(family_id), 0) AS pred_ai,
-  SUM(Physical_Sciences_and_Engineering)/NULLIF(COUNT(family_id), 0) AS Physical_Sciences_and_Engineering_pred,
-  SUM(Life_Sciences)/NULLIF(COUNT(family_id), 0) AS Life_Sciences_pred,
-  SUM(Security__eg_cybersecurity)/NULLIF(COUNT(family_id), 0) AS Security__eg_cybersecurity_pred,
-  SUM(Transportation)/NULLIF(COUNT(family_id), 0) AS Transportation_pred,
-  SUM(Industrial_and_Manufacturing)/NULLIF(COUNT(family_id), 0) AS Industrial_and_Manufacturing_pred,
-  SUM(Education)/NULLIF(COUNT(family_id), 0) AS Education_pred,
-  SUM(Document_Mgt_and_Publishing)/NULLIF(COUNT(family_id), 0) AS Document_Mgt_and_Publishing_pred,
-  SUM(Military)/NULLIF(COUNT(family_id), 0) AS Military_pred,
-  SUM(Agricultural)/NULLIF(COUNT(family_id), 0) AS Agricultural_pred,
-  SUM(Computing_in_Government)/NULLIF(COUNT(family_id), 0) AS Computing_in_Government_pred,
-  SUM(Personal_Devices_and_Computing)/NULLIF(COUNT(family_id), 0) AS Personal_Devices_and_Computing_pred,
-  SUM(Banking_and_Finance)/NULLIF(COUNT(family_id), 0) AS Banking_and_Finance_pred,
-  SUM(Telecommunications)/NULLIF(COUNT(family_id), 0) AS Telecommunications_pred,
-  SUM(Networks__eg_social_IOT_etc)/NULLIF(COUNT(family_id), 0) AS Networks__eg_social_IOT_etc_pred,
-  SUM(Business)/NULLIF(COUNT(family_id), 0) AS Business_pred,
-  SUM(Energy_Management)/NULLIF(COUNT(family_id), 0) AS Energy_Management_pred,
-  SUM(Entertainment)/NULLIF(COUNT(family_id), 0) AS Entertainment_pred,
-  SUM(Nanotechnology)/NULLIF(COUNT(family_id), 0) AS Nanotechnology_pred,
-  SUM(Semiconductors)/NULLIF(COUNT(family_id), 0) AS Semiconductors_pred,
-  SUM(Language_Processing)/NULLIF(COUNT(family_id), 0) AS Language_Processing_pred,
-  SUM(Speech_Processing)/NULLIF(COUNT(family_id), 0) AS Speech_Processing_pred,
-  SUM(Knowledge_Representation)/NULLIF(COUNT(family_id), 0) AS Knowledge_Representation_pred,
-  SUM(Planning_and_Scheduling)/NULLIF(COUNT(family_id), 0) AS Planning_and_Scheduling_pred,
-  SUM(Control)/NULLIF(COUNT(family_id), 0) AS Control_pred,
-  SUM(Distributed_AI)/NULLIF(COUNT(family_id), 0) AS Distributed_AI_pred,
-  SUM(Robotics)/NULLIF(COUNT(family_id), 0) AS Robotics_pred,
-  SUM(Computer_Vision)/NULLIF(COUNT(family_id), 0) AS Computer_Vision_pred,
-  SUM(Analytics_and_Algorithms)/NULLIF(COUNT(family_id), 0) AS Analytics_and_Algorithms_pred,
-  SUM(Measuring_and_Testing)/NULLIF(COUNT(family_id), 0) AS Measuring_and_Testing_pred,
-  SUM(Logic_Programming)/NULLIF(COUNT(family_id), 0) AS Logic_Programming_pred,
-  SUM(Fuzzy_Logic)/NULLIF(COUNT(family_id), 0) AS Fuzzy_Logic_pred,
-  SUM(Probabilistic_Reasoning)/NULLIF(COUNT(family_id), 0) AS Probabilistic_Reasoning_pred,
-  SUM(Ontology_Engineering)/NULLIF(COUNT(family_id), 0) AS Ontology_Engineering_pred,
-  SUM(Machine_Learning)/NULLIF(COUNT(family_id), 0) AS Machine_Learning_pred,
-  SUM(Search_Methods)/COUNT(family_id) AS Search_Methods_pred,
+  SUM(ai) / NULLIF(COUNT(family_id), 0) AS pred_ai,
+  SUM(Physical_Sciences_and_Engineering) / NULLIF(COUNT(family_id), 0) AS Physical_Sciences_and_Engineering_pred,
+  SUM(Life_Sciences) / NULLIF(COUNT(family_id), 0) AS Life_Sciences_pred,
+  SUM(Security__eg_cybersecurity) / NULLIF(COUNT(family_id), 0) AS Security__eg_cybersecurity_pred,
+  SUM(Transportation) / NULLIF(COUNT(family_id), 0) AS Transportation_pred,
+  SUM(Industrial_and_Manufacturing) / NULLIF(COUNT(family_id), 0) AS Industrial_and_Manufacturing_pred,
+  SUM(Education) / NULLIF(COUNT(family_id), 0) AS Education_pred,
+  SUM(Document_Mgt_and_Publishing) / NULLIF(COUNT(family_id), 0) AS Document_Mgt_and_Publishing_pred,
+  SUM(Military) / NULLIF(COUNT(family_id), 0) AS Military_pred,
+  SUM(Agricultural) / NULLIF(COUNT(family_id), 0) AS Agricultural_pred,
+  SUM(Computing_in_Government) / NULLIF(COUNT(family_id), 0) AS Computing_in_Government_pred,
+  SUM(Personal_Devices_and_Computing) / NULLIF(COUNT(family_id), 0) AS Personal_Devices_and_Computing_pred,
+  SUM(Banking_and_Finance) / NULLIF(COUNT(family_id), 0) AS Banking_and_Finance_pred,
+  SUM(Telecommunications) / NULLIF(COUNT(family_id), 0) AS Telecommunications_pred,
+  SUM(Networks__eg_social_IOT_etc) / NULLIF(COUNT(family_id), 0) AS Networks__eg_social_IOT_etc_pred,
+  SUM(Business) / NULLIF(COUNT(family_id), 0) AS Business_pred,
+  SUM(Energy_Management) / NULLIF(COUNT(family_id), 0) AS Energy_Management_pred,
+  SUM(Entertainment) / NULLIF(COUNT(family_id), 0) AS Entertainment_pred,
+  SUM(Nanotechnology) / NULLIF(COUNT(family_id), 0) AS Nanotechnology_pred,
+  SUM(Semiconductors) / NULLIF(COUNT(family_id), 0) AS Semiconductors_pred,
+  SUM(Language_Processing) / NULLIF(COUNT(family_id), 0) AS Language_Processing_pred,
+  SUM(Speech_Processing) / NULLIF(COUNT(family_id), 0) AS Speech_Processing_pred,
+  SUM(Knowledge_Representation) / NULLIF(COUNT(family_id), 0) AS Knowledge_Representation_pred,
+  SUM(Planning_and_Scheduling) / NULLIF(COUNT(family_id), 0) AS Planning_and_Scheduling_pred,
+  SUM(Control) / NULLIF(COUNT(family_id), 0) AS Control_pred,
+  SUM(Distributed_AI) / NULLIF(COUNT(family_id), 0) AS Distributed_AI_pred,
+  SUM(Robotics) / NULLIF(COUNT(family_id), 0) AS Robotics_pred,
+  SUM(Computer_Vision) / NULLIF(COUNT(family_id), 0) AS Computer_Vision_pred,
+  SUM(Analytics_and_Algorithms) / NULLIF(COUNT(family_id), 0) AS Analytics_and_Algorithms_pred,
+  SUM(Measuring_and_Testing) / NULLIF(COUNT(family_id), 0) AS Measuring_and_Testing_pred,
+  SUM(Logic_Programming) / NULLIF(COUNT(family_id), 0) AS Logic_Programming_pred,
+  SUM(Fuzzy_Logic) / NULLIF(COUNT(family_id), 0) AS Fuzzy_Logic_pred,
+  SUM(Probabilistic_Reasoning) / NULLIF(COUNT(family_id), 0) AS Probabilistic_Reasoning_pred,
+  SUM(Ontology_Engineering) / NULLIF(COUNT(family_id), 0) AS Ontology_Engineering_pred,
+  SUM(Machine_Learning) / NULLIF(COUNT(family_id), 0) AS Machine_Learning_pred,
+  SUM(Search_Methods) / NULLIF(COUNT(family_id), 0) AS Search_Methods_pred
 FROM
   merged
 GROUP BY

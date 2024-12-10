@@ -1,6 +1,6 @@
 -- Get dummy families
 WITH
-  families_with_dummies AS (
+families_with_dummies AS (
   SELECT
     patent_id,
     COALESCE(family_id,
@@ -50,8 +50,8 @@ inventors AS (
     FROM
       unified_patents.inventors
     )
-  USING
-    (patent_id)
+    USING
+      (patent_id)
 ),
 
 -- Aggregate.
@@ -92,9 +92,9 @@ top10_tab AS (
     WHERE
       inventor_rank <= 10
     )
-  USING
-    (cluster_id,
-      inventor)
+    USING
+      (cluster_id,
+        inventor)
   GROUP BY
     cluster_id
 ),
@@ -106,11 +106,10 @@ miss_inventor_tab AS (
     SUM(miss_inventor) AS NPF_missing_all_inventors
   FROM (
     SELECT
-      DISTINCT cluster_id,
+      cluster_id,
       family_id,
       MIN(
-      IF
-        (inventor IS NULL, 1, 0)) AS miss_inventor
+        IF(inventor IS NULL, 1, 0)) AS miss_inventor
     FROM
       inventors
     GROUP BY
@@ -143,18 +142,18 @@ FROM (
       FROM
         inventor_rank_tab
       )
-    USING
-      (cluster_id)
+      USING
+        (cluster_id)
     )
   LEFT JOIN
     top10_tab
-  USING
-    (cluster_id)
+    USING
+      (cluster_id)
   )
 LEFT JOIN
   miss_inventor_tab
-USING
-  (cluster_id)
+  USING
+    (cluster_id)
 ORDER BY
   cluster_id,
   inventor_rank
