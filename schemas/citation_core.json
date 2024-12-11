@@ -1,0 +1,32 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "family_id",
+    "type": "STRING",
+    "description": "Patent family id."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "core_stat",
+    "type": "INTEGER",
+    "description": "Core patent family score: N_in_cluster * patent_family_share_in_cluster_connections * Ln(weight links + 1)/(age+1)"
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "core_rank",
+    "type": "INTEGER",
+    "description": "Rank of a patent family based on the cluster core patent family score."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "core_title",
+    "type": "STRING",
+    "description": "Title and priority year in one string."
+    }
+]

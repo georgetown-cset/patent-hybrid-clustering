@@ -1,0 +1,20 @@
+[
+        {
+        "mode": "REQUIRED",
+        "name": "cluster_id",
+        "type": "INTEGER",
+        "description": "Patent cluster ID."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "main_category",
+        "type": "STRING",
+        "description": "Most commonly occurring patent category in cluster, based on patent_categories groupings."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "top_categories",
+        "type": "STRING",
+        "description": "Top three most common patent categories in cluster and percentage of patent families in each category, based on patent_categories groupings."
+        }
+]

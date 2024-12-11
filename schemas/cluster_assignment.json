@@ -1,0 +1,14 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "family_id",
+    "type": "STRING",
+    "description": "Patent family ID. In cases where no family ID exists, a dummy family ID has been assigned starting with X; mappings can be found in patent_categories.dummy_families."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    }
+]

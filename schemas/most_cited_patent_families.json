@@ -1,0 +1,32 @@
+[
+        {
+        "mode": "REQUIRED",
+        "name": "family_id",
+        "type": "STRING",
+        "description": "Patent family ID."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "cluster_id",
+        "type": "INTEGER",
+        "description": "Patent cluster ID."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "citations",
+        "type": "INTEGER",
+        "description": "Number of citations."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "citation_rank",
+        "type": "INTEGER",
+        "description": "Rank of the patent family based on the number of patent family-to-patent-family citations."
+        },
+        {
+        "mode": "NULLABLE",
+        "name": "most_cited_title",
+        "type": "STRING",
+        "description": "Title and priority year in one string."
+        }
+]

@@ -1,0 +1,20 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cset_extracted_phrase",
+    "type": "STRING",
+    "description": "Phrases extracted from abstracts and titles."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "score",
+    "type": "FLOAT",
+    "description": "Frequency weight -- share of patents that use this phrase in titles or abstracts."
+    }
+]

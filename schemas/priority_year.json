@@ -1,0 +1,20 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_cluster",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster in year."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year",
+    "type": "INTEGER",
+    "description": "Priority year of patent family."
+    }
+]

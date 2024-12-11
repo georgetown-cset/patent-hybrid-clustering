@@ -1,0 +1,122 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "pred_robotics",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Robotics-relevant based on 1790 categorization."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Aerospace_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Aerospace Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Agriculture_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Agriculture Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Consumer_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Consumer Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Education_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Education Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Entertainment_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Entertainment Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Humanoid_Exoskeleton_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Humanoid/Exoskeleton Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Industrial_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Industrial Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Medical_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Medical Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Military_Security_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Military/Security Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Telepresence_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Telepresence Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Transportation_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Transportation Robot Type of based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Type__Underwater_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Underwater Robot Type based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Artificial_Intelligence_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Artificial Intelligence based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Physical_Components_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Physical Components based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Control_Systems_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Control Systems based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Sensors_Measurement_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Sensors Measurement based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Speech_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Speech based on 1790 categorization.   Only Robotics-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robot_Feature__Vision_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be relevant to the Robot Feature of Vision based on 1790 categorization.   Only Robotics-relevant patents considered."
+    }
+]

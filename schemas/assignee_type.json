@@ -1,0 +1,44 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Company",
+    "type": "FLOAT",
+    "description": "Private company assignee."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Education",
+    "type": "FLOAT",
+    "description": "Educational organization assignee."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Nonprofit",
+    "type": "FLOAT",
+    "description": "Non-profit or Healthcare organization assignee."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Government",
+    "type": "FLOAT",
+    "description": "Government or Archive or Facility or Other organization assignee."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_missing_all_assignee_types",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster where all assignee types are missing."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF",
+    "type": "INTEGER",
+    "description": "Number of patent families."
+    }
+]
