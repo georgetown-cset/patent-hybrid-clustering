@@ -1,25 +1,28 @@
+import csv
 import json
 import os
 import sys
-import yake
-import csv
 from collections import defaultdict
 from typing import Optional
+
+import yake
 from google.cloud import bigquery
 from wordfreq import zipf_frequency
 
 """
-Replace the data function here with GCP bucket download. 
+Replace the data function here with GCP bucket download.
 """
 
-client = bigquery.Client(project='gcp-cset-projects')
+client = bigquery.Client(project="gcp-cset-projects")
 
-df = client.query("""
+df = (
+    client.query(
+        """
 
 WITH cluster_text AS (
   SELECT
     cluster_id,
-    family_id, 
+    family_id,
     title_abstract
   FROM `staging_patent_clusters.cluster_family_text_data`
 )
@@ -32,7 +35,14 @@ SELECT
 FROM cluster_text
 ORDER BY cluster_id, family_id
 
-""").to_dataframe().to_csv('patent_cluster_data.csv', index=False, quoting=csv.QUOTE_NONE, escapechar=' ')
+"""
+    )
+    .to_dataframe()
+    .to_csv(
+        "patent_cluster_data.csv", index=False, quoting=csv.QUOTE_NONE, escapechar=" "
+    )
+)
+
 
 class Postprocessor:
     def __init__(self):
@@ -64,20 +74,21 @@ class Postprocessor:
         """
         # if phrase is not a single word
         if len(phrase.split()) > 1:
-          # remove duplicates and rebuild string
-          unique_words = set(phrase.split())
-          unique_words_string = ' '.join(unique_words)
-          return unique_words_string
+            # remove duplicates and rebuild string
+            unique_words = set(phrase.split())
+            unique_words_string = " ".join(unique_words)
+            return unique_words_string
         # if phrase is a single word
         else:
-          if " " not in phrase.strip():
-              # if our single word is generic or in one of the cluster's multi-word phrases, remove it
-              if (
-                  zipf_frequency(phrase, "en") >= 4
-                  or phrase.lower() in self.already_seen[cluster]
-              ):
-                  return
-          return phrase
+            if " " not in phrase.strip():
+                # if our single word is generic or in one of the cluster's multi-word phrases, remove it
+                if (
+                    zipf_frequency(phrase, "en") >= 4
+                    or phrase.lower() in self.already_seen[cluster]
+                ):
+                    return
+            return phrase
+
 
 def get_cluster_text() -> defaultdict(str):
     """
@@ -85,18 +96,19 @@ def get_cluster_text() -> defaultdict(str):
     :return: clust_text (dict of extracted phrases for clusters)
     """
     clust_text = defaultdict(str)
-    with open('patent_cluster_data(1).csv') as f:
+    with open("patent_cluster_data(1).csv") as f:
         # Skip header row of column names
         next(f)
         for line in f:
-            line = '['+line
+            line = "[" + line
             # Some titles/abstracts just don't work, so skip them
             try:
-              js = json.loads(line, strict=False)
-              clust_text[int(js[0]['cluster_id'])] += " " + js[1]["text_corp"]
+                js = json.loads(line, strict=False)
+                clust_text[int(js[0]["cluster_id"])] += " " + js[1]["text_corp"]
             except:
-              continue
+                continue
     return clust_text
+
 
 def run_yake(clust_text) -> list:
     """
@@ -114,6 +126,7 @@ def run_yake(clust_text) -> list:
             )
     return yake_output
 
+
 def extract_phrases() -> None:
     """
     Runs phrase extraction
@@ -128,15 +141,15 @@ def extract_phrases() -> None:
     new_extracted = []
     for row in output:
         p.build_already_seen(row["cluster_id"], row["cset_extracted_phrase"])
-    #print(vars(p))
+    # print(vars(p))
     for row in output:
         row["cset_extracted_phrase"] = p.remove_generics(
             row["cluster_id"], row["cset_extracted_phrase"]
         )
         if row["cset_extracted_phrase"]:
-          print(row)
-          new_extracted.append(row)
-    with open('patent_cluster_phrases.jsonl', 'w') as out:
+            print(row)
+            new_extracted.append(row)
+    with open("patent_cluster_phrases.jsonl", "w") as out:
         for row in new_extracted:
             out.write(json.dumps(row, ensure_ascii=False) + "\n")
 
