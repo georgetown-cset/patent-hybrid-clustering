@@ -141,13 +141,11 @@ def extract_phrases() -> None:
     new_extracted = []
     for row in output:
         p.build_already_seen(row["cluster_id"], row["cset_extracted_phrase"])
-    # print(vars(p))
     for row in output:
         row["cset_extracted_phrase"] = p.remove_generics(
             row["cluster_id"], row["cset_extracted_phrase"]
         )
         if row["cset_extracted_phrase"]:
-            print(row)
             new_extracted.append(row)
     with open("patent_cluster_phrases.jsonl", "w") as out:
         for row in new_extracted:
