@@ -28,10 +28,9 @@ WITH cluster_text AS (
 )
 
 # Structure data for pipeline expectations
-# Replace tab/non-breaking spaces at the start
 SELECT
-  CONCAT('{"cluster_id": ', cluster_id, '}') AS cluster_id,
-  CONCAT('{"text_corp": "', REPLACE(title_abstract, '"', ''), '"}]') AS text_corp
+  cluster_id,
+  title_abstract AS text_corp
 FROM cluster_text
 ORDER BY cluster_id, family_id
 
@@ -93,20 +92,14 @@ class Postprocessor:
 def get_cluster_text() -> defaultdict(str):
     """
     Read in cluster text to use in yake algorithm.
+    Change path to environment's data storage.
     :return: clust_text (dict of extracted phrases for clusters)
     """
     clust_text = defaultdict(str)
-    with open("patent_cluster_data(1).csv") as f:
-        # Skip header row of column names
-        next(f)
+    with open("patent_cluster_data_test.jsonl") as f:
         for line in f:
-            line = "[" + line
-            # Some titles/abstracts just don't work, so skip them
-            try:
-                js = json.loads(line, strict=False)
-                clust_text[int(js[0]["cluster_id"])] += " " + js[1]["text_corp"]
-            except:
-                continue
+            js = json.loads(line)
+            clust_text[int(js["cluster_id"])] += " " + js["text_corp"]
     return clust_text
 
 
