@@ -24,8 +24,8 @@ class TestTranslate(unittest.TestCase):
         self.assertNotEqual(text, result)
         self.assertEqual(
             result,
-            "Method for the preservation of fully ripe potatoes "
-            "and other root vegetables by means of deep freezing.",
+            "Method for preserving fully ripe potatoes "
+            "and other root vegetables by deep freezing.",
         )
         # test character max
         translate.max_chars_to_translate = 5
