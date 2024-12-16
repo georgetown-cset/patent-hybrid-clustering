@@ -1,0 +1,5 @@
+production_dataset,table_name
+,cluster_assignment_staging
+,new_metadata
+,new_cpc_text
+,new_family_references
