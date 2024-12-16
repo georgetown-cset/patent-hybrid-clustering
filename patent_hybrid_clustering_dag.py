@@ -14,12 +14,14 @@ from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperato
 from airflow.providers.google.cloud.operators.kubernetes_engine import (
     GKEStartPodOperator,
 )
+from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import (
     BigQueryToBigQueryOperator,
 )
 from airflow.providers.google.cloud.transfers.bigquery_to_gcs import (
     BigQueryToGCSOperator,
 )
+from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
     GCSToBigQueryOperator,
 )
@@ -33,7 +35,6 @@ from dataloader.airflow_utils.defaults import (
 )
 from dataloader.scripts.populate_documentation import update_table_descriptions
 from kubernetes.client import models as k8s
-
 
 def get_clean_lines(f):
     # Filters commented lines from a csv
@@ -72,7 +73,6 @@ with DAG(
     # 11. run cluster breakdown SQL queries on updated clusters [Rebecca]
     # 12. run SQL tests and transfer to production and backup tables [Katherine, Rebecca]
 
-    # TODO: do we need this? maybe. Figure out
     clear_tmp_dir = GCSDeleteObjectsOperator(
         task_id="clear_tmp_dir", bucket_name=DATA_BUCKET, prefix=tmp_dir
     )
@@ -84,7 +84,7 @@ with DAG(
     # and add those to the sequence table as well
 
     with open(
-        f"{os.environ.get('DAGS_FOLDER')}/{sequence_dir}/initial_data_query_sequence.csv"
+        f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequence.csv"
     ) as f:
         for line in csv.DictReader(get_clean_lines(f)):
             query = BigQueryInsertJobOperator(
@@ -269,9 +269,63 @@ with DAG(
         ]
     ]
 
-    # TODO (Katherine): one more BigQuery operator to merge all our text data for FAISS prep
+    # TODO (Katherine): one more BigQuery operator to merge all our text data for embedding
 
     # TODO (Rebecca): export both the text data and CPC text to GCS
+
+    export_patents_to_embed = BigQueryToGCSOperator(
+        task_id="export_prev_family_categories",
+        source_project_dataset_table=f"{staging_dataset}.patents_to_embed",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding/data*.jsonl",
+        export_format="NEWLINE_DELIMITED_JSON",
+        force_rerun=True,
+    )
+
+    # TODO (Rebecca): Run embedding scripts for both text and CPC text
+
+    dataflow_options = {
+        "project": "gcp-cset-projects",
+        "disk_size_gb": "30",
+        "max_num_workers": "100",
+        "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding_tmp/",
+        "save_main_session": True,
+        "requirements_file": "get_embeddings_requirements.txt",
+        "runner": "DataflowRunner"
+    }
+
+    run_text_embedding = BeamRunPythonPipelineOperator(
+        py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
+        runner="DataflowRunner",
+        task_id="run_text_embedding",
+        default_pipeline_options=dataflow_options,
+        pipeline_options={
+            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding/to_embed_*",
+            "output_data": f"gs://{production_dataset}/embedding_output/embedded",
+            "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        },
+        dataflow_config=DataflowConfiguration(
+            job_name="patent-embeddings-update", location="us-east1", wait_until_finished=True
+        ),
+    )
+
+    dataflow_options["temp_location"] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
+
+    run_cpc_embedding = BeamRunPythonPipelineOperator(
+        py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
+        runner="DataflowRunner",
+        task_id="run_cpc_embedding",
+        default_pipeline_options=dataflow_options,
+        pipeline_options={
+            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding/to_embed_*",
+            "output_data": f"gs://{production_dataset}/cpc_embedding_output/embedded",
+            "model": "sentence-transformers/all-mpnet-base-v2"
+        },
+        dataflow_config=DataflowConfiguration(
+            job_name="patent-embeddings-update", location="us-east1", wait_until_finished=True
+        ),
+    )
+
+    # TODO (Rebecca): export the data
 
     # TODO (Rebecca): another operator to run FAISS on both outputs (possibly this one
     # isn't in kubernetes since it uses dataflow? a dataflow operator?)
@@ -300,7 +354,7 @@ with DAG(
         ("family_categories", production_dataset),
     ]
     with open(
-        f"{os.environ.get('DAGS_FOLDER')}/{sequence_dir}/patent_clustering_query_sequence.csv"
+        f"{DAGS_DIG}/{sequence_dir}/patent_clustering_query_sequence.csv"
     ) as f:
         for line in csv.DictReader(get_clean_lines(f)):
             if line["production_dataset"]:
@@ -349,7 +403,7 @@ with DAG(
     # Update the below to make sure production tables transfer and non-production ones don't
 
     checks = []
-    for query in os.listdir(f"{os.environ.get('DAGS_FOLDER')}/{sql_dir}"):
+    for query in os.listdir(f"{DAGS_DIR}/{sql_dir}"):
         if not query.startswith("check_"):
             continue
         checks.append(
@@ -389,7 +443,7 @@ with DAG(
     wait_for_production_backups >> non_production_backups >> success_alert
 
     with open(
-        f"{os.environ.get('DAGS_FOLDER')}/schemas/{production_dataset}/table_descriptions.json"
+        f"{DAGS_DIR}/schemas/{production_dataset}/table_descriptions.json"
     ) as f:
         table_desc = json.loads(f.read())
     for table, dataset in production_queries:
