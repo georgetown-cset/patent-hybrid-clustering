@@ -23,7 +23,6 @@ from airflow.providers.google.cloud.transfers.bigquery_to_gcs import (
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
     GCSToBigQueryOperator,
 )
-from kubernetes.client import models as k8s
 from dataloader.airflow_utils.defaults import (
     DAGS_DIR,
     DATA_BUCKET,
@@ -33,6 +32,7 @@ from dataloader.airflow_utils.defaults import (
     get_post_success,
 )
 from dataloader.scripts.populate_documentation import update_table_descriptions
+from kubernetes.client import models as k8s
 
 
 def get_clean_lines(f):
@@ -84,25 +84,25 @@ with DAG(
     # and add those to the sequence table as well
 
     with open(
-            f"{os.environ.get('DAGS_FOLDER')}/{sequence_dir}/initial_data_query_sequence.csv"
+        f"{os.environ.get('DAGS_FOLDER')}/{sequence_dir}/initial_data_query_sequence.csv"
     ) as f:
         for line in csv.DictReader(get_clean_lines(f)):
             query = BigQueryInsertJobOperator(
                 task_id=line["table_name"],
                 configuration={
-                "query": {
-                    "query": "{% include '"
-                             + f"{sql_dir}/{line['table_name']}.sql"
-                             + "' %}",
-                    "useLegacySql": False,
-                    "destinationTable": {
-                        "projectId": PROJECT_ID,
-                        "datasetId": staging_dataset,
-                        "tableId": line["table_name"],
-                    },
-                    "allowLargeResults": True,
-                    "createDisposition": "CREATE_IF_NEEDED",
-                    "writeDisposition": "WRITE_TRUNCATE",
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
                     }
                 },
             )
@@ -116,9 +116,8 @@ with DAG(
         source_project_dataset_table=f"{production_dataset}.family_categories",
         destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/prev_family_categories/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
-        force_rerun=True
+        force_rerun=True,
     )
-
 
     # TODO (Katherine): Run LID; save output to a BQ table
     # you'll have to modify the actual commands in here to make it run correctly but here's
@@ -135,10 +134,10 @@ with DAG(
         arguments=[
             "-c",
             (
-                    setup_commands
-                    + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
-                      f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
-                      f"--curr_baseset {curr_baseset}"
+                setup_commands
+                + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
+                f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
+                f"--curr_baseset {curr_baseset}"
             ),
         ],
         namespace="default",
@@ -201,7 +200,7 @@ with DAG(
         source_project_dataset_table=f"{production_dataset}.family_categories",
         destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/prev_family_categories/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
-        force_rerun=True
+        force_rerun=True,
     )
 
     # TODO (Katherine): run translation in KubernetesPod (again, example below)
@@ -217,10 +216,10 @@ with DAG(
         arguments=[
             "-c",
             (
-                    setup_commands
-                    + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
-                      f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
-                      f"--curr_baseset {curr_baseset}"
+                setup_commands
+                + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
+                f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
+                f"--curr_baseset {curr_baseset}"
             ),
         ],
         namespace="default",
