@@ -4,7 +4,7 @@ WITH get_original_set AS (
   FROM
     unified_patents.metadata
   LEFT JOIN
-    staging_patent_clusters.cluster_assignment
+    staging_patent_clusters.cluster_assignment_staging
     USING
       (family_id)
   WHERE
