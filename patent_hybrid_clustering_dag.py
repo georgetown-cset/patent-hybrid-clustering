@@ -111,10 +111,10 @@ with DAG(
 
     # TODO (Katherine): transfer data requiring LID to GCS (leaving an example here)
 
-    export_prev_family_categories = BigQueryToGCSOperator(
-        task_id="export_prev_family_categories",
-        source_project_dataset_table=f"{production_dataset}.family_categories",
-        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/prev_family_categories/data*.jsonl",
+    export_patents_to_lid = BigQueryToGCSOperator(
+        task_id="export_patents_to_lid",
+        source_project_dataset_table=f"{staging_dataset}.new_metadata_to_lid",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
@@ -134,10 +134,10 @@ with DAG(
         arguments=[
             "-c",
             (
-                setup_commands
-                + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
-                f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
-                f"--curr_baseset {curr_baseset}"
+                f"echo 'starting lid' ; rm -r data || true"
+                f"mkdir -p data/output_lid_data && "
+                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/ && "
+                f"python3 lid_new_patents.py --input_path data/new_metadata_to_lid"
             ),
         ],
         namespace="default",
