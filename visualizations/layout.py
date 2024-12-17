@@ -101,12 +101,12 @@ def find_best_layout(nodes, n_layouts:int) -> None:
     x_best = np.loadtxt(f"layouts/x{best_map_number}.txt")
     y_best = np.loadtxt(f"layouts/y{best_map_number}.txt")
 
-    df = pd.DataFrame(
-        data=np.column_stack((nodes, x_best, y_best)), columns=["cluster_id", "x", "y"]
-    )
+    #df = pd.DataFrame(
+    #    data=np.column_stack((nodes, x_best, y_best)), columns=["cluster_id", "x", "y"]
+    #)
 
-    df["cluster_id"] = df["cluster_id"].astype(int)  # convert cluster_id to integer
-    df.to_csv("layouts/clust_locations.csv", index=False)
+    #df["cluster_id"] = df["cluster_id"].astype(int)  # convert cluster_id to integer
+    #df.to_csv("layouts/clust_locations.csv", index=False)
 
     np.savetxt(f"layouts/x_best.txt", x_best)
     np.savetxt(f"layouts/y_best.txt", y_best)
@@ -128,8 +128,8 @@ if __name__ == "__main__":
     t4 = time.time()
     print(f"Time for {args.n_layouts}: ", t4-t3, " seconds")
 
-    nodes = np.array(g_citations.vs['name'])
+    #nodes = np.array(g_citations.vs.indices)
 
-    find_best_layout(nodes, args.n_layouts)
+    find_best_layout([], args.n_layouts)
 
     print("\n Total Time: ", t4-t1, " seconds")
