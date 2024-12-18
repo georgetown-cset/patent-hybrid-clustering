@@ -135,9 +135,11 @@ with DAG(
             "-c",
             (
                 f"echo 'starting lid' ; rm -r data || true"
-                f"mkdir -p data/output_lid_data && "
-                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/ && "
-                f"python3 lid_new_patents.py --input_path data/new_metadata_to_lid"
+                f"mkdir -p data/input_data && "
+                f"mkdir -p data/output_data && "
+                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/input_data && "
+                f"python3 lid_new_patents.py --data_folder data"
+                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/ "
             ),
         ],
         namespace="default",
@@ -172,7 +174,7 @@ with DAG(
 
     load_lid_outputs = [
         GCSToBigQueryOperator(
-            task_id="load_patent_categorization_" + table_name,
+            task_id="load_lid_outputs",
             bucket=DATA_BUCKET,
             source_objects=[f"{tmp_dir}/output_data/{data_name}.jsonl"],
             schema_object=f"{schema_dir}/{schema_name}.json",
