@@ -22,7 +22,7 @@ def lid(data):
     results = []
     for row in data:
         isReliable, textBytesFound, details = cld2.detect(remove_bad_chars(row['abstract_original']))
-        results.append({'patent_id':row['patent_id'], 'reliable': isReliable, 'language_long': details[0][0], 'language': details[0][1]})
+        results.append({'patent_id':row['patent_id'], 'family_id':row['family_id'], 'reliable': isReliable, 'language_long': details[0][0], 'language': details[0][1]})
     return results
 
 def save_lid(data_folder, results):

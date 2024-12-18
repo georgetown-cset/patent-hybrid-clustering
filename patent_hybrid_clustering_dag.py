@@ -139,7 +139,7 @@ with DAG(
                 f"mkdir -p data/output_data && "
                 f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/input_data && "
                 f"python3 lid_new_patents.py --data_folder data"
-                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/ "
+                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_lid "
             ),
         ],
         namespace="default",
@@ -172,23 +172,16 @@ with DAG(
     # TODO (Katherine): transfer LID data from GCS to BigQuery so
     # we can use it in queries (again, I'm leaving example transfer code here)
 
-    load_lid_outputs = [
-        GCSToBigQueryOperator(
+    load_lid_outputs = GCSToBigQueryOperator(
             task_id="load_lid_outputs",
             bucket=DATA_BUCKET,
-            source_objects=[f"{tmp_dir}/output_data/{data_name}.jsonl"],
-            schema_object=f"{schema_dir}/{schema_name}.json",
-            destination_project_dataset_table=f"{staging_dataset}.{table_name}",
+            source_objects=[f"{tmp_dir}/new_metadata_lid/lid.jsonl"],
+            schema_object=f"{schema_dir}/patent_lid.json",
+            destination_project_dataset_table=f"{staging_dataset}.patent_lid",
             source_format="NEWLINE_DELIMITED_JSON",
             create_disposition="CREATE_IF_NEEDED",
             write_disposition="WRITE_TRUNCATE",
         )
-        for table_name, data_name, schema_name in [
-            ("staging_categories", "patent_categories", "staging_categories"),
-            ("metrics", "metrics", "metrics"),
-            ("tie_categories", "tie_categories", "tie_categories"),
-        ]
-    ]
 
     # TODO (Katherine): find data that needs to be translated
     # We'll need some BigQuery operators here; there are examples of these above
