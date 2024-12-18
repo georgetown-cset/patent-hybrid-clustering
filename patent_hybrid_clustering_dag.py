@@ -184,16 +184,38 @@ with DAG(
         )
 
     # TODO (Katherine): find data that needs to be translated
-    # We'll need some BigQuery operators here; there are examples of these above
-    # you can either use a single one or another sequence document depending on
-    # how many queries you end up with!
+    with open(
+        f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv"
+    ) as f:
+        for line in csv.DictReader(get_clean_lines(f)):
+            query = BigQueryInsertJobOperator(
+                task_id=line["table_name"],
+                configuration={
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
+                    }
+                },
+            )
+            curr_downstream_query >> query
+            curr_downstream_query = query
 
     # TODO (Katherine): transfer data requiring translating to GCS
 
-    export_prev_family_categories = BigQueryToGCSOperator(
-        task_id="export_prev_family_categories",
-        source_project_dataset_table=f"{production_dataset}.family_categories",
-        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/prev_family_categories/data*.jsonl",
+    export_patents_for_translation = BigQueryToGCSOperator(
+        task_id="export_patents_for_translation",
+        source_project_dataset_table=f"{production_dataset}.new_patents_to_translate",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
@@ -201,8 +223,8 @@ with DAG(
     # TODO (Katherine): run translation in KubernetesPod (again, example below)
 
     run_translation = GKEStartPodOperator(
-        task_id="run-lid",
-        name=f"run-lid",
+        task_id="run-translation",
+        name=f"run-translation",
         project_id=PROJECT_ID,
         location=GCP_ZONE,
         cluster_name="cc2-task-pool",
@@ -211,10 +233,12 @@ with DAG(
         arguments=[
             "-c",
             (
-                setup_commands
-                + f" && python3 download_merged_ids.py --gcs_bucket {DATA_BUCKET} "
-                f"--gcs_prefix {raw_merged_ids_dir} --s3_prefix data/merged_ids/{dataset} "
-                f"--curr_baseset {curr_baseset}"
+                f"echo 'starting translation' ; rm -r data || true"
+                f"mkdir -p data/input_data && "
+                f"mkdir -p data/output_data && "
+                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate data/input_data && "
+                f"python3 translate_new_patents.py --data_folder data"
+                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate "
             ),
         ],
         namespace="default",
