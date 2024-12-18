@@ -175,15 +175,15 @@ with DAG(
     # we can use it in queries (again, I'm leaving example transfer code here)
 
     load_lid_outputs = GCSToBigQueryOperator(
-            task_id="load_lid_outputs",
-            bucket=DATA_BUCKET,
-            source_objects=[f"{tmp_dir}/new_metadata_lid/lid.jsonl"],
-            schema_object=f"{schema_dir}/patent_lid.json",
-            destination_project_dataset_table=f"{staging_dataset}.patent_lid",
-            source_format="NEWLINE_DELIMITED_JSON",
-            create_disposition="CREATE_IF_NEEDED",
-            write_disposition="WRITE_TRUNCATE",
-        )
+        task_id="load_lid_outputs",
+        bucket=DATA_BUCKET,
+        source_objects=[f"{tmp_dir}/new_metadata_lid/lid.jsonl"],
+        schema_object=f"{schema_dir}/patent_lid.json",
+        destination_project_dataset_table=f"{staging_dataset}.patent_lid",
+        source_format="NEWLINE_DELIMITED_JSON",
+        create_disposition="CREATE_IF_NEEDED",
+        write_disposition="WRITE_TRUNCATE",
+    )
 
     # TODO (Katherine): find data that needs to be translated
     with open(
@@ -316,7 +316,7 @@ with DAG(
 
     export_patents_to_embed = BigQueryToGCSOperator(
         task_id="export_patents_to_embed",
-        source_project_dataset_table=f"{staging_dataset}.new_patents_patents_to_embed",
+        source_project_dataset_table=f"{staging_dataset}.new_patents_to_embed",
         destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
@@ -379,36 +379,6 @@ with DAG(
 
     # TODO (Rebecca): Get the FAISS data back into BigQuery
 
-    # TODO (Rebecca): a bigquery operator to create overall edge weights
-    # possibly here it makes sense to make another sequence file so
-    # we can combine this with
-    # TODO (Katherine): (Bigquery operators to run the reattachment waves)
-
-    with open(
-        f"{DAGS_DIR}/{sequence_dir}/cluster_assignment_sequence.csv"
-    ) as f:
-        for line in csv.DictReader(get_clean_lines(f)):
-            query = BigQueryInsertJobOperator(
-                task_id=line["table_name"],
-                configuration={
-                    "query": {
-                        "query": "{% include '"
-                        + f"{sql_dir}/{line['table_name']}.sql"
-                        + "' %}",
-                        "useLegacySql": False,
-                        "destinationTable": {
-                            "projectId": PROJECT_ID,
-                            "datasetId": staging_dataset,
-                            "tableId": line["table_name"],
-                        },
-                        "allowLargeResults": True,
-                        "createDisposition": "CREATE_IF_NEEDED",
-                        "writeDisposition": "WRITE_TRUNCATE",
-                    }
-                },
-            )
-            curr_downstream_query >> query
-            curr_downstream_query = query
 
     wait_for_faiss_load = DummyOperator(task_id="wait_for_faiss_load")
     wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
@@ -442,6 +412,7 @@ with DAG(
     curr_downstream_query >> wait_for_map_queries
 
     # TODO (Rebecca): another data export to GCS for keywords
+    # waiting to write this until I know what data the keyword script requires
 
     # TODO (Rebecca): a KubernetesPod to run keyword extraction
 
@@ -453,8 +424,9 @@ with DAG(
     # TODO (Rebecca): Update and finalize this to make sure it runs the query sequences
 
     curr_downstream_query = wait_for_keyword_load
+    # add any tables we want in production that aren't breakdowns
     production_queries = [
-        ("family_categories", production_dataset),
+        ("cluster_assignment", production_dataset),
     ]
     with open(f"{DAGS_DIG}/{sequence_dir}/patent_clustering_query_sequence.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):

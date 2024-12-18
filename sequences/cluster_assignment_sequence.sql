@@ -1,2 +1,0 @@
-production_dataset,table_name
-,new_cluster_assignments

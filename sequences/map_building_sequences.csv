@@ -4,3 +4,4 @@ production_dataset,table_name
 ,new_text_weights
 ,new_combined_weights
 ,new_hybrid_sts_scaled_weights
+,new_cluster_assignments
