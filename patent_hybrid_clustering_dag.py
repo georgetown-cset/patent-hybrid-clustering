@@ -375,7 +375,32 @@ with DAG(
     # possibly here it makes sense to make another sequence file so
     # we can combine this with
     # TODO (Katherine): (Bigquery operators to run the reattachment waves)
-    # as there's no reason these couldn't be run in sequence
+
+    with open(
+        f"{DAGS_DIR}/{sequence_dir}/cluster_assignment_sequence.csv"
+    ) as f:
+        for line in csv.DictReader(get_clean_lines(f)):
+            query = BigQueryInsertJobOperator(
+                task_id=line["table_name"],
+                configuration={
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
+                    }
+                },
+            )
+            curr_downstream_query >> query
+            curr_downstream_query = query
 
     # TODO (Rebecca): another data export to GCS for keywords
 
