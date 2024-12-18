@@ -139,7 +139,7 @@ with DAG(
                 f"mkdir -p data/output_data && "
                 f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/input_data && "
                 f"python3 lid_new_patents.py --data_folder data"
-                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_lid "
+                f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_lid "
             ),
         ],
         namespace="default",
@@ -271,30 +271,24 @@ with DAG(
     # TODO (Katherine): move translation outputs back to BigQuery so we can make final
     # table for FAISS
 
-    load_patent_family_categorization_outputs = [
-        GCSToBigQueryOperator(
-            task_id="load_patent_family_categorization_" + table_name,
+    load_patent_translations = GCSToBigQueryOperator(
+            task_id="load_patent_translations",
             bucket=DATA_BUCKET,
-            source_objects=[f"{tmp_dir}/family_output_data/{data_name}.jsonl"],
-            schema_object=f"{schema_dir}/{schema_name}.json",
-            destination_project_dataset_table=f"{staging_dataset}.{table_name}",
+            source_objects=[f"{tmp_dir}/new_patents_to_translate/translated_patents.jsonl"],
+            schema_object=f"{schema_dir}/new_translated_patents.json",
+            destination_project_dataset_table=f"{staging_dataset}.new_translated_patents",
             source_format="NEWLINE_DELIMITED_JSON",
             create_disposition="CREATE_IF_NEEDED",
             write_disposition="WRITE_TRUNCATE",
         )
-        for table_name, data_name, schema_name in [
-            ("family_categories", "patent_family_categories", "family_categories"),
-            ("tie_family_categories", "tie_family_categories", "tie_family_categories"),
-        ]
-    ]
 
     # TODO (Katherine): one more BigQuery operator to merge all our text data for embedding
 
     # TODO (Rebecca): export both the text data and CPC text to GCS
 
     export_patents_to_embed = BigQueryToGCSOperator(
-        task_id="export_prev_family_categories",
-        source_project_dataset_table=f"{staging_dataset}.patents_to_embed",
+        task_id="export_patents_to_embed",
+        source_project_dataset_table=f"{staging_dataset}.new_patents_patents_to_embed",
         destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
