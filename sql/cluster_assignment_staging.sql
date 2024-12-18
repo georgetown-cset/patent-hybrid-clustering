@@ -3,7 +3,7 @@ get_dummy_families AS (
   SELECT DISTINCT
     family_id,
     cluster_id,
-    SUBSTRING(family_id, 2) AS patent_id
+    SUBSTRING(family_id, 3) AS patent_id
   FROM
     staging_patent_clusters.cluster_assignment
   WHERE

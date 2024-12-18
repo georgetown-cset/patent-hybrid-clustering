@@ -6,22 +6,22 @@ from datetime import datetime
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryInsertJobOperator,
 )
+from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
 from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airflow.providers.google.cloud.operators.kubernetes_engine import (
     GKEStartPodOperator,
 )
-from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import (
     BigQueryToBigQueryOperator,
 )
 from airflow.providers.google.cloud.transfers.bigquery_to_gcs import (
     BigQueryToGCSOperator,
 )
-from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
     GCSToBigQueryOperator,
 )
@@ -35,6 +35,7 @@ from dataloader.airflow_utils.defaults import (
 )
 from dataloader.scripts.populate_documentation import update_table_descriptions
 from kubernetes.client import models as k8s
+
 
 def get_clean_lines(f):
     # Filters commented lines from a csv
@@ -79,13 +80,12 @@ with DAG(
 
     curr_downstream_query = clear_tmp_dir
 
-    # TODO: write the actual SQL queries that are in this sequence table
+    wait_for_initial_queries = DummyOperator(task_id="wait_for_initial_queries")
+
     # TODO (Katherine): add queries to find the data we need to run LID on
     # and add those to the sequence table as well
 
-    with open(
-        f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequence.csv"
-    ) as f:
+    with open(f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequences.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             query = BigQueryInsertJobOperator(
                 task_id=line["table_name"],
@@ -108,6 +108,8 @@ with DAG(
             )
             curr_downstream_query >> query
             curr_downstream_query = query
+
+    curr_downstream_query >> wait_for_initial_queries
 
     # TODO (Katherine): transfer data requiring LID to GCS (leaving an example here)
 
@@ -329,7 +331,7 @@ with DAG(
         "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding_tmp/",
         "save_main_session": True,
         "requirements_file": "get_embeddings_requirements.txt",
-        "runner": "DataflowRunner"
+        "runner": "DataflowRunner",
     }
 
     run_text_embedding = BeamRunPythonPipelineOperator(
@@ -340,14 +342,18 @@ with DAG(
         pipeline_options={
             "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding/to_embed_*",
             "output_data": f"gs://{production_dataset}/embedding_output/embedded",
-            "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+            "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         },
         dataflow_config=DataflowConfiguration(
-            job_name="patent-embeddings-update", location="us-east1", wait_until_finished=True
+            job_name="patent-embeddings-update",
+            location="us-east1",
+            wait_until_finished=True,
         ),
     )
 
-    dataflow_options["temp_location"] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
+    dataflow_options[
+        "temp_location"
+    ] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
 
     run_cpc_embedding = BeamRunPythonPipelineOperator(
         py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
@@ -357,10 +363,12 @@ with DAG(
         pipeline_options={
             "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding/to_embed_*",
             "output_data": f"gs://{production_dataset}/cpc_embedding_output/embedded",
-            "model": "sentence-transformers/all-mpnet-base-v2"
+            "model": "sentence-transformers/all-mpnet-base-v2",
         },
         dataflow_config=DataflowConfiguration(
-            job_name="patent-embeddings-update", location="us-east1", wait_until_finished=True
+            job_name="patent-embeddings-update",
+            location="us-east1",
+            wait_until_finished=True,
         ),
     )
 
@@ -402,6 +410,37 @@ with DAG(
             curr_downstream_query >> query
             curr_downstream_query = query
 
+    wait_for_faiss_load = DummyOperator(task_id="wait_for_faiss_load")
+    wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
+
+    curr_downstream_query = wait_for_faiss_load
+
+    with open(f"{DAGS_DIR}/{sequence_dir}/map_building_sequences.csv") as f:
+        for line in csv.DictReader(get_clean_lines(f)):
+            query = BigQueryInsertJobOperator(
+                task_id=line["table_name"],
+                configuration={
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
+                    }
+                },
+            )
+            curr_downstream_query >> query
+            curr_downstream_query = query
+
+    curr_downstream_query >> wait_for_map_queries
+
     # TODO (Rebecca): another data export to GCS for keywords
 
     # TODO (Rebecca): a KubernetesPod to run keyword extraction
@@ -417,9 +456,7 @@ with DAG(
     production_queries = [
         ("family_categories", production_dataset),
     ]
-    with open(
-        f"{DAGS_DIG}/{sequence_dir}/patent_clustering_query_sequence.csv"
-    ) as f:
+    with open(f"{DAGS_DIG}/{sequence_dir}/patent_clustering_query_sequence.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             if line["production_dataset"]:
                 production_queries.append(
@@ -506,9 +543,7 @@ with DAG(
     wait_for_production_backups = DummyOperator(task_id="wait_for_production_backups")
     wait_for_production_backups >> non_production_backups >> success_alert
 
-    with open(
-        f"{DAGS_DIR}/schemas/{production_dataset}/table_descriptions.json"
-    ) as f:
+    with open(f"{DAGS_DIR}/schemas/{production_dataset}/table_descriptions.json") as f:
         table_desc = json.loads(f.read())
     for table, dataset in production_queries:
         prod_table_name = f"{dataset}.{table}"

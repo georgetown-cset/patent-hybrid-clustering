@@ -16,6 +16,12 @@ dummy_links AS (
     COALESCE(family_id, "X-" || patent_id) AS family_id
   FROM
     unified_patents.links
+  -- We're specifically looking for the citation links from new patents
+  -- to the patents in the original map
+  INNER JOIN
+    staging_patent_clusters.cluster_assignment
+    USING
+      (family_id)
 )
 
 SELECT DISTINCT

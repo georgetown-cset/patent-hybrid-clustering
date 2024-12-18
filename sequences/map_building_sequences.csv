@@ -1,0 +1,6 @@
+production_dataset,table_name
+,new_citation_weights
+,new_cpc_weights
+,new_text_weights
+,new_combined_weights
+,new_hybrid_sts_scaled_weights
