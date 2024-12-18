@@ -284,6 +284,32 @@ with DAG(
 
     # TODO (Katherine): one more BigQuery operator to merge all our text data for embedding
 
+    with open(
+        f"{DAGS_DIR}/{sequence_dir}/patent_text_to_embed_sequence.csv"
+    ) as f:
+        for line in csv.DictReader(get_clean_lines(f)):
+            query = BigQueryInsertJobOperator(
+                task_id=line["table_name"],
+                configuration={
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
+                    }
+                },
+            )
+            curr_downstream_query >> query
+            curr_downstream_query = query
+
     # TODO (Rebecca): export both the text data and CPC text to GCS
 
     export_patents_to_embed = BigQueryToGCSOperator(
