@@ -37,9 +37,7 @@ ORDER BY cluster_id, family_id
 """
     )
     .to_dataframe()
-    .to_csv(
-        "patent_cluster_data.csv", index=False, quoting=csv.QUOTE_NONE, escapechar=" "
-    )
+    .to_json("patent_cluster_data_test.jsonl", lines=True, orient="records")
 )
 
 
@@ -92,7 +90,6 @@ class Postprocessor:
 def get_cluster_text() -> defaultdict(str):
     """
     Read in cluster text to use in yake algorithm.
-    Change path to environment's data storage.
     :return: clust_text (dict of extracted phrases for clusters)
     """
     clust_text = defaultdict(str)
