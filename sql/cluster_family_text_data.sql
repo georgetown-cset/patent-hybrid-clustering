@@ -5,7 +5,6 @@ keyword extraction.
 SELECT
   cluster_id,
   family_id,
-  cpc_text,
   text AS title_abstract
 FROM `staging_patent_clusters.cluster_assignment`
 LEFT JOIN `staging_patent_clusters.family_cpc_text` USING (family_id)

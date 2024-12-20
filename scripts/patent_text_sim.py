@@ -2,7 +2,7 @@ import csv
 import json
 import os
 import sys
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from typing import Optional
 
 import yake
@@ -71,10 +71,9 @@ class Postprocessor:
         """
         # if phrase is not a single word
         if len(phrase.split()) > 1:
-            # remove duplicates and rebuild string
-            unique_words = set(phrase.split())
-            unique_words_string = " ".join(unique_words)
-            return unique_words_string
+            # remove duplicates while maintaining order and rebuild string
+            unique_words = " ".join(OrderedDict.fromkeys(phrase.split()))
+            return unique_words
         # if phrase is a single word
         else:
             if " " not in phrase.strip():
