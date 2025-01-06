@@ -82,9 +82,6 @@ with DAG(
 
     wait_for_initial_queries = DummyOperator(task_id="wait_for_initial_queries")
 
-    # TODO (Katherine): add queries to find the data we need to run LID on
-    # and add those to the sequence table as well
-
     with open(f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequences.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             query = BigQueryInsertJobOperator(
@@ -111,8 +108,6 @@ with DAG(
 
     curr_downstream_query >> wait_for_initial_queries
 
-    # TODO (Katherine): transfer data requiring LID to GCS (leaving an example here)
-
     export_patents_to_lid = BigQueryToGCSOperator(
         task_id="export_patents_to_lid",
         source_project_dataset_table=f"{staging_dataset}.new_metadata_to_lid",
@@ -120,10 +115,6 @@ with DAG(
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
-
-    # TODO (Katherine): Run LID; save output to a BQ table
-    # you'll have to modify the actual commands in here to make it run correctly but here's
-    # a sample pod operator
 
     run_lid = GKEStartPodOperator(
         task_id="run-lid",
@@ -171,9 +162,6 @@ with DAG(
         annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
     )
 
-    # TODO (Katherine): transfer LID data from GCS to BigQuery so
-    # we can use it in queries (again, I'm leaving example transfer code here)
-
     load_lid_outputs = GCSToBigQueryOperator(
         task_id="load_lid_outputs",
         bucket=DATA_BUCKET,
@@ -193,7 +181,6 @@ with DAG(
 
     curr_downstream_query = load_lid_outputs
 
-    # TODO (Katherine): find data that needs to be translated
     with open(
         f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv"
     ) as f:
