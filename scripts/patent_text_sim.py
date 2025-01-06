@@ -1,10 +1,12 @@
+import argparse
 import json
 import os
 from collections import OrderedDict, defaultdict
 from typing import Optional
-import argparse
+
 import yake
 from wordfreq import zipf_frequency
+
 
 class Postprocessor:
     def __init__(self):
@@ -110,7 +112,7 @@ def extract_phrases(text_dir: str, output_dir: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_data_folder', default='data/input_data')
-    parser.add_argument('--output_data_folder', default='data/output_data')
+    parser.add_argument("--input_data_folder", default="data/input_data")
+    parser.add_argument("--output_data_folder", default="data/output_data")
     args = parser.parse_args()
     extract_phrases(args.input_data_folder, args.output_data_folder)

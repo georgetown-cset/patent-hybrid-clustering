@@ -3,9 +3,7 @@ WITH get_alpha_beta AS (
   SELECT
     0.91078609897767326 AS alpha,
     0.046888892827964893 AS beta
-  FROM unnest(
-            ARRAY[1]
-           )
+  FROM unnest(ARRAY[1])
 )
 
 SELECT

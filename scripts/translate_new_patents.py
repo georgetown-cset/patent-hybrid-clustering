@@ -6,6 +6,7 @@ import pycld2 as cld2
 import regex
 from google.cloud import translate_v2 as translate
 
+
 class Translator:
     def __init__(self, output_file):
         self.translate_client = translate.Client()
@@ -19,14 +20,14 @@ class Translator:
         self.num_chars_translated = 0
 
     def get_patents_to_translate(self, data_folder):
-        data_files = os.listdir(os.path.join(data_folder, 'input_data'))
+        data_files = os.listdir(os.path.join(data_folder, "input_data"))
         data_raw = []
         for file in data_files:
-            with open(os.path.join(data_folder, 'input_data/' + file), 'r') as fil:
+            with open(os.path.join(data_folder, "input_data/" + file), "r") as fil:
                 json_list = list(fil)
                 for row in json_list:
                     data_raw.append(json.loads(row))
-                print(os.path.join(data_folder, 'input_data/' + file))
+                print(os.path.join(data_folder, "input_data/" + file))
 
         for i, row in enumerate(data_raw):
             if i % 100 == 0:
@@ -79,9 +80,9 @@ class Translator:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_folder', default='data')
+    parser.add_argument("--data_folder", default="data")
     args = parser.parse_args()
 
-    translate = Translator(args.data_folder+"/output_data/translated_patents.jsonl")
-    translate.get_patents_to_translate(args.data_folder)
-    translate.write_output()
+    translator = Translator(args.data_folder + "/output_data/translated_patents.jsonl")
+    translator.get_patents_to_translate(args.data_folder)
+    translator.write_output()

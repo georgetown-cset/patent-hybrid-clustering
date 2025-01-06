@@ -1,21 +1,21 @@
 /*
 Create table for downstream keyword extraction.
 */
-with cluster_text as (
-SELECT
-  cluster_id,
-  family_id,
-  COALESCE(patents_to_embed.text, new_patents_to_embed.text) AS title_abstract
-FROM
-  staging_patent_clusters.cluster_assignment_staging
-LEFT JOIN
-  staging_patent_clusters.patents_to_embed
-  USING
-    (family_id)
-LEFT JOIN
-  staging_patent_clusters.new_patents_to_embed
-  USING
-    (family_id)
+WITH cluster_text AS (
+  SELECT
+    cluster_id,
+    family_id,
+    COALESCE(patents_to_embed.text, new_patents_to_embed.text) AS title_abstract
+  FROM
+    staging_patent_clusters.cluster_assignment_staging
+  LEFT JOIN
+    staging_patent_clusters.patents_to_embed
+    USING
+      (family_id)
+  LEFT JOIN
+    staging_patent_clusters.new_patents_to_embed
+    USING
+      (family_id)
 )
 
 -- Structure data for pipeline expectations

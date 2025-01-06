@@ -35,10 +35,10 @@ no_nulls AS (
   SELECT
     patent_id,
     family_id,
-    COALESCE(title,"") AS title,
-    COALESCE(abstract,"") AS abstract,
-    COALESCE(title_original,"") AS title_original,
-    COALESCE(abstract_original,"") AS abstract_original
+    COALESCE(title, "") AS title,
+    COALESCE(abstract, "") AS abstract,
+    COALESCE(title_original, "") AS title_original,
+    COALESCE(abstract_original, "") AS abstract_original
   FROM all_patents
 ),
 
@@ -110,4 +110,3 @@ FROM
   get_ordering
 WHERE
   ordering = 1
-

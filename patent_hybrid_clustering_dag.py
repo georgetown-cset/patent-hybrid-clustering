@@ -118,7 +118,7 @@ with DAG(
 
     run_lid = GKEStartPodOperator(
         task_id="run-lid",
-        name=f"run-lid",
+        name="run-lid",
         project_id=PROJECT_ID,
         location=GCP_ZONE,
         cluster_name="cc2-task-pool",
@@ -173,17 +173,11 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
     )
 
-    (
-            export_patents_to_lid
-            >> run_lid
-            >> load_lid_outputs
-    )
+    (export_patents_to_lid >> run_lid >> load_lid_outputs)
 
     curr_downstream_query = load_lid_outputs
 
-    with open(
-        f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv"
-    ) as f:
+    with open(f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             query = BigQueryInsertJobOperator(
                 task_id=line["table_name"],
@@ -207,7 +201,6 @@ with DAG(
             curr_downstream_query >> query
             curr_downstream_query = query
 
-
     export_patents_for_translation = BigQueryToGCSOperator(
         task_id="export_patents_for_translation",
         source_project_dataset_table=f"{production_dataset}.new_patents_to_translate",
@@ -220,7 +213,7 @@ with DAG(
 
     run_translation = GKEStartPodOperator(
         task_id="run-translation",
-        name=f"run-translation",
+        name="run-translation",
         project_id=PROJECT_ID,
         location=GCP_ZONE,
         cluster_name="cc2-task-pool",
@@ -264,25 +257,24 @@ with DAG(
         annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
     )
 
-
     load_patent_translations = GCSToBigQueryOperator(
-            task_id="load_patent_translations",
-            bucket=DATA_BUCKET,
-            source_objects=[f"{tmp_dir}/new_patents_to_translate/translated_patents.jsonl"],
-            schema_object=f"{schema_dir}/new_translated_patents.json",
-            destination_project_dataset_table=f"{staging_dataset}.new_translated_patents",
-            source_format="NEWLINE_DELIMITED_JSON",
-            create_disposition="CREATE_IF_NEEDED",
-            write_disposition="WRITE_TRUNCATE",
-        )
+        task_id="load_patent_translations",
+        bucket=DATA_BUCKET,
+        source_objects=[f"{tmp_dir}/new_patents_to_translate/translated_patents.jsonl"],
+        schema_object=f"{schema_dir}/new_translated_patents.json",
+        destination_project_dataset_table=f"{staging_dataset}.new_translated_patents",
+        source_format="NEWLINE_DELIMITED_JSON",
+        create_disposition="CREATE_IF_NEEDED",
+        write_disposition="WRITE_TRUNCATE",
+    )
 
     patent_text_to_embed = BigQueryInsertJobOperator(
         task_id="patent_text_to_embed",
         configuration={
             "query": {
                 "query": "{% include '"
-                         + f"{sql_dir}/new_patents_to_embed.sql"
-                         + "' %}",
+                + f"{sql_dir}/new_patents_to_embed.sql"
+                + "' %}",
                 "useLegacySql": False,
                 "destinationTable": {
                     "projectId": PROJECT_ID,
@@ -353,13 +345,13 @@ with DAG(
     )
 
     (
-            export_patents_for_translation
-            >> run_translation
-            >> load_patent_translations
-            >> patent_text_to_embed
-            >> export_patents_to_embed
-            >> run_text_embedding
-            >> run_cpc_embedding
+        export_patents_for_translation
+        >> run_translation
+        >> load_patent_translations
+        >> patent_text_to_embed
+        >> export_patents_to_embed
+        >> run_text_embedding
+        >> run_cpc_embedding
     )
 
     # TODO (Rebecca): export the data
@@ -368,7 +360,6 @@ with DAG(
     # isn't in kubernetes since it uses dataflow? a dataflow operator?)
 
     # TODO (Rebecca): Get the FAISS data back into BigQuery
-
 
     wait_for_faiss_load = DummyOperator(task_id="wait_for_faiss_load")
     wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
@@ -411,7 +402,7 @@ with DAG(
 
     run_keyword_extraction = GKEStartPodOperator(
         task_id="run-keyword-extraction",
-        name=f"run-keyword-extraction",
+        name="run-keyword-extraction",
         project_id=PROJECT_ID,
         location=GCP_ZONE,
         cluster_name="cc2-task-pool",
@@ -470,11 +461,11 @@ with DAG(
     wait_for_queries = DummyOperator(task_id="wait_for_queries")
 
     (
-            wait_for_map_queries
-            >> export_keyword_data
-            >> run_keyword_extraction
-            >> load_keywords
-            >> wait_for_keyword_load
+        wait_for_map_queries
+        >> export_keyword_data
+        >> run_keyword_extraction
+        >> load_keywords
+        >> wait_for_keyword_load
     )
 
     curr_downstream_query = wait_for_keyword_load
@@ -482,7 +473,7 @@ with DAG(
     production_queries = [
         ("cluster_assignment", production_dataset),
     ]
-    with open(f"{DAGS_DIG}/{sequence_dir}/patent_clustering_query_sequence.csv") as f:
+    with open(f"{DAGS_DIR}/{sequence_dir}/patent_clustering_query_sequence.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             if line["production_dataset"]:
                 production_queries.append(
@@ -544,7 +535,7 @@ with DAG(
     ]
     non_production_backups.append(
         BigQueryToBigQueryOperator(
-            task_id=f"back_up_curr_patent_metadata",
+            task_id="back_up_curr_patent_metadata",
             source_project_dataset_tables=["unified_patents.classifications"],
             destination_project_dataset_table=f"{staging_dataset}.classifications",
             create_disposition="CREATE_IF_NEEDED",
