@@ -1,45 +1,10 @@
-import csv
 import json
 import os
-import sys
 from collections import OrderedDict, defaultdict
 from typing import Optional
-
+import argparse
 import yake
-from google.cloud import bigquery
 from wordfreq import zipf_frequency
-
-"""
-Replace the data function here with GCP bucket download.
-"""
-
-client = bigquery.Client(project="gcp-cset-projects")
-
-df = (
-    client.query(
-        """
-
-WITH cluster_text AS (
-  SELECT
-    cluster_id,
-    family_id,
-    title_abstract
-  FROM `staging_patent_clusters.cluster_family_text_data`
-)
-
-# Structure data for pipeline expectations
-SELECT
-  cluster_id,
-  title_abstract AS text_corp
-FROM cluster_text
-ORDER BY cluster_id, family_id
-
-"""
-    )
-    .to_dataframe()
-    .to_json("patent_cluster_data_test.jsonl", lines=True, orient="records")
-)
-
 
 class Postprocessor:
     def __init__(self):
@@ -86,16 +51,18 @@ class Postprocessor:
             return phrase
 
 
-def get_cluster_text() -> defaultdict(str):
+def get_cluster_text(text_dir: str) -> defaultdict(str):
     """
     Read in cluster text to use in yake algorithm.
     :return: clust_text (dict of extracted phrases for clusters)
     """
     clust_text = defaultdict(str)
-    with open("patent_cluster_data_test.jsonl") as f:
-        for line in f:
-            js = json.loads(line)
-            clust_text[int(js["cluster_id"])] += " " + js["text_corp"]
+    text_files = os.listdir(text_dir)
+    for filename in text_files:
+        with open(os.path.join(text_dir, filename)) as f:
+            for line in f:
+                js = json.loads(line)
+                clust_text[int(js["cluster_id"])] += " " + js["text_corp"]
     return clust_text
 
 
@@ -116,13 +83,13 @@ def run_yake(clust_text) -> list:
     return yake_output
 
 
-def extract_phrases() -> None:
+def extract_phrases(text_dir: str, output_dir: str) -> None:
     """
     Runs phrase extraction
     :param n_workers: Number of CPU workers used in multi-processing
     """
     print("Get cluster title + abstracts")
-    cluster_text = get_cluster_text()
+    cluster_text = get_cluster_text(text_dir)
     print("Run yake algorithm on cluster texts")
     output = run_yake(cluster_text)
     print("Postprocess the results of yake algorithm")
@@ -136,10 +103,14 @@ def extract_phrases() -> None:
         )
         if row["cset_extracted_phrase"]:
             new_extracted.append(row)
-    with open("patent_cluster_phrases.jsonl", "w") as out:
+    with open(os.path.join(output_dir, "patent_cluster_phrases.jsonl"), "w") as out:
         for row in new_extracted:
             out.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
-    extract_phrases()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_data_folder', default='data/input_data')
+    parser.add_argument('--output_data_folder', default='data/output_data')
+    args = parser.parse_args()
+    extract_phrases(args.input_data_folder, args.output_data_folder)

@@ -185,6 +185,14 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
     )
 
+    (
+            export_patents_to_lid
+            >> run_lid
+            >> load_lid_outputs
+    )
+
+    curr_downstream_query = load_lid_outputs
+
     # TODO (Katherine): find data that needs to be translated
     with open(
         f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv"
@@ -212,7 +220,6 @@ with DAG(
             curr_downstream_query >> query
             curr_downstream_query = query
 
-    # TODO (Katherine): transfer data requiring translating to GCS
 
     export_patents_for_translation = BigQueryToGCSOperator(
         task_id="export_patents_for_translation",
@@ -222,7 +229,7 @@ with DAG(
         force_rerun=True,
     )
 
-    # TODO (Katherine): run translation in KubernetesPod (again, example below)
+    curr_downstream_query >> export_patents_for_translation
 
     run_translation = GKEStartPodOperator(
         task_id="run-translation",
@@ -270,8 +277,6 @@ with DAG(
         annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
     )
 
-    # TODO (Katherine): move translation outputs back to BigQuery so we can make final
-    # table for FAISS
 
     load_patent_translations = GCSToBigQueryOperator(
             task_id="load_patent_translations",
@@ -284,35 +289,25 @@ with DAG(
             write_disposition="WRITE_TRUNCATE",
         )
 
-    # TODO (Katherine): one more BigQuery operator to merge all our text data for embedding
-
-    with open(
-        f"{DAGS_DIR}/{sequence_dir}/patent_text_to_embed_sequence.csv"
-    ) as f:
-        for line in csv.DictReader(get_clean_lines(f)):
-            query = BigQueryInsertJobOperator(
-                task_id=line["table_name"],
-                configuration={
-                    "query": {
-                        "query": "{% include '"
-                        + f"{sql_dir}/{line['table_name']}.sql"
-                        + "' %}",
-                        "useLegacySql": False,
-                        "destinationTable": {
-                            "projectId": PROJECT_ID,
-                            "datasetId": staging_dataset,
-                            "tableId": line["table_name"],
-                        },
-                        "allowLargeResults": True,
-                        "createDisposition": "CREATE_IF_NEEDED",
-                        "writeDisposition": "WRITE_TRUNCATE",
-                    }
+    patent_text_to_embed = BigQueryInsertJobOperator(
+        task_id="patent_text_to_embed",
+        configuration={
+            "query": {
+                "query": "{% include '"
+                         + f"{sql_dir}/new_patents_to_embed.sql"
+                         + "' %}",
+                "useLegacySql": False,
+                "destinationTable": {
+                    "projectId": PROJECT_ID,
+                    "datasetId": staging_dataset,
+                    "tableId": "new_patents_to_embed",
                 },
-            )
-            curr_downstream_query >> query
-            curr_downstream_query = query
-
-    # TODO (Rebecca): export both the text data and CPC text to GCS
+                "allowLargeResults": True,
+                "createDisposition": "CREATE_IF_NEEDED",
+                "writeDisposition": "WRITE_TRUNCATE",
+            }
+        },
+    )
 
     export_patents_to_embed = BigQueryToGCSOperator(
         task_id="export_patents_to_embed",
@@ -321,8 +316,6 @@ with DAG(
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
-
-    # TODO (Rebecca): Run embedding scripts for both text and CPC text
 
     dataflow_options = {
         "project": "gcp-cset-projects",
@@ -372,6 +365,16 @@ with DAG(
         ),
     )
 
+    (
+            export_patents_for_translation
+            >> run_translation
+            >> load_patent_translations
+            >> patent_text_to_embed
+            >> export_patents_to_embed
+            >> run_text_embedding
+            >> run_cpc_embedding
+    )
+
     # TODO (Rebecca): export the data
 
     # TODO (Rebecca): another operator to run FAISS on both outputs (possibly this one
@@ -411,17 +414,81 @@ with DAG(
 
     curr_downstream_query >> wait_for_map_queries
 
-    # TODO (Rebecca): another data export to GCS for keywords
-    # waiting to write this until I know what data the keyword script requires
+    export_keyword_data = BigQueryToGCSOperator(
+        task_id="export_keyword_data",
+        source_project_dataset_table=f"{staging_dataset}.cluster_family_text_data",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data/data*.jsonl",
+        export_format="NEWLINE_DELIMITED_JSON",
+        force_rerun=True,
+    )
 
-    # TODO (Rebecca): a KubernetesPod to run keyword extraction
+    run_keyword_extraction = GKEStartPodOperator(
+        task_id="run-keyword-extraction",
+        name=f"run-keyword-extraction",
+        project_id=PROJECT_ID,
+        location=GCP_ZONE,
+        cluster_name="cc2-task-pool",
+        do_xcom_push=True,
+        cmds=["/bin/bash"],
+        arguments=[
+            "-c",
+            (
+                f"echo 'starting keyword extraction' ; rm -r data || true"
+                f"mkdir -p data/input_data && "
+                f"mkdir -p data/output_data && "
+                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data data/input_data && "
+                f"python3 patent_text_sim.py --input_data_folder data/input_data --output_data_folder data/output_data"
+                f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/phrases/patent_cluster_phrases.jsonl "
+            ),
+        ],
+        namespace="default",
+        image=f"gcr.io/{PROJECT_ID}/cc2-task-pool",
+        get_logs=True,
+        startup_timeout_seconds=300,
+        on_finish_action="delete_pod",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": [
+                                        "default-pool",
+                                    ],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
+    )
 
-    # TODO (Rebecca): transfer keyword data back to BigQuery
+    load_keywords = GCSToBigQueryOperator(
+        task_id="load_keywords",
+        bucket=DATA_BUCKET,
+        source_objects=[f"{tmp_dir}/phrases/patent_cluster_phrases.jsonl"],
+        schema_object=f"{schema_dir}/phrases.json",
+        destination_project_dataset_table=f"{staging_dataset}.phrases",
+        source_format="NEWLINE_DELIMITED_JSON",
+        create_disposition="CREATE_IF_NEEDED",
+        write_disposition="WRITE_TRUNCATE",
+    )
 
     wait_for_keyword_load = DummyOperator(task_id="wait_for_keyword_load")
     wait_for_queries = DummyOperator(task_id="wait_for_queries")
 
-    # TODO (Rebecca): Update and finalize this to make sure it runs the query sequences
+    (
+            wait_for_map_queries
+            >> export_keyword_data
+            >> run_keyword_extraction
+            >> load_keywords
+            >> wait_for_keyword_load
+    )
 
     curr_downstream_query = wait_for_keyword_load
     # add any tables we want in production that aren't breakdowns
@@ -456,20 +523,6 @@ with DAG(
                 curr_downstream_query >> query
                 curr_downstream_query = query
 
-    # TODO (Rebecca and Katherine): Get everything sequenced correctly; example below
-
-    (
-        clear_tmp_dir
-        >> get_input
-        >> export_input_data
-        >> run_categorize_patents
-        >> load_patent_categorization_outputs
-        >> export_prev_family_categories
-        >> run_categorize_patent_family
-        >> load_patent_family_categorization_outputs
-        >> wait_for_family_load
-    )
-
     curr_downstream_query >> wait_for_queries
 
     # TODO (Rebecca and Katherine): Add SQL checks and make sure they're set up right
@@ -488,6 +541,8 @@ with DAG(
         )
 
     wait_for_checks = DummyOperator(task_id="wait_for_checks")
+
+    # TODO: Rebecca and Katherine: deal with backups
 
     curr_date = datetime.now().strftime("%Y%m%d")
     non_production_backups = [

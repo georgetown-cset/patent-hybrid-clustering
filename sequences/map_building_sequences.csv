@@ -5,3 +5,4 @@ production_dataset,table_name
 ,new_combined_weights
 ,new_hybrid_sts_scaled_weights
 ,new_cluster_assignments
+,cluster_family_text_data
