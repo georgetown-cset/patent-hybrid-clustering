@@ -1,0 +1,32 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "merged_id",
+    "type": "STRING",
+    "description": "CSET merged article ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "citations",
+    "type": "INTEGER",
+    "description": "Number of citations."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "citation_rank",
+    "type": "INTEGER",
+    "description": "Rank of the paper based on the number of patent family-to-paper citations."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "most_cited_title",
+    "type": "STRING",
+    "description": "Title, year, and venue name in one string."
+    }
+]

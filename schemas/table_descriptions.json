@@ -1,0 +1,20 @@
+{
+  "staging_patent_clusters.academic_assignee": "Top academic assignees by cluster.",
+  "staging_patent_clusters.ai_pred" : "Proportions of patents that relate to various AI topics in each cluster.",
+  "staging_patent_clusters.assignee" : "Top assignees by cluster.",
+  "staging_patent_clusters.assignee_type" : "Proportion of each organization type of assignees by cluster.",
+  "staging_patent_clusters.biotech_pred" : "Proportions of patents that relate to various biotech topics in each cluster.",
+  "staging_patent_clusters.cluster_assignment" : "Assignment of patent families into clusters.",
+  "staging_patent_clusters.citation_core": "Core patents in each cluster, based on patent-to-patent citations. This method is weaker for patents than for papers due to the sparsity and uneven nature of these citations, but still provides useful data.",
+  "staging_patent_clusters.core": "Core patents in each cluster, based on patent map weights.",
+  "staging_patent_clusters.cybersecurity_pred" : "Proportions of patents that relate to various cybersecurity topics in each cluster.",
+  "staging_patent_clusters.industry_assignee": "Top industry assignees by cluster.",
+  "staging_patent_clusters.inventor": "Top inventors by cluster.",
+  "staging_patent_clusters.most_cited_papers": "Most cited papers in the scientific literature by cluster. Papers only appear if they are in Dimensions, as all citations come from Dimensions patents. Citations are sparse and uneven in the patent data; some countries have far more than others.",
+  "staging_patent_clusters.most_cited_patent_families": "Most cited patent families by cluster. Citations are sparse and uneven in the patent data; some countries have far more than others.",
+  "staging_patent_clusters.patent_category": "Top patent categories for each cluster.",
+  "staging_patent_clusters.priority_year": "Count of patent families in each cluster broken down by the patent family's priority year (that is, the application year of the priority document in the patent family).",
+  "staging_patent_clusters.priority_country": "Top priority countries by cluster. Priority country indicates where the priority document in the patent family was applied for, and is the country field generally used to associate a patent family with a given country.",
+  "staging_patent_clusters.robotics_pred" : "Proportions of patents that relate to various Robotics topics in each cluster.",
+  "staging_patent_clusters.phrases" : "Top extracted phrases pulled from titles and abstracts of each cluster."
+}

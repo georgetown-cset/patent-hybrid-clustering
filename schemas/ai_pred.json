@@ -1,0 +1,223 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "pred_ai",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be AI-relevant based on 1790 categorization."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Physical_Sciences_and_Engineering_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Physical Sciences and Engineering-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Life_Sciences_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Life Sciences-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Security__eg_cybersecurity_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Security (e.g. cybersecurity)-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Transportation_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Transportation-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Industrial_and_Manufacturing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Industrial and Manufacturing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Education_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Education-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Document_Mgt_and_Publishing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Document Management and Publishing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Military_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Military-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Agricultural_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Agricultural-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Computing_in_Government_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Computing in Government-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Personal_Devices_and_Computing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Personal Devices and Computing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Banking_and_Finance_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Banking and Finance-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Telecommunications_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Telecommunications-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Networks__eg_social_IOT_etc_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Networks (e.g. social, IOT, etc.)-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },{
+    "mode": "NULLABLE",
+    "name": "Business_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Business-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Energy_Management_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Energy Management-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Entertainment_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Entertainment-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Nanotechnology_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Nanotechnology-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Semiconductors_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Semiconductors-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Language_Processing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Language Processing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Speech_Processing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Speech Processing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Knowledge_Representation_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Knowledge Representation-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Planning_and_Scheduling_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Planning and Scheduling-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Control_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Control-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Distributed_AI_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Distributed AI-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Robotics_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Robotics-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Computer_Vision_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Computer Vision-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Analytics_and_Algorithms_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Analytics and Algorithms-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Measuring_and_Testing_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Measuring and Testing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Logic_Programming_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Logic Programming-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Fuzzy_Logic_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Fuzzy Logic-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Probabilistic_Reasoning_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Probabilistic Reasoning-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Ontology_Engineering_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Ontology Engineering-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Machine_Learning_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Machine Learning-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Search_Methods_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Search Methods-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    }
+]

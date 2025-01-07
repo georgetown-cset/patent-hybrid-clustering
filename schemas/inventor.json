@@ -1,0 +1,38 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "inventor",
+    "type": "STRING",
+    "description": "Inventor name."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "inventor_rank",
+    "type": "INTEGER",
+    "description": "Rank of an inventor by the number of patent families in a cluster."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_inventor",
+    "type": "INTEGER",
+    "description": "Number of patent families from the inventor in a cluster."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_top10_inventors",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster from one of the top 10 inventors."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_missing_all_inventors",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster where all inventors are missing."
+    }
+]

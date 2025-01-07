@@ -1,0 +1,38 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "country",
+    "type": "STRING",
+    "description": "Priority country (country of the first priority document in a patent family, generally used as the primary country designator for patents)."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "country_rank",
+    "type": "INTEGER",
+    "description": "Rank of a priority country by the number of patent families in a cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_country",
+    "type": "INTEGER",
+    "description": "Number of patent families from the priority country in a cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_top10_countries",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster from one of the top 10 priority countries."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_missing_all_countries",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster where all priority countries are missing."
+    }
+]

@@ -1,0 +1,32 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "merged_id",
+    "type": "STRING",
+    "description": "CSET merged article ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "citations",
+    "type": "INTEGER",
+    "description": "Number of citations."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "citation_rank",
+    "type": "INTEGER",
+    "description": "Rank of the research cluster based on the number of patent family-to-paper citations of papers within that cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "keywords",
+    "type": "STRING",
+    "description": "List of keyword phrases for the research cluster."
+    }
+]

@@ -1,0 +1,44 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "industry_assignee",
+    "type": "STRING",
+    "description": "Organization of patent family assignee."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "industry_assignee_rank",
+    "type": "INTEGER",
+    "description": "Rank of an industry assignee by the number of patent families in a cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_industry_assignee",
+    "type": "INTEGER",
+    "description": "Number of patent families from industry assignee in a cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_top10_industry_assignees",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster from one of the top 10 industry assignees."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_missing_all_industry_assignees",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster where all industry assignees are missing."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster."
+    }
+]

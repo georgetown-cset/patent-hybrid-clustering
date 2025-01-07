@@ -1,0 +1,98 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "pred_biotech",
+    "type": "FLOAT",
+    "description": "Proportion of biotech-related patent families."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Diagnosis_Sequencing_Bioinformatics_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Diagnosis/Sequencing/Bioinformatics biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Product_Extraction_Purification_Synthesis_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Product Extraction/Purification/Synthesis biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Gene_Editing_Engineering_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Gene Editing/Engineering biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "Physical_Apparatus_Robotics_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Physical Apparatus/Robotics biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Microorganisms_Bacteria_Viruses_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Microorganisms/Bacteria/Viruses biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Tissues_Cells_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Tissues/Cells biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Compounds_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Compounds (e.g. Enzymes/Proteins/Peptides/Steroids) biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Genes_and_Genomes_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Genes/Genomes biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Health_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Health biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Industrial_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Industrial biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Agriculture_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Agriculture biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Food_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Food biotech-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Energy_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Energy biotech-related patent families based on 1790 categorization."
+  },
+  {
+  "mode": "REQUIRED",
+  "name": "Military_Defense_pred",
+  "type": "FLOAT",
+  "description": "Proportion of Military/Defense biotech-related patent families based on 1790 categorization."
+  }
+]

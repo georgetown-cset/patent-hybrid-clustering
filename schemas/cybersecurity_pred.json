@@ -1,0 +1,56 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "pred_cybersecurity",
+    "type": "FLOAT",
+    "description": "Proportion of cybersecurity-related patent families."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Communications_Cryptography_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Communications/Cryptography cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Net_Analysis_Forensics_Attack_Detection_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Network Analysis/Forensics Attack Detection cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Authentication_Authorization_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Authentication/Authorization cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "Vulnerability_Discovery_Threat_Mitigation_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Vulnerability Discovery/Threat Mitigation cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Attack_Interdiction_Recovery_Restoration_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Attack Interdiction/Recovery/Restoration cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Asset_Management_Policy_Enforcement_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Asset Management/Policy Enforcement cybersecurity-related patent families based on 1790 categorization."
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "Other_General_pred",
+    "type": "FLOAT",
+    "description": "Proportion of Other/General cybersecurity-related patent families based on 1790 categorization."
+  }
+]
