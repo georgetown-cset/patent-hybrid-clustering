@@ -50,7 +50,7 @@ new_art AS (
   -- assume 150 DAYS lag between expected publication and expected import date
   SELECT
     merged_id,
-    cluster_id AS paper_cluster_id
+    cluster_id AS research_cluster_id
   FROM
     map_of_science.cluster_assignment
   INNER JOIN
@@ -140,7 +140,7 @@ ncit_cluster AS (
   SELECT
     cluster_id,
     COUNT(DISTINCT family_id) AS Ncit,
-    paper_cluster_id
+    research_cluster_id
   FROM
     cit_clust
   INNER JOIN
@@ -148,13 +148,13 @@ ncit_cluster AS (
     ON (id = merged_id)
   GROUP BY
     cluster_id,
-    paper_cluster_id
+    research_cluster_id
 ),
 
 -- prepare keywords for cit
 cit_keyword_corp AS (
   SELECT
-    cluster_id AS paper_cluster_id,
+    cluster_id AS research_cluster_id,
     STRING_AGG(cset_extracted_phrase, ", ") AS keywords
   FROM
     map_of_science.phrases
@@ -166,7 +166,7 @@ cit_keyword_corp AS (
 cit_rank AS (
   SELECT DISTINCT
     cluster_id,
-    paper_cluster_id,
+    research_cluster_id,
     Ncit AS citations
   FROM
     ncit_cluster
@@ -182,7 +182,7 @@ cit_keyword AS (
   LEFT JOIN
     cit_keyword_corp
     USING
-      (paper_cluster_id)
+      (research_cluster_id)
 )
 
 SELECT DISTINCT

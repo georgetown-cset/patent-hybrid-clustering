@@ -1,9 +1,9 @@
 [
     {
     "mode": "REQUIRED",
-    "name": "merged_id",
+    "name": "research_cluster_id",
     "type": "STRING",
-    "description": "CSET merged article ID."
+    "description": "Cluster id of reseach cluster in the map of science."
     },
     {
     "mode": "REQUIRED",
