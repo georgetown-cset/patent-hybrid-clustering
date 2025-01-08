@@ -167,39 +167,31 @@ with DAG(
         bucket=DATA_BUCKET,
         source_objects=[f"{tmp_dir}/new_metadata_lid/lid.jsonl"],
         schema_object=f"{schema_dir}/patent_lid.json",
-        destination_project_dataset_table=f"{staging_dataset}.patent_lid",
+        destination_project_dataset_table=f"{staging_dataset}.new_patent_lid",
         source_format="NEWLINE_DELIMITED_JSON",
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_TRUNCATE",
     )
 
-    (export_patents_to_lid >> run_lid >> load_lid_outputs)
-
-    curr_downstream_query = load_lid_outputs
-
-    with open(f"{DAGS_DIR}/{sequence_dir}/patent_to_translate_sequence.csv") as f:
-        for line in csv.DictReader(get_clean_lines(f)):
-            query = BigQueryInsertJobOperator(
-                task_id=line["table_name"],
-                configuration={
-                    "query": {
-                        "query": "{% include '"
-                        + f"{sql_dir}/{line['table_name']}.sql"
-                        + "' %}",
-                        "useLegacySql": False,
-                        "destinationTable": {
-                            "projectId": PROJECT_ID,
-                            "datasetId": staging_dataset,
-                            "tableId": line["table_name"],
-                        },
-                        "allowLargeResults": True,
-                        "createDisposition": "CREATE_IF_NEEDED",
-                        "writeDisposition": "WRITE_TRUNCATE",
-                    }
+    patents_to_translate = BigQueryInsertJobOperator(
+        task_id="new_patents_to_translate",
+        configuration={
+            "query": {
+                "query": "{% include '"
+                         + "new_patents_to_translate.sql"
+                         + "' %}",
+                "useLegacySql": False,
+                "destinationTable": {
+                    "projectId": PROJECT_ID,
+                    "datasetId": staging_dataset,
+                    "tableId": "new_patents_to_translate",
                 },
-            )
-            curr_downstream_query >> query
-            curr_downstream_query = query
+                "allowLargeResults": True,
+                "createDisposition": "CREATE_IF_NEEDED",
+                "writeDisposition": "WRITE_TRUNCATE",
+            }
+        },
+    )
 
     export_patents_for_translation = BigQueryToGCSOperator(
         task_id="export_patents_for_translation",
@@ -208,8 +200,6 @@ with DAG(
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
-
-    curr_downstream_query >> export_patents_for_translation
 
     run_translation = GKEStartPodOperator(
         task_id="run-translation",
@@ -345,7 +335,11 @@ with DAG(
     )
 
     (
-        export_patents_for_translation
+        export_patents_to_lid
+        >> run_lid
+        >> load_lid_outputs
+        >> patents_to_translate
+        >> export_patents_for_translation
         >> run_translation
         >> load_patent_translations
         >> patent_text_to_embed
@@ -365,6 +359,9 @@ with DAG(
     wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
 
     curr_downstream_query = wait_for_faiss_load
+
+    # TODO (Rebecca) join the old and new embeddings tables together with a SQL query
+    # do the same for FAISS
 
     with open(f"{DAGS_DIR}/{sequence_dir}/map_building_sequences.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
@@ -521,6 +518,7 @@ with DAG(
     wait_for_checks = DummyOperator(task_id="wait_for_checks")
 
     # TODO: Rebecca and Katherine: deal with backups
+    # the only non-production backups we want are whatever the FAISS outputs are
 
     curr_date = datetime.now().strftime("%Y%m%d")
     non_production_backups = [
@@ -531,7 +529,7 @@ with DAG(
             create_disposition="CREATE_IF_NEEDED",
             write_disposition="WRITE_TRUNCATE",
         )
-        for table_name in ["tie_family_categories", "tie_categories", "metrics"]
+        for table_name in ["patent_lid", "tie_categories", "metrics"]
     ]
     non_production_backups.append(
         BigQueryToBigQueryOperator(

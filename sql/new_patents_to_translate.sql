@@ -3,7 +3,7 @@ LID_families AS (
   SELECT
     CAST(family_id AS STRING) AS family_id,
     ARRAY_AGG(DISTINCT language IGNORE NULLS) AS langs
-  FROM staging_patent_clusters.patent_lid
+  FROM staging_patent_clusters.new_patent_lid
   GROUP BY family_id
 ),
 
