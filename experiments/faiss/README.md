@@ -9,7 +9,7 @@ To run FAISS on a new VM, do the following:
 1.3 TB and 700+ GB of memory while the experiment was running. To calculate similarities on the CPC text embeddings in
 `gs://patent-clustering/cpc_embedding_output`, I had to use a `m1-ultramem-160` instance to have sufficient memory,
 but a 2 TB disk was still sufficient. The code has been run successfully on Ubuntu 20.04 and 24.04.
-2. Install dependencies:
+1. Install dependencies:
 ```bash
 sudo apt-get update
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -17,12 +17,10 @@ bash Miniconda3-latest-Linux-x86_64.sh
 <restart your shell here>
 conda install -c pytorch faiss-cpu=1.8.0
 ```
-3. Choose your index. `IndexFlatL2` can be used to calculate similarities for a small ground truth set to test your
+1. Choose your index. `IndexFlatL2` can be used to calculate similarities for a small ground truth set to test your
 configuration or compare to a different index (see `score.py`). `IndexHNSWFlat` is what we have used for large-scale
 similarity calculations - see results below
-4. Update the `EMBEDDING_SIZE` global variable in `run_experiments.py` to reflect the embedding size of the data
-you are running on.
-5. Run your experiment, e.g. `python3 run_experiments.py --input_dir test_set --output_dir test_set_hnsw
+1. Run your experiment, e.g. `python3 run_experiments.py --input_dir test_set --output_dir test_set_hnsw
 --index_name IndexHNSWFlat`. You should use a screen or tmux session to ensure your experiment does not die due to a
 lost ssh connection.
 
