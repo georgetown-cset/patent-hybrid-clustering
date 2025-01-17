@@ -28,6 +28,7 @@ import numpy as np
 from tqdm import tqdm
 
 TOP_N = 11
+OUTPUT_PREFIX = "new_"
 
 
 # @profile  # noqa: F821
@@ -96,25 +97,28 @@ def get_IndexHNSWFlat(np_embeddings, embedding_size: int):
 
 
 # @profile  # noqa: F821
-def run(input_dir: str, output_dir: str, index_name: str, index_path: str, output_index_path: str=None) -> None:
+def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_map_file: str) -> None:
     """
     Reads a directory of JSONL files containing patent embeddings, generates the specified faiss index, and writes the
     top `TOP_N` most similar patent families to the output directory in JSONL form
     :param input_dir: directory of JSONL files containing patent embeddings
     :param output_dir: directory where output JSONL files containing most similar patents should be written
     :param index_name: Name of the faiss index to use
-    :param index_path: Path to the index file, if any
-    :param output_index_path: Path to the output index file, if any
+    :param index_file: Name of file containing existing index, if any. Will be overwritten by updated index.
+    :param id_map_file: Name of file containing map between CSET and FAISS ids. Will be overwritten by updated map.
     :return: None
     """
     # Specifying an id is not supported with flat indexes, but faiss assigns a numeric id to entries in these indexes in
     # the order they are added. This dict will record the mapping between the order a family id was added to the index
     # and the family id
     numeric_to_family_id = {}
-    seen_family_ids = set()
+    if os.path.exists(id_map_file):
+        with open(id_map_file, mode="rb") as f:
+            numeric_to_family_id = pickle.load(f)
+    seen_family_ids = {v for _, v in numeric_to_family_id.items()}
     embeddings = []
-    curr_id = 0
-    embedding_size = 0
+    curr_id = max({k for k in numeric_to_family_id})+1 if numeric_to_family_id else 0
+    embedding_size = None
     for fi in tqdm(os.listdir(input_dir)):
         with open(os.path.join(input_dir, fi)) as f:
             for line in f:
@@ -132,8 +136,8 @@ def run(input_dir: str, output_dir: str, index_name: str, index_path: str, outpu
                 curr_id += 1
     print(f"Indexing {len(embeddings)} text embeddings")
     np_embeddings = np.array(embeddings)
-    if index_path:
-        with open(index_path, mode="rb") as f:
+    if os.path.exists(index_file):
+        with open(index_file, mode="rb") as f:
             index = pickle.load(f)
             index.add(np_embeddings)
     elif index_name == "IndexFlatIP":
@@ -169,8 +173,10 @@ def run(input_dir: str, output_dir: str, index_name: str, index_path: str, outpu
         ]
         curr_file.write(json.dumps(row) + "\n")
     curr_file.close()
-    with open(output_index_path if output_index_path else index_path, mode="wb") as f:
-        pickle.dump(f, index)
+    with open(f"{OUTPUT_PREFIX}{index_file}", mode="wb") as f:
+        pickle.dump(index, f)
+    with open(f"{OUTPUT_PREFIX}{id_map_file}", mode="wb") as f:
+        pickle.dump(numeric_to_family_id, f)
 
 
 if __name__ == "__main__":
@@ -184,10 +190,12 @@ if __name__ == "__main__":
         choices=["IndexFlatIP", "IndexFlatL2", "IndexIVFFlat", "IndexHNSWFlat"],
         help="FAISS name of index"
     )
-    parser.add_argument("--index_path", help="Path to existing index (can be null)")
-    parser.add_argument("--output_index_path",
-                        help="Path to where updated index should be written. If null, will overwrite `index_path`")
+    parser.add_argument("--index_file",
+                        help="Name of index file (can be null). "
+                             f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.")
+    parser.add_argument("--id_map_file",
+                        help="Name of file containing id map (can be null). "
+                             f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.")
     args = parser.parse_args()
 
-    run(args.input_dir, args.output_dir, args.index_name, args.index_path,
-        args.output_index_path if args.output_index_path else args.index_path)
+    run(args.input_dir, args.output_dir, args.index_name, args.index_file, args.id_map_file)
