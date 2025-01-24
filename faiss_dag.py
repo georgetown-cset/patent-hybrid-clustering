@@ -42,8 +42,6 @@ with (DAG(
     # This is the only region where we can currently create a m1-ultramem-160 instance.
     gce_zone = "us-central1-a"
 
-    # TODO: add as_setup, as_teardown
-    # TODO: big vm, reduce size
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
         project_id=PROJECT_ID,
@@ -104,7 +102,6 @@ with (DAG(
     ]
 
     for index in indexes:
-        # TODO - ask them to update their output directory.
         prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
         prep_environment_sequence.append(
             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
