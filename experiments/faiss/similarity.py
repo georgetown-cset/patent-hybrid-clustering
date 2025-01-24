@@ -118,6 +118,7 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
     seen_family_ids = {v for _, v in numeric_to_family_id.items()}
     embeddings = []
     curr_id = max({k for k in numeric_to_family_id})+1 if numeric_to_family_id else 0
+    min_id = curr_id
     embedding_size = None
     for fi in tqdm(os.listdir(input_dir)):
         with open(os.path.join(input_dir, fi)) as f:
@@ -166,7 +167,7 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
                 os.path.join(output_dir, f"top_{TOP_N}_{num_id / file_length}.jsonl"),
                 mode="w",
             )
-        row = {"family_id": numeric_to_family_id[num_id]}
+        row = {"family_id": numeric_to_family_id[num_id+min_id]}
         row["most_similar"] = [
             {"family_id": numeric_to_family_id[sim_id], "similarity": sim}
             for sim, sim_id in zip(sims, sim_ids)

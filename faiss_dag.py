@@ -43,6 +43,7 @@ with (DAG(
     gce_zone = "us-central1-a"
 
     # TODO: add as_setup, as_teardown
+    # TODO: big vm, reduce size
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
         project_id=PROJECT_ID,
@@ -106,7 +107,7 @@ with (DAG(
         # TODO - ask them to update their output directory.
         prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
         prep_environment_sequence.append(
-            f"gsutil -m cp -r gs://{DATA_BUCKET}/{production_dataset}/{embedding_dir.format(index)}/* "
+            f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
             f"{embedding_dir.format(index)}/")
     prep_environment_script = " && ".join(prep_environment_sequence)
 
@@ -116,7 +117,7 @@ with (DAG(
                      f'--command "{prep_environment_script}"',
     )
 
-    gce_instance_create >> gce_instance_start >> prep_environment
+    gce_instance_create >> gce_instance_start.as_setup() >> prep_environment
     curr = prep_environment
 
     similarities_dir = "{}_similarities"
@@ -161,7 +162,12 @@ with (DAG(
         resource_id=gce_resource_id,
     )
 
-    curr >> gce_instance_stop >> gce_instance_delete
+    curr >> gce_instance_stop.as_teardown() >> gce_instance_delete
+    # This piping is necessary to make the setup/teardown work
+    gce_instance_start >> gce_instance_stop
+    # Ensure that delete doesn't run if we're in the error -> teardown condition so we'll have a chance to review
+    # the failing data
+    curr >> gce_instance_delete
 
     for index in indexes:
         import_embeddings = GCSToBigQueryOperator(
