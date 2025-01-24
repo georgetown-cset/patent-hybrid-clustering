@@ -150,6 +150,7 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
         index = get_IndexHNSWFlat(np_embeddings, embedding_size)
     # Get top n most similar ids for all input embeddings
     similarities, ids = index.search(np_embeddings, TOP_N)
+    print(ids)
     # Write out results in a human-readable form
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
