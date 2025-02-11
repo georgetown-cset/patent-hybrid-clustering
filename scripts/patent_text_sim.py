@@ -7,7 +7,6 @@ from typing import Optional
 import yake
 from wordfreq import zipf_frequency
 
-
 class Postprocessor:
     def __init__(self):
         """

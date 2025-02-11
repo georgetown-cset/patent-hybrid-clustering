@@ -26,7 +26,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.hybrid_sts_scaled_weights_link_c
       CAST(family_id AS STRING) AS node_id,
       CAST(cluster_id AS STRING) AS cluster_id
     FROM
-      staging_clustering_experiments.patent_cluster_intial_experiement_sts_voting_10012024_0_clusters_mapped_from_cset
+      staging_clustering_experiments.patent_cluster_experiment_sts_voting_20241206_0_clusters_mapped_from_cset
   ),
 
   c1 AS (
@@ -34,7 +34,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.hybrid_sts_scaled_weights_link_c
       CAST(family_id AS STRING) AS node_id,
       CAST(cluster_id AS STRING) AS cluster_id
     FROM
-      staging_clustering_experiments.patent_cluster_intial_experiement_sts_voting_10012024_1_clusters_mapped_from_cset
+      staging_clustering_experiments.patent_cluster_experiment_sts_voting_20241206_1_clusters_mapped_from_cset
   ),
 
   c2 AS (
@@ -42,7 +42,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.hybrid_sts_scaled_weights_link_c
       CAST(family_id AS STRING) AS node_id,
       CAST(cluster_id AS STRING) AS cluster_id
     FROM
-      staging_clustering_experiments.patent_cluster_intial_experiement_sts_voting_10012024_2_clusters_mapped_from_cset
+      staging_clustering_experiments.patent_cluster_experiment_sts_voting_20241206_2_clusters_mapped_from_cset
   ),
 
   c3 AS (
@@ -50,7 +50,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.hybrid_sts_scaled_weights_link_c
       CAST(family_id AS STRING) AS node_id,
       CAST(cluster_id AS STRING) AS cluster_id
     FROM
-      staging_clustering_experiments.patent_cluster_intial_experiement_sts_voting_10012024_3_clusters_mapped_from_cset
+      staging_clustering_experiments.patent_cluster_experiment_sts_voting_20241206_3_clusters_mapped_from_cset
   ),
 
   c4 AS (
@@ -58,7 +58,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.hybrid_sts_scaled_weights_link_c
       CAST(family_id AS STRING) AS node_id,
       CAST(cluster_id AS STRING) AS cluster_id
     FROM
-      staging_clustering_experiments.patent_cluster_intial_experiement_sts_voting_10012024_4_clusters_mapped_from_cset
+      staging_clustering_experiments.patent_cluster_experiment_sts_voting_20241206_4_clusters_mapped_from_cset
   ),
 
   -- Seeing if each edge in the link graph connects to patents in the same cluster or not for each experiment
