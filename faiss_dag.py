@@ -23,13 +23,13 @@ args = get_default_args()
 args["on_failure_callback"] = None
 args["retries"] = 1
 
-with (DAG(
+with DAG(
     "faiss_check",
     default_args=args,
     description="Runs faiss",
     schedule_interval=None,
-) as dag):
-    production_dataset = "patent_clustering"
+) as dag:
+    production_dataset = "patent_clusters"
     tmp_dir = f"{production_dataset}/tmp"
     schema_dir = f"{production_dataset}/schemas"
     scripts_dir = f"{production_dataset}/scripts" # added this

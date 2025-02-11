@@ -4,7 +4,10 @@ production_dataset,table_name
 ,new_text_weights
 ,new_combined_weights
 ,new_hybrid_sts_scaled_weights
-,new_cluster_assignments
+,new_cluster_assignment
+,cluster_assignment
 ,cluster_family_text_data
 ,patent_lid
 ,translated_patents
+,most_similar_text
+,most_similar_cpc

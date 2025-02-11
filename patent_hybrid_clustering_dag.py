@@ -12,6 +12,7 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryInsertJobOperator,
 )
 from airflow.operators.bash import BashOperator
+from airflow.providers.google.cloud.transfers import GCSToGCSOperator
 from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
 from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airflow.providers.google.cloud.operators.compute import (
@@ -59,7 +60,7 @@ with DAG(
     description="Runs patent hybrid clustering",
     schedule_interval=None,
 ) as dag:
-    production_dataset = "patent_clustering"
+    production_dataset = "patent_clusters"
     tmp_dir = f"{production_dataset}/tmp"
     schema_dir = f"{production_dataset}/schemas"
     scripts_dir = f"{production_dataset}/scripts"
@@ -315,7 +316,7 @@ with DAG(
         default_pipeline_options=dataflow_options,
         pipeline_options={
             "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding/to_embed_*",
-            "output_data": f"gs://{production_dataset}/embedding_output/embedded",
+            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/text_embeddings",
             "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         },
         dataflow_config=DataflowConfiguration(
@@ -336,7 +337,7 @@ with DAG(
         default_pipeline_options=dataflow_options,
         pipeline_options={
             "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding/to_embed_*",
-            "output_data": f"gs://{production_dataset}/cpc_embedding_output/embedded",
+            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/cpc_embeddings",
             "model": "sentence-transformers/all-mpnet-base-v2",
         },
         dataflow_config=DataflowConfiguration(
@@ -359,8 +360,6 @@ with DAG(
         >> run_text_embedding
         >> run_cpc_embedding
     )
-
-    # TODO (Rebecca): export the data. It should go in gs://airflow-data-exchange/patent_clustering/tmp/{cpc,text}_embeddings
 
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
@@ -492,7 +491,7 @@ with DAG(
             bucket=DATA_BUCKET,
             source_objects=[f"{tmp_dir}/{similarities_dir.format(index)}/*"],
             schema_object=f"{schema_dir}/most_similar.json",
-            destination_project_dataset_table=f"{staging_dataset}.most_similar_{index}",
+            destination_project_dataset_table=f"{staging_dataset}.new_most_similar_{index}",
             source_format="NEWLINE_DELIMITED_JSON",
             create_disposition="CREATE_IF_NEEDED",
             # note that this is write append - be careful to clean the table out if you want to retry
@@ -506,9 +505,6 @@ with DAG(
     wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
 
     curr_downstream_query = wait_for_faiss_load
-
-    # TODO (Rebecca) join the old and new embeddings tables together with a SQL query
-    # do the same for FAISS
 
     with open(f"{DAGS_DIR}/{sequence_dir}/map_building_sequences.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
@@ -667,6 +663,33 @@ with DAG(
     # TODO: Rebecca and Katherine: deal with backups
     # the only non-production backups we want are whatever the FAISS outputs are
 
+    copy_cpc_embeddings = GCSToGCSOperator(
+        task_id="copy_cpc_embeddings",
+        source_bucket="airflow-data-exchange",
+        source_objects=["patent_clusters/tmp/cpc_embeddings"],
+        destination_bucket="patent_clustering",
+        destination_object="cpc_embedding_output/",
+        match_glob="**/*.embedded"
+    )
+
+    copy_text_embeddings = GCSToGCSOperator(
+        task_id="copy_text_embeddings",
+        source_bucket="airflow-data-exchange",
+        source_objects=["patent_clusters/tmp/text_embeddings"],
+        destination_bucket="patent_clustering",
+        destination_object="embedding_output/",
+        match_glob="**/*.embedded"
+    )
+
+    copy_indexes = GCSToGCSOperator(
+        task_id="copy_text_embeddings",
+        source_bucket="airflow-data-exchange",
+        source_objects=["patent_clusters/indexes"],
+        destination_bucket="airflow-data-exchange",
+        destination_object="patent-clusters/indexes-backup/",
+        match_glob="**/*.pickle"
+    )
+
     curr_date = datetime.now().strftime("%Y%m%d")
     non_production_backups = [
         BigQueryToBigQueryOperator(
@@ -676,19 +699,11 @@ with DAG(
             create_disposition="CREATE_IF_NEEDED",
             write_disposition="WRITE_TRUNCATE",
         )
-        for table_name in ["patent_lid", "tie_categories", "metrics"]
+        for table_name in ["most_similar_cpc", "most_similar_text", "hybrid_sts_scaled_weights",
+                           "patent_lid", "translated_patents"]
     ]
-    non_production_backups.append(
-        BigQueryToBigQueryOperator(
-            task_id="back_up_curr_patent_metadata",
-            source_project_dataset_tables=["unified_patents.classifications"],
-            destination_project_dataset_table=f"{staging_dataset}.classifications",
-            create_disposition="CREATE_IF_NEEDED",
-            write_disposition="WRITE_TRUNCATE",
-        )
-    )
 
-    success_alert = get_post_success("Patent categorization update succeeded!", dag)
+    success_alert = get_post_success("Patent clustering update succeeded!", dag)
 
     wait_for_production_backups = DummyOperator(task_id="wait_for_production_backups")
     wait_for_production_backups >> non_production_backups >> success_alert
@@ -725,6 +740,9 @@ with DAG(
             wait_for_queries
             >> checks
             >> wait_for_checks
+            >> copy_cpc_embeddings
+            >> copy_text_embeddings
+            >> copy_indexes
             >> table_copy
             >> pop_descriptions
             >> table_backup
