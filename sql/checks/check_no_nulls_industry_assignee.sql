@@ -1,5 +1,4 @@
-SELECT
-  LOGICAL_AND(cluster_id IS NOT NULL)
+SELECT LOGICAL_AND(cluster_id IS NOT NULL)
   AND LOGICAL_AND(industry_assignee IS NOT NULL)
   AND LOGICAL_AND(industry_assignee_rank IS NOT NULL)
   AND LOGICAL_AND(NPF_industry_assignee IS NOT NULL)

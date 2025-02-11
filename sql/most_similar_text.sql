@@ -1,11 +1,9 @@
 WITH all_ids AS (
-  SELECT DISTINCT
-    family_id
+  SELECT DISTINCT family_id
   FROM
     staging_patent_clusters.most_similar_text
   UNION DISTINCT
-  SELECT DISTINCT
-    family_id
+  SELECT DISTINCT family_id
   FROM
     staging_patent_clusters.new_most_similar_text
 )

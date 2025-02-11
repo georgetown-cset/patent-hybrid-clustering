@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 from airflow import DAG
+from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
@@ -11,19 +12,18 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryInsertJobOperator,
 )
-from airflow.operators.bash import BashOperator
-from airflow.providers.google.cloud.transfers import GCSToGCSOperator
-from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
-from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airflow.providers.google.cloud.operators.compute import (
     ComputeEngineDeleteInstanceOperator,
     ComputeEngineInsertInstanceOperator,
     ComputeEngineStartInstanceOperator,
     ComputeEngineStopInstanceOperator,
 )
+from airflow.providers.google.cloud.operators.dataflow import DataflowConfiguration
+from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airflow.providers.google.cloud.operators.kubernetes_engine import (
     GKEStartPodOperator,
 )
+from airflow.providers.google.cloud.transfers import GCSToGCSOperator
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import (
     BigQueryToBigQueryOperator,
 )
@@ -72,20 +72,6 @@ with DAG(
     gce_resource_id = "faiss"
     # This is the only region where we can currently create a m1-ultramem-160 instance.
     gce_zone = "us-central1-a"
-
-    # TODO: a list
-    # 1. pull *new* patent families that have titles or abstracts [Rebecca]
-    # but were not included in the previous clustering
-    # 2. Run LID over the new patent families that don't have language ids [Katherine]
-    # 3. Get the list of patents that need translation [Katherine]
-    # 4. Run translation over the new patent families to prep for embedding [Katherine]
-    # 5. run FAISS over the new patent families [Katherine, Rebecca]
-    # 6. get citation links for the new patent families [Rebecca]
-    # 7. create overall edge weights for new patent families [Rebecca]
-    # 8. run "reattachment" waves to add new patent families into clusters and get final map [Katherine]
-    # 10. run keyword extraction on updated clusters [Rebecca]
-    # 11. run cluster breakdown SQL queries on updated clusters [Rebecca]
-    # 12. run SQL tests and transfer to production and backup tables [Katherine, Rebecca]
 
     clear_tmp_dir = GCSDeleteObjectsOperator(
         task_id="clear_tmp_dir", bucket_name=DATA_BUCKET, prefix=tmp_dir
@@ -190,9 +176,7 @@ with DAG(
         task_id="new_patents_to_translate",
         configuration={
             "query": {
-                "query": "{% include '"
-                         + "new_patents_to_translate.sql"
-                         + "' %}",
+                "query": "{% include '" + "new_patents_to_translate.sql" + "' %}",
                 "useLegacySql": False,
                 "destinationTable": {
                     "projectId": PROJECT_ID,
@@ -424,13 +408,14 @@ with DAG(
         prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
         prep_environment_sequence.append(
             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
-            f"{embedding_dir.format(index)}/")
+            f"{embedding_dir.format(index)}/"
+        )
     prep_environment_script = " && ".join(prep_environment_sequence)
 
     prep_environment = BashOperator(
         task_id="prep_environment",
-        bash_command=f'gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} '
-                     f'--command "{prep_environment_script}"',
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+        f'--command "{prep_environment_script}"',
     )
 
     gce_instance_create >> gce_instance_start.as_setup() >> prep_environment
@@ -449,16 +434,18 @@ with DAG(
             f"gsutil cp new_{index}.pickle gs://{DATA_BUCKET}/{index_dir}/{index}.pickle",
             f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle "
             f"gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle_prev; "
-            f"gsutil cp new_{index}_map.pickle gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle"
+            f"gsutil cp new_{index}_map.pickle gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle",
         ]
-        get_similarities_script = (f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle .; "
-                                   f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle .; " +
-                                   (" && ".join(get_similarities_sequence)))
+        get_similarities_script = (
+            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle .; "
+            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle .; "
+            + (" && ".join(get_similarities_sequence))
+        )
 
         get_embeddings = BashOperator(
             task_id=f"get_{index}_embeddings",
-            bash_command=f'gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} '
-                         f'--command "{get_similarities_script}"',
+            bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+            f'--command "{get_similarities_script}"',
         )
 
         curr >> get_embeddings
@@ -496,7 +483,7 @@ with DAG(
             create_disposition="CREATE_IF_NEEDED",
             # note that this is write append - be careful to clean the table out if you want to retry
             write_disposition="WRITE_APPEND",
-            retries=0
+            retries=0,
         )
 
     gce_instance_delete >> import_embeddings
@@ -669,7 +656,7 @@ with DAG(
         source_objects=["patent_clusters/tmp/cpc_embeddings"],
         destination_bucket="patent_clustering",
         destination_object="cpc_embedding_output/",
-        match_glob="**/*.embedded"
+        match_glob="**/*.embedded",
     )
 
     copy_text_embeddings = GCSToGCSOperator(
@@ -678,7 +665,7 @@ with DAG(
         source_objects=["patent_clusters/tmp/text_embeddings"],
         destination_bucket="patent_clustering",
         destination_object="embedding_output/",
-        match_glob="**/*.embedded"
+        match_glob="**/*.embedded",
     )
 
     copy_indexes = GCSToGCSOperator(
@@ -687,7 +674,7 @@ with DAG(
         source_objects=["patent_clusters/indexes"],
         destination_bucket="airflow-data-exchange",
         destination_object="patent-clusters/indexes-backup/",
-        match_glob="**/*.pickle"
+        match_glob="**/*.pickle",
     )
 
     curr_date = datetime.now().strftime("%Y%m%d")
@@ -699,8 +686,13 @@ with DAG(
             create_disposition="CREATE_IF_NEEDED",
             write_disposition="WRITE_TRUNCATE",
         )
-        for table_name in ["most_similar_cpc", "most_similar_text", "hybrid_sts_scaled_weights",
-                           "patent_lid", "translated_patents"]
+        for table_name in [
+            "most_similar_cpc",
+            "most_similar_text",
+            "hybrid_sts_scaled_weights",
+            "patent_lid",
+            "translated_patents",
+        ]
     ]
 
     success_alert = get_post_success("Patent clustering update succeeded!", dag)

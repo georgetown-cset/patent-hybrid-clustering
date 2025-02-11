@@ -1,13 +1,13 @@
 from airflow import DAG
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
-    GCSToBigQueryOperator,
-)
 from airflow.operators.bash import BashOperator
 from airflow.providers.google.cloud.operators.compute import (
     ComputeEngineDeleteInstanceOperator,
     ComputeEngineInsertInstanceOperator,
     ComputeEngineStartInstanceOperator,
     ComputeEngineStopInstanceOperator,
+)
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
+    GCSToBigQueryOperator,
 )
 from dataloader.airflow_utils.defaults import (
     DAGS_DIR,
@@ -17,7 +17,6 @@ from dataloader.airflow_utils.defaults import (
     get_default_args,
     get_post_success,
 )
-
 
 args = get_default_args()
 args["on_failure_callback"] = None
@@ -32,8 +31,8 @@ with DAG(
     production_dataset = "patent_clusters"
     tmp_dir = f"{production_dataset}/tmp"
     schema_dir = f"{production_dataset}/schemas"
-    scripts_dir = f"{production_dataset}/scripts" # added this
-    index_dir = f"{production_dataset}/indexes" # added this
+    scripts_dir = f"{production_dataset}/scripts"  # added this
+    index_dir = f"{production_dataset}/indexes"  # added this
     sql_dir = f"sql/{production_dataset}"
     sequence_dir = f"sequences/{production_dataset}"
     staging_dataset = f"staging_{production_dataset}"
@@ -105,13 +104,14 @@ with DAG(
         prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
         prep_environment_sequence.append(
             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
-            f"{embedding_dir.format(index)}/")
+            f"{embedding_dir.format(index)}/"
+        )
     prep_environment_script = " && ".join(prep_environment_sequence)
 
     prep_environment = BashOperator(
         task_id="prep_environment",
-        bash_command=f'gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} '
-                     f'--command "{prep_environment_script}"',
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+        f'--command "{prep_environment_script}"',
     )
 
     gce_instance_create >> gce_instance_start.as_setup() >> prep_environment
@@ -130,16 +130,18 @@ with DAG(
             f"gsutil cp new_{index}.pickle gs://{DATA_BUCKET}/{index_dir}/{index}.pickle",
             f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle "
             f"gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle_prev; "
-            f"gsutil cp new_{index}_map.pickle gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle"
+            f"gsutil cp new_{index}_map.pickle gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle",
         ]
-        get_similarities_script = (f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle .; "
-                                   f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle .; " +
-                                   (" && ".join(get_similarities_sequence)))
+        get_similarities_script = (
+            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle .; "
+            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle .; "
+            + (" && ".join(get_similarities_sequence))
+        )
 
         get_embeddings = BashOperator(
             task_id=f"get_{index}_embeddings",
-            bash_command=f'gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} '
-                         f'--command "{get_similarities_script}"',
+            bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+            f'--command "{get_similarities_script}"',
         )
 
         curr >> get_embeddings
@@ -177,11 +179,7 @@ with DAG(
             create_disposition="CREATE_IF_NEEDED",
             # note that this is write append - be careful to clean the table out if you want to retry
             write_disposition="WRITE_APPEND",
-            retries=0
+            retries=0,
         )
 
         gce_instance_delete >> import_embeddings
-
-
-
-

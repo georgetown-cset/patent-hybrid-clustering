@@ -97,7 +97,9 @@ def get_IndexHNSWFlat(np_embeddings, embedding_size: int):
 
 
 # @profile  # noqa: F821
-def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_map_file: str) -> None:
+def run(
+    input_dir: str, output_dir: str, index_name: str, index_file: str, id_map_file: str
+) -> None:
     """
     Reads a directory of JSONL files containing patent embeddings, generates the specified faiss index, and writes the
     top `TOP_N` most similar patent families to the output directory in JSONL form
@@ -117,7 +119,7 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
             numeric_to_family_id = pickle.load(f)
     seen_family_ids = {v for _, v in numeric_to_family_id.items()}
     embeddings = []
-    curr_id = max({k for k in numeric_to_family_id})+1 if numeric_to_family_id else 0
+    curr_id = max({k for k in numeric_to_family_id}) + 1 if numeric_to_family_id else 0
     min_id = curr_id
     embedding_size = None
     for fi in tqdm(os.listdir(input_dir)):
@@ -167,7 +169,7 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
                 os.path.join(output_dir, f"top_{TOP_N}_{num_id / file_length}.jsonl"),
                 mode="w",
             )
-        row = {"family_id": numeric_to_family_id[num_id+min_id]}
+        row = {"family_id": numeric_to_family_id[num_id + min_id]}
         row["most_similar"] = [
             {"family_id": numeric_to_family_id[sim_id], "similarity": sim}
             for sim, sim_id in zip(sims, sim_ids)
@@ -183,21 +185,36 @@ def run(input_dir: str, output_dir: str, index_name: str, index_file: str, id_ma
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", default="small_embedding_sample", help="Directory of embeddings")
-    parser.add_argument("--output_dir", default="small_embedding_sample_out",
-                        help="Directory where lists of most similar documents should be written")
+    parser.add_argument(
+        "--input_dir", default="small_embedding_sample", help="Directory of embeddings"
+    )
+    parser.add_argument(
+        "--output_dir",
+        default="small_embedding_sample_out",
+        help="Directory where lists of most similar documents should be written",
+    )
     parser.add_argument(
         "--index_name",
         default="IndexHNSWFlat",
         choices=["IndexFlatIP", "IndexFlatL2", "IndexIVFFlat", "IndexHNSWFlat"],
-        help="FAISS name of index"
+        help="FAISS name of index",
     )
-    parser.add_argument("--index_file",
-                        help="Name of index file (can be null). "
-                             f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.")
-    parser.add_argument("--id_map_file",
-                        help="Name of file containing id map (can be null). "
-                             f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.")
+    parser.add_argument(
+        "--index_file",
+        help="Name of index file (can be null). "
+        f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.",
+    )
+    parser.add_argument(
+        "--id_map_file",
+        help="Name of file containing id map (can be null). "
+        f"New index will be written to this filename prefixed with `{OUTPUT_PREFIX}`.",
+    )
     args = parser.parse_args()
 
-    run(args.input_dir, args.output_dir, args.index_name, args.index_file, args.id_map_file)
+    run(
+        args.input_dir,
+        args.output_dir,
+        args.index_name,
+        args.index_file,
+        args.id_map_file,
+    )

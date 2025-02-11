@@ -1,5 +1,4 @@
-SELECT
-  LOGICAL_AND(research_cluster_id IS NOT NULL)
+SELECT LOGICAL_AND(research_cluster_id IS NOT NULL)
   AND LOGICAL_AND(cluster_id IS NOT NULL)
   AND LOGICAL_AND(citations IS NOT NULL)
   AND LOGICAL_AND(citation_rank IS NOT NULL)
