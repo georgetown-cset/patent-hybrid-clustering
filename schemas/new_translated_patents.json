@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "patent_id",
+    "type": "STRING",
+    "description": "The persistent ID of the patent."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "family_id",
+    "type": "STRING",
+    "description": "Family ID of the patent, or a dummy id used for our purposes (structured as X-patent_id)."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "title",
+    "type": "BOOLEAN",
+    "description": "Translated title to English."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "abstract",
+    "type": "STRING",
+    "description": "Translated title to English."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "title_original",
+    "type": "STRING",
+    "description": "Original title."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "abstract_original",
+    "type": "STRING",
+    "description": "Original abstract."
+  }
+]

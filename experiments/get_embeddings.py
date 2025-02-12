@@ -62,7 +62,8 @@ def run(input_data: str, output_data: str, model_name: str, pipeline_args: dict)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input_data", default="gs://patent-clustering/cpc_embedding/to_embed_*"
+        "--input_data",
+        default="gs://airflow-data-exchange/tmp/cpc_embedding/to_embed_*",
     )
     parser.add_argument(
         "--output_data", default="gs://patent-clustering/cpc_embedding_output/embedded"

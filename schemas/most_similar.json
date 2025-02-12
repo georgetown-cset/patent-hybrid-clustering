@@ -1,0 +1,24 @@
+[
+  {
+    "fields": [
+      {
+        "mode": "NULLABLE",
+        "name": "similarity",
+        "type": "FLOAT"
+      },
+      {
+        "mode": "NULLABLE",
+        "name": "family_id",
+        "type": "STRING"
+      }
+    ],
+    "mode": "REPEATED",
+    "name": "most_similar",
+    "type": "RECORD"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "family_id",
+    "type": "STRING"
+  }
+]

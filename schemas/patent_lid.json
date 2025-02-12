@@ -1,0 +1,32 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "patent_id",
+    "type": "STRING",
+    "description": "The persistent ID of the patent."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "family_id",
+    "type": "STRING",
+    "description": "Family ID of the patent, or a dummy id used for our purposes (structured as X-patent_id)."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "reliable",
+    "type": "BOOLEAN",
+    "description": "Whether or not the language id is reliable."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "language_long",
+    "type": "STRING",
+    "description": "Long version of the language identified in the patent."
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "language",
+    "type": "STRING",
+    "description": "Short version of the language identified in the patent."
+  }
+]
