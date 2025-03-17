@@ -11,7 +11,7 @@ WITH get_original_set AS (
     NOT((REGEXP_CONTAINS(SPLIT(patent_id, '-')[OFFSET(2)], 'P')
       OR REGEXP_CONTAINS(SPLIT(patent_id, '-')[OFFSET(2)], 'S'))
       AND SPLIT(patent_id, '-')[OFFSET(0)] = 'US')
-    AND (cluster_assignment.family_id IS NULL)
+    AND (cluster_assignment_staging.family_id IS NULL)
 ),
 
 test_for_text AS (

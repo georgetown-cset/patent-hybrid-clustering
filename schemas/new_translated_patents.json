@@ -14,7 +14,7 @@
   {
     "mode": "NULLABLE",
     "name": "title",
-    "type": "BOOLEAN",
+    "type": "STRING",
     "description": "Translated title to English."
   },
   {

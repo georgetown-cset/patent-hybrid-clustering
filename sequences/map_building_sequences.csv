@@ -1,4 +1,8 @@
 production_dataset,table_name
+,patent_lid
+,translated_patents
+,most_similar_text
+,most_similar_cpc
 ,new_citation_weights
 ,new_cpc_weights
 ,new_text_weights
@@ -7,7 +11,3 @@ production_dataset,table_name
 ,new_cluster_assignment
 ,cluster_assignment
 ,cluster_family_text_data
-,patent_lid
-,translated_patents
-,most_similar_text
-,most_similar_cpc

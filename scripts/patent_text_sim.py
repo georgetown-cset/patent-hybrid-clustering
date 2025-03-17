@@ -64,7 +64,8 @@ def get_cluster_text(text_dir: str) -> defaultdict(str):
         with open(os.path.join(text_dir, filename)) as f:
             for line in f:
                 js = json.loads(line)
-                clust_text[int(js["cluster_id"])] += " " + js["text_corp"]
+                if "text_corp" in js:
+                    clust_text[int(js["cluster_id"])] += " " + js["text_corp"]
     return clust_text
 
 
@@ -77,6 +78,12 @@ def run_yake(clust_text) -> list:
     yake_output = []
     kw_extractor = yake.KeywordExtractor(n=3, dedupLim=0.5, top=20)
     for cluster in clust_text:
+        if not clust_text:
+            # If a cluster is all non-English, we have no phrases
+            yake_output.append(
+                {"cluster_id": cluster, "cset_extracted_phrase": None, "score": None}
+            )
+            continue
         keywords = kw_extractor.extract_keywords(clust_text[cluster])
         for kw in keywords:
             yake_output.append(
@@ -88,7 +95,8 @@ def run_yake(clust_text) -> list:
 def extract_phrases(text_dir: str, output_dir: str) -> None:
     """
     Runs phrase extraction
-    :param n_workers: Number of CPU workers used in multi-processing
+    :param text_dir The directory of text
+    :param output_dir THe output directory
     """
     print("Get cluster title + abstracts")
     cluster_text = get_cluster_text(text_dir)

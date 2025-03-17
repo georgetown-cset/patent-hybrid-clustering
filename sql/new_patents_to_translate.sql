@@ -10,7 +10,7 @@ LID_families AS (
 model_check AS (
   SELECT family_id
   FROM LID_families
-  WHERE staging_patent_clusters.CHECKLANGUAGES(langs) IS FALSE
+  WHERE staging_patent_clusters.checkLanguages(langs) IS FALSE --noqa
 )
 
 SELECT

@@ -12,10 +12,12 @@ def remove_bad_chars(text):
 
 
 def load_data(data_folder):
-    data_files = os.listdir(os.path.join(data_folder, "input_data"))
+    data_files = os.listdir(os.path.join(data_folder, "input_data/new_metadata_to_lid"))
     data_raw = []
     for file in data_files:
-        with open(os.path.join(data_folder, "input_data/" + file), "r") as fil:
+        with open(
+            os.path.join(data_folder, "input_data/new_metadata_to_lid", file), "r"
+        ) as fil:
             json_list = list(fil)
             for row in json_list:
                 data_raw.append(json.loads(row))

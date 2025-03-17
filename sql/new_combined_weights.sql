@@ -20,4 +20,3 @@ SELECT
   weight_cpc
 FROM get_clean_weights
 LEFT JOIN staging_patent_clusters.new_patents_to_embed ON family_reference = new_patents_to_embed.family_id
-WHERE text IS NOT NULL
