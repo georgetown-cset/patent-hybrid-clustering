@@ -1,7 +1,7 @@
 -- Get dummy families
 WITH
 families_with_dummies AS (
-  SELECT
+  SELECT DISTINCT
     patent_id,
     COALESCE(family_id,
       "X-" || patent_id) AS family_id
@@ -23,30 +23,35 @@ clusters AS (
       (family_id)
 ),
 
+-- find dates
+date_info AS (
+  SELECT DISTINCT
+    patent_id,
+    first_priority_date,
+    EXTRACT(YEAR FROM CURRENT_DATE()) - EXTRACT(YEAR FROM first_priority_date) AS age
+  FROM
+    unified_patents.dates
+  WHERE
+    DATE_DIFF(first_priority_date, DATE_SUB(CURRENT_DATE(), INTERVAL 3800 DAY), DAY) > 0
+),
+
 new_pat AS (
   -- assume 150 DAYS lag between expected publication and expected import date
   -- include any patents from the last 10 years
   -- (in papers we do 5 but patents have a longer lag)
-  SELECT
+  SELECT DISTINCT
     *
   FROM
     clusters
-  INNER JOIN (
-    SELECT
-      patent_id,
-      first_priority_date,
-      EXTRACT(YEAR FROM CURRENT_DATE()) - EXTRACT(YEAR FROM first_priority_date) AS age
-    FROM
-      unified_patents.dates
-    WHERE
-      DATE_DIFF(first_priority_date, DATE_SUB(CURRENT_DATE(), INTERVAL 3800 DAY), DAY) > 0)
+  INNER JOIN
+    date_info
     USING
       (patent_id)
 ),
 
 -- Link weights to families so we can count all
 new_cit AS (
-  SELECT
+  SELECT DISTINCT
     clusters.family_id AS id,
     family_reference AS ref_id
   FROM
@@ -58,20 +63,17 @@ new_cit AS (
   LEFT JOIN
     unified_patents.links
     ON (family_reference = links.family_id)
-  WHERE
-    links.patent_id IN (
-      SELECT patent_id
-      FROM
-        new_pat)
-    AND clusters.patent_id IN (
-      SELECT patent_id
-      FROM
-        new_pat)
+  INNER JOIN
+    new_pat
+    ON new_pat.patent_id = links.patent_id
+  INNER JOIN
+    new_pat AS new_pat_b -- noqa: L031
+    ON new_pat_b.patent_id = clusters.patent_id
 ),
 
 -- link references to cluster ids
 linked_cits AS (
-  SELECT
+  SELECT DISTINCT
     id,
     ref_id,
     cluster_id AS clust1
@@ -99,27 +101,31 @@ new_cit_clust AS (
       linked_cits.ref_id = clusters.family_id
 ),
 
+-- find what's in the same cluster
+same_clust_finder AS (
+  SELECT DISTINCT
+    id,
+    clust1 AS cluster_id,
+    same_clust
+  FROM
+    new_cit_clust
+  UNION ALL
+  SELECT
+    ref_id AS id,
+    clust2 AS cluster_id,
+    same_clust
+  FROM
+    new_cit_clust
+),
+
 -- get number of links within clusters and in total for each family_id
 Nlinks AS (
   SELECT
     id,
     SUM(same_clust) AS same_clust_N,
     COUNT(*) AS total_linksN
-  FROM (
-    SELECT
-      id,
-      clust1 AS cluster_id,
-      same_clust
-    FROM
-      new_cit_clust
-    UNION ALL
-    SELECT
-      ref_id AS id,
-      clust2 AS cluster_id,
-      same_clust
-    FROM
-      new_cit_clust
-  )
+  FROM
+    same_clust_finder
   GROUP BY
     id
 ),
@@ -137,7 +143,7 @@ ncit_counts AS (
 
 -- clean up link counts
 links_count AS (
-  SELECT
+  SELECT DISTINCT
     id,
     same_clust_N,
     IF(total_linksN = 0, 1, total_linksN) AS total_linksN,
@@ -152,7 +158,7 @@ links_count AS (
 
 -- prepare data for core calculation
 Links_cit AS (
-  SELECT
+  SELECT DISTINCT
     id,
     same_clust_N,
     total_linksN,
@@ -168,7 +174,7 @@ Links_cit AS (
 
 -- get share of links in same cluster for each id and cluster
 Link_cit_clust AS (
-  SELECT
+  SELECT DISTINCT
     id,
     cluster_id,
     same_clust_N,
@@ -194,78 +200,92 @@ core AS (
     Link_cit_clust
 ),
 
+-- get a core ranking
+core_ranking AS (
+  SELECT
+    cluster_id,
+    id,
+    core_stat,
+    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY core_stat DESC) AS core_rank
+  FROM
+    core
+  WHERE
+    core_stat IS NOT NULL
+),
+
 -- calculate top10 core
 top_core AS (
-  SELECT
+  SELECT DISTINCT
     *
-  FROM (
-    SELECT
-      cluster_id,
-      id,
-      core_stat,
-      ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY core_stat DESC) AS core_rank
-    FROM
-      core
-    WHERE
-      core_stat IS NOT NULL
-  )
+  FROM
+    core_ranking
   WHERE
     core_rank < 11
 ),
 
+date_data AS (
+  SELECT DISTINCT
+    patent_id,
+    family_id,
+    EXTRACT(YEAR
+      FROM
+      first_priority_date) AS priority_year,
+    COALESCE(first_priority_date, application_date, publication_date) AS patent_date
+  FROM
+    unified_patents.dates
+),
+
 -- Get initial title and date info
 title_date_info AS (
-  SELECT
+  SELECT DISTINCT
     patent_id,
     clusters.family_id,
     title,
     title_original,
     IF(priority_year IS NULL, '', CAST(priority_year AS STRING)) AS priority_year,
-    patent_date
+    patent_date,
+    IF(patent_date IS NULL, '', CAST(EXTRACT(YEAR FROM patent_date) AS STRING)) AS patent_year
   FROM
     unified_patents.metadata
-  LEFT JOIN (
-    SELECT
-      patent_id,
-      family_id,
-      EXTRACT(YEAR
-        FROM
-        first_priority_date) AS priority_year,
-      COALESCE(first_priority_date, application_date, publication_date) AS patent_date
-    FROM
-      unified_patents.dates
-  )
-  USING
-    (patent_id)
+  LEFT JOIN
+    date_data
+    USING
+      (patent_id)
   LEFT JOIN
     clusters
     USING
       (patent_id)
+),
+
+good_titles AS (
+  SELECT
+    patent_id,
+    family_id,
+    COALESCE(title, title_original) AS title,
+    patent_date
+  FROM
+    title_date_info
   WHERE title IS NOT NULL
     OR title_original IS NOT NULL
 ),
 
 get_ordering AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
     patent_id,
     title,
-    title_original,
-    priority_year,
-    patent_date,
     RANK() OVER (
-      PARTITION BY family_id ORDER BY patent_date ASC, LENGTH(COALESCE(title, title_original)) DESC
+      PARTITION BY family_id ORDER BY patent_date ASC, LENGTH(title) DESC
     ) AS ordering
   FROM
-    title_date_info
+    good_titles
 ),
 
 -- Group title and year by family
 family_title_date AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
-    COALESCE(title, title_original) AS title,
-    priority_year
+    title
   FROM
     get_ordering
   WHERE ordering = 1
@@ -273,11 +293,17 @@ family_title_date AS (
 
 -- prepare titles for cit
 title_core AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
-    CONCAT( IF(title IS NULL, '', title), ', ', priority_year ) AS core_title
+    CONCAT(
+      IF(family_title_date.title IS NULL, '', family_title_date.title), ', ', COALESCE(priority_year, patent_year)
+    ) AS core_title
   FROM
+    title_date_info
+  LEFT JOIN
     family_title_date
+    USING
+      (family_id)
 )
 
 SELECT DISTINCT

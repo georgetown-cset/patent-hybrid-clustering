@@ -234,59 +234,69 @@ top_core AS (
     core_rank < 11
 ),
 
+date_data AS (
+  SELECT DISTINCT
+    patent_id,
+    family_id,
+    EXTRACT(YEAR
+      FROM
+      first_priority_date) AS priority_year,
+    COALESCE(first_priority_date, application_date, publication_date) AS patent_date
+  FROM
+    unified_patents.dates
+),
+
 -- Get initial title and date info
 title_date_info AS (
-  SELECT
+  SELECT DISTINCT
     patent_id,
     clusters.family_id,
     title,
     title_original,
     IF(priority_year IS NULL, '', CAST(priority_year AS STRING)) AS priority_year,
-    patent_date
+    patent_date,
+    IF(patent_date IS NULL, '', CAST(EXTRACT(YEAR FROM patent_date) AS STRING)) AS patent_year
   FROM
     unified_patents.metadata
-  LEFT JOIN (
-    SELECT
-      patent_id,
-      family_id,
-      EXTRACT(YEAR
-        FROM
-        first_priority_date) AS priority_year,
-      COALESCE(first_priority_date, application_date, publication_date) AS patent_date
-    FROM
-      unified_patents.dates
-  )
-  USING
-    (patent_id)
+  LEFT JOIN
+    date_data
+    USING
+      (patent_id)
   LEFT JOIN
     clusters
     USING
       (patent_id)
+),
+
+good_titles AS (
+  SELECT
+    patent_id,
+    family_id,
+    COALESCE(title, title_original) AS title,
+    patent_date
+  FROM
+    title_date_info
   WHERE title IS NOT NULL
     OR title_original IS NOT NULL
 ),
 
 get_ordering AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
     patent_id,
     title,
-    title_original,
-    priority_year,
-    patent_date,
     RANK() OVER (
-      PARTITION BY family_id ORDER BY patent_date ASC, LENGTH(COALESCE(title, title_original)) DESC
+      PARTITION BY family_id ORDER BY patent_date ASC, LENGTH(title) DESC
     ) AS ordering
   FROM
-    title_date_info
+    good_titles
 ),
 
 -- Group title and year by family
 family_title_date AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
-    COALESCE(title, title_original) AS title,
-    priority_year
+    title
   FROM
     get_ordering
   WHERE ordering = 1
@@ -294,11 +304,17 @@ family_title_date AS (
 
 -- prepare titles for cit
 title_core AS (
-  SELECT
+  SELECT DISTINCT
     family_id,
-    CONCAT( IF(title IS NULL, '', title), ', ', priority_year ) AS core_title
+    CONCAT(
+      IF(family_title_date.title IS NULL, '', family_title_date.title), ', ', COALESCE(priority_year, patent_year)
+    ) AS core_title
   FROM
+    title_date_info
+  LEFT JOIN
     family_title_date
+    USING
+      (family_id)
 )
 
 SELECT DISTINCT

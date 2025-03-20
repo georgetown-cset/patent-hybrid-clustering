@@ -62,8 +62,3 @@ SELECT
   family_id,
   cluster_id
 FROM weight_rankings
-UNION ALL
-SELECT
-  family_id,
-  cluster_id
-FROM staging_patent_clusters.cluster_assignment_staging

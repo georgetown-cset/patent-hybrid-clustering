@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import time
 
 import pycld2 as cld2
 import regex
@@ -20,14 +21,23 @@ class Translator:
         self.num_chars_translated = 0
 
     def get_patents_to_translate(self, data_folder):
-        data_files = os.listdir(os.path.join(data_folder, "input_data"))
+        data_files = os.listdir(
+            os.path.join(data_folder, "input_data/new_patents_to_translate")
+        )
         data_raw = []
         for file in data_files:
-            with open(os.path.join(data_folder, "input_data/" + file), "r") as fil:
+            with open(
+                os.path.join(data_folder, "input_data/new_patents_to_translate", file),
+                "r",
+            ) as fil:
                 json_list = list(fil)
                 for row in json_list:
                     data_raw.append(json.loads(row))
-                print(os.path.join(data_folder, "input_data/" + file))
+                print(
+                    os.path.join(
+                        data_folder, "input_data/new_patents_to_translate", file
+                    )
+                )
 
         for i, row in enumerate(data_raw):
             if i % 100 == 0:
@@ -59,7 +69,12 @@ class Translator:
                     f"Requested translation of over {self.max_chars_to_translate} "
                     f"characters, review input data."
                 )
-            result = self.translate_client.translate(text, target_language="en")
+            result = None
+            while not result:
+                try:
+                    result = self.translate_client.translate(text, target_language="en")
+                except:  # noqa: E722
+                    time.wait(30)
             return result["translatedText"]
 
     def remove_bad_chars(self, text):

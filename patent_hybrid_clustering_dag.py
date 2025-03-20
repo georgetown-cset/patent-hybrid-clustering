@@ -8,6 +8,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
+from airflow.providers.google.cloud.hooks.dataflow import DataflowJobStatus
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryInsertJobOperator,
@@ -23,7 +24,8 @@ from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperato
 from airflow.providers.google.cloud.operators.kubernetes_engine import (
     GKEStartPodOperator,
 )
-from airflow.providers.google.cloud.transfers import GCSToGCSOperator
+from airflow.providers.google.cloud.sensors.dataflow import DataflowJobStatusSensor
+from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import (
     BigQueryToBigQueryOperator,
 )
@@ -33,6 +35,7 @@ from airflow.providers.google.cloud.transfers.bigquery_to_gcs import (
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
     GCSToBigQueryOperator,
 )
+from airflow.providers.google.cloud.transfers.gcs_to_gcs import GCSToGCSOperator
 from dataloader.airflow_utils.defaults import (
     DAGS_DIR,
     DATA_BUCKET,
@@ -126,11 +129,14 @@ with DAG(
         arguments=[
             "-c",
             (
-                f"echo 'starting lid' ; rm -r data || true"
+                f"echo 'starting lid' ; rm -r data || true && "
                 f"mkdir -p data/input_data && "
                 f"mkdir -p data/output_data && "
-                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid data/input_data && "
-                f"python3 lid_new_patents.py --data_folder data"
+                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid/ data/input_data && "
+                f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/lid_new_patents.py . && "
+                f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
+                f"pip install pycld2 regex && "
+                f"python3 lid_new_patents.py --data_folder data && "
                 f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_lid "
             ),
         ],
@@ -176,7 +182,9 @@ with DAG(
         task_id="new_patents_to_translate",
         configuration={
             "query": {
-                "query": "{% include '" + "new_patents_to_translate.sql" + "' %}",
+                "query": "{% include '"
+                + f"{sql_dir}/new_patents_to_translate.sql"
+                + "' %}",
                 "useLegacySql": False,
                 "destinationTable": {
                     "projectId": PROJECT_ID,
@@ -192,7 +200,7 @@ with DAG(
 
     export_patents_for_translation = BigQueryToGCSOperator(
         task_id="export_patents_for_translation",
-        source_project_dataset_table=f"{production_dataset}.new_patents_to_translate",
+        source_project_dataset_table=f"{staging_dataset}.new_patents_to_translate",
         destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
@@ -209,12 +217,15 @@ with DAG(
         arguments=[
             "-c",
             (
-                f"echo 'starting translation' ; rm -r data || true"
+                f"echo 'starting translation' ; rm -r data || true && "
                 f"mkdir -p data/input_data && "
                 f"mkdir -p data/output_data && "
                 f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate data/input_data && "
-                f"python3 translate_new_patents.py --data_folder data"
-                f"gsutil -m cp -r data/output_output gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate "
+                f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/translate_new_patents.py . && "
+                f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
+                f"pip install pycld2 regex google-cloud-translate && "
+                f"python3 translate_new_patents.py --data_folder data && "
+                f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate"
             ),
         ],
         namespace="default",
@@ -247,7 +258,9 @@ with DAG(
     load_patent_translations = GCSToBigQueryOperator(
         task_id="load_patent_translations",
         bucket=DATA_BUCKET,
-        source_objects=[f"{tmp_dir}/new_patents_to_translate/translated_patents.jsonl"],
+        source_objects=[
+            f"{tmp_dir}/new_patents_to_translate/output_data/translated_patents.jsonl"
+        ],
         schema_object=f"{schema_dir}/new_translated_patents.json",
         destination_project_dataset_table=f"{staging_dataset}.new_translated_patents",
         source_format="NEWLINE_DELIMITED_JSON",
@@ -278,7 +291,7 @@ with DAG(
     export_patents_to_embed = BigQueryToGCSOperator(
         task_id="export_patents_to_embed",
         source_project_dataset_table=f"{staging_dataset}.new_patents_to_embed",
-        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding/data*.jsonl",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_input/data*.jsonl",
         export_format="NEWLINE_DELIMITED_JSON",
         force_rerun=True,
     )
@@ -287,10 +300,9 @@ with DAG(
         "project": "gcp-cset-projects",
         "disk_size_gb": "30",
         "max_num_workers": "100",
-        "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding_tmp/",
+        "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embeddings_tmp/",
         "save_main_session": True,
-        "requirements_file": "get_embeddings_requirements.txt",
-        "runner": "DataflowRunner",
+        "requirements_file": f"{DAGS_DIR}/{production_dataset}/get_embeddings_requirements.txt",
     }
 
     run_text_embedding = BeamRunPythonPipelineOperator(
@@ -299,10 +311,11 @@ with DAG(
         task_id="run_text_embedding",
         default_pipeline_options=dataflow_options,
         pipeline_options={
-            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/embedding/to_embed_*",
-            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/text_embeddings",
+            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_input/data*",
+            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/text_embeddings/output",
             "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         },
+        py_requirements=["apache_beam[gcp]", "sentence-transformers"],
         dataflow_config=DataflowConfiguration(
             job_name="patent-embeddings-update",
             location="us-east1",
@@ -314,41 +327,49 @@ with DAG(
         "temp_location"
     ] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
 
+    dataflow_options["machine_type"] = "n1-standard-4"
+
+    export_patent_cpcs_to_embed = BigQueryToGCSOperator(
+        task_id="export_patent_cpcs_to_embed",
+        source_project_dataset_table=f"{staging_dataset}.new_cpc_text",
+        destination_cloud_storage_uris=f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*.jsonl",
+        export_format="NEWLINE_DELIMITED_JSON",
+        force_rerun=True,
+    )
+
+    # Notes for trying to make sensor work:
+    # Try setting wait_until_finished to False
+
     run_cpc_embedding = BeamRunPythonPipelineOperator(
         py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
         runner="DataflowRunner",
         task_id="run_cpc_embedding",
         default_pipeline_options=dataflow_options,
         pipeline_options={
-            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding/to_embed_*",
-            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/cpc_embeddings",
+            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*",
+            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/cpc_embeddings/output",
             "model": "sentence-transformers/all-mpnet-base-v2",
         },
+        py_requirements=["apache_beam[gcp]", "sentence-transformers"],
         dataflow_config=DataflowConfiguration(
-            job_name="patent-embeddings-update",
+            job_name="patent-embeddings-update-cpc",
             location="us-east1",
             wait_until_finished=True,
         ),
     )
 
-    (
-        export_patents_to_lid
-        >> run_lid
-        >> load_lid_outputs
-        >> patents_to_translate
-        >> export_patents_for_translation
-        >> run_translation
-        >> load_patent_translations
-        >> patent_text_to_embed
-        >> export_patents_to_embed
-        >> run_text_embedding
-        >> run_cpc_embedding
-    )
+    # dataflow_sensor_cpc = DataflowJobStatusSensor(
+    #     task_id="cpc_dataflow_sensor",
+    #     job_id="{{task_instance.xcom_pull('patent-embeddings-update-cpc')['dataflow_job_id']}}",
+    #     expected_statuses={DataflowJobStatus.JOB_STATE_DONE},
+    #     location="us-east1",
+    # )
 
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
         project_id=PROJECT_ID,
         zone=gce_zone,
+        impersonation_chain="dataloader@gcp-cset-projects.iam.gserviceaccount.com",
         body={
             "name": gce_resource_id,
             "machine_type": f"zones/{gce_zone}/machineTypes/m1-ultramem-160",
@@ -384,6 +405,24 @@ with DAG(
         },
     )
 
+    (
+        wait_for_initial_queries
+        >> export_patents_to_lid
+        >> run_lid
+        >> load_lid_outputs
+        >> patents_to_translate
+        >> export_patents_for_translation
+        >> run_translation
+        >> load_patent_translations
+        >> patent_text_to_embed
+        >> export_patents_to_embed
+        >> run_text_embedding
+        >> export_patent_cpcs_to_embed
+        >> run_cpc_embedding
+        # >> dataflow_sensor_cpc
+        >> gce_instance_create
+    )
+
     gce_instance_start = ComputeEngineStartInstanceOperator(
         task_id=f"start-{gce_resource_id}",
         project_id=PROJECT_ID,
@@ -405,6 +444,7 @@ with DAG(
     ]
 
     for index in indexes:
+        prep_environment_sequence.append(f"rm -rf {embedding_dir.format(index)}")
         prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
         prep_environment_sequence.append(
             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
@@ -472,6 +512,8 @@ with DAG(
     # the failing data
     curr >> gce_instance_delete
 
+    wait_for_faiss_load = DummyOperator(task_id="wait_for_faiss_load")
+
     for index in indexes:
         import_embeddings = GCSToBigQueryOperator(
             task_id=f"import_{index}_embeddings",
@@ -485,10 +527,9 @@ with DAG(
             write_disposition="WRITE_APPEND",
             retries=0,
         )
+        import_embeddings >> wait_for_faiss_load
+        gce_instance_delete >> import_embeddings
 
-    gce_instance_delete >> import_embeddings
-
-    wait_for_faiss_load = DummyOperator(task_id="wait_for_faiss_load")
     wait_for_map_queries = DummyOperator(task_id="wait_for_map_queries")
 
     curr_downstream_query = wait_for_faiss_load
@@ -519,6 +560,12 @@ with DAG(
 
     curr_downstream_query >> wait_for_map_queries
 
+    clear_keyword_data = GCSDeleteObjectsOperator(
+        task_id="clear_keyword_data",
+        bucket_name=DATA_BUCKET,
+        prefix=f"{tmp_dir}/cluster_family_text_data",
+    )
+
     export_keyword_data = BigQueryToGCSOperator(
         task_id="export_keyword_data",
         source_project_dataset_table=f"{staging_dataset}.cluster_family_text_data",
@@ -527,56 +574,183 @@ with DAG(
         force_rerun=True,
     )
 
-    run_keyword_extraction = GKEStartPodOperator(
-        task_id="run-keyword-extraction",
-        name="run-keyword-extraction",
+    gce_resource_id = "keywords"
+
+    # gce_instance_create_keywords = ComputeEngineInsertInstanceOperator(
+    #     task_id=f"create_{gce_resource_id}",
+    #     project_id=PROJECT_ID,
+    #     zone=gce_zone,
+    #     body={
+    #         "name": gce_resource_id,
+    #         "machine_type": f"zones/{gce_zone}/machineTypes/n2-standard-64",
+    #         "disks": [
+    #             {
+    #                 "boot": True,
+    #                 "auto_delete": True,
+    #                 "initialize_params": {
+    #                     "disk_size_gb": "500",
+    #                     "disk_type": f"zones/{gce_zone}/diskTypes/pd-balanced",
+    #                     "source_image": "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240927",
+    #                 },
+    #             }
+    #         ],
+    #         "network_interfaces": [
+    #             {
+    #                 "access_configs": [
+    #                     {"name": "External NAT", "network_tier": "PREMIUM"}
+    #                 ],
+    #                 "stack_type": "IPV4_ONLY",
+    #                 "subnetwork": "regions/us-central1/subnetworks/default",
+    #             }
+    #         ],
+    #         "service_accounts": [
+    #             {
+    #                 "email": "dataloader@gcp-cset-projects.iam.gserviceaccount.com",
+    #                 "scopes": [
+    #                     "https://www.googleapis.com/auth/devstorage.full_control",
+    #                     "https://www.googleapis.com/auth/cloud-platform",
+    #                 ],
+    #             }
+    #         ],
+    #     },
+    # )
+
+    gce_instance_start_keywords = ComputeEngineStartInstanceOperator(
+        task_id=f"start-{gce_resource_id}",
         project_id=PROJECT_ID,
-        location=GCP_ZONE,
-        cluster_name="cc2-task-pool",
-        do_xcom_push=True,
-        cmds=["/bin/bash"],
-        arguments=[
-            "-c",
-            (
-                f"echo 'starting keyword extraction' ; rm -r data || true"
-                f"mkdir -p data/input_data && "
-                f"mkdir -p data/output_data && "
-                f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data data/input_data && "
-                f"python3 patent_text_sim.py --input_data_folder data/input_data --output_data_folder data/output_data"
-                f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/phrases/patent_cluster_phrases.jsonl "
-            ),
-        ],
-        namespace="default",
-        image=f"gcr.io/{PROJECT_ID}/cc2-task-pool",
-        get_logs=True,
-        startup_timeout_seconds=300,
-        on_finish_action="delete_pod",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": [
-                                        "default-pool",
-                                    ],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
-        annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
+        zone=gce_zone,
+        resource_id=gce_resource_id,
     )
+
+    (
+        wait_for_map_queries
+        >> clear_keyword_data
+        >> export_keyword_data
+        >> gce_instance_start_keywords
+    )
+
+    prep_environment_sequence = [
+        "sudo apt-get -y update",
+        "rm -r data || true",
+        "mkdir -p data/input_data",
+        "mkdir -p data/output_data",
+        f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/patent_text_sim.py .",
+        "sudo apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate",
+        "pip install yake wordfreq",
+        f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data data/input_data/",
+    ]
+    prep_environment_script = " && ".join(prep_environment_sequence)
+
+    prep_environment_keywords = BashOperator(
+        task_id="prep_environment_keywords",
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+        f'--command "{prep_environment_script}"',
+    )
+
+    get_keywords_sequence = [
+        "source .venv/bin/activate",
+        "python3 patent_text_sim.py --input_data_folder data/input_data/cluster_family_text_data "
+        "--output_data_folder data/output_data",
+        f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/phrases/",
+    ]
+    get_keywords_script = " && ".join(get_keywords_sequence)
+
+    get_keywords = BashOperator(
+        task_id="get_keywords",
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
+        f'--command "{get_keywords_script}"',
+    )
+
+    gce_instance_stop_keywords = ComputeEngineStopInstanceOperator(
+        project_id=PROJECT_ID,
+        zone=gce_zone,
+        resource_id=gce_resource_id,
+        task_id=f"stop-{gce_resource_id}",
+    )
+
+    # gce_instance_delete_keywords = ComputeEngineDeleteInstanceOperator(
+    #     task_id=f"delete_{gce_resource_id}",
+    #     project_id=PROJECT_ID,
+    #     zone=gce_zone,
+    #     resource_id=gce_resource_id,
+    # )
+
+    (
+        # gce_instance_create_keywords
+        gce_instance_start_keywords.as_setup()
+        >> prep_environment_keywords
+        >> get_keywords
+        >> gce_instance_stop_keywords.as_teardown()
+        # >> gce_instance_delete_keywords
+    )
+
+    # This piping is necessary to make the setup/teardown work
+    gce_instance_start_keywords >> gce_instance_stop_keywords
+    # Ensure that delete doesn't run if we're in the error -> teardown condition so we'll have a chance to review
+    # the failing data
+    # get_keywords >> gce_instance_delete_keywords
+
+    # run_keyword_extraction = GKEStartPodOperator(
+    #     task_id="run-keyword-extraction",
+    #     name="run-keyword-extraction",
+    #     project_id=PROJECT_ID,
+    #     location=GCP_ZONE,
+    #     cluster_name="cc2-task-pool",
+    #     do_xcom_push=True,
+    #     cmds=["/bin/bash"],
+    #     arguments=[
+    #         "-c",
+    #         (
+    #             f"echo 'starting keyword extraction' ; rm -r data || true &&"
+    #             f"mkdir -p data/input_data && "
+    #             f"mkdir -p data/output_data && "
+    #             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data data/input_data && "
+    #             f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/patent_text_sim.py . && "
+    #             f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
+    #             f"pip install yake wordfreq && "
+    #             f"python3 patent_text_sim.py --input_data_folder data/input_data/cluster_family_text_data "
+    #             f"--output_data_folder data/output_data &&"
+    #             f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/phrases/patent_cluster_phrases.jsonl &&"
+    #             f"touch done.txt && gsutil cp done.txt gs://{DATA_BUCKET}/{tmp_dir}/"
+    #         ),
+    #     ],
+    #     namespace="default",
+    #     image=f"gcr.io/{PROJECT_ID}/cc2-task-pool",
+    #     get_logs=True,
+    #     startup_timeout_seconds=300,
+    #     affinity={
+    #         "nodeAffinity": {
+    #             "requiredDuringSchedulingIgnoredDuringExecution": {
+    #                 "nodeSelectorTerms": [
+    #                     {
+    #                         "matchExpressions": [
+    #                             {
+    #                                 "key": "cloud.google.com/gke-nodepool",
+    #                                 "operator": "In",
+    #                                 "values": [
+    #                                     "default-pool",
+    #                                 ],
+    #                             }
+    #                         ]
+    #                     }
+    #                 ]
+    #             }
+    #         }
+    #     },
+    #     annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
+    # )
+
+    # wait_for_keywords = GCSObjectExistenceSensor(
+    #     task_id=f"wait_for_keywords",
+    #     bucket=DATA_BUCKET,
+    #     object=f"{tmp_dir}/done.txt",
+    #     deferrable=True,
+    # )
 
     load_keywords = GCSToBigQueryOperator(
         task_id="load_keywords",
         bucket=DATA_BUCKET,
-        source_objects=[f"{tmp_dir}/phrases/patent_cluster_phrases.jsonl"],
+        source_objects=[f"{tmp_dir}/phrases/output_data/patent_cluster_phrases.jsonl"],
         schema_object=f"{schema_dir}/phrases.json",
         destination_project_dataset_table=f"{staging_dataset}.phrases",
         source_format="NEWLINE_DELIMITED_JSON",
@@ -584,23 +758,20 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
     )
 
+    # Ensure that load_keywords doesn't run if get_keywords fails
+    get_keywords >> load_keywords
+
     wait_for_keyword_load = DummyOperator(task_id="wait_for_keyword_load")
     wait_for_queries = DummyOperator(task_id="wait_for_queries")
 
-    (
-        wait_for_map_queries
-        >> export_keyword_data
-        >> run_keyword_extraction
-        >> load_keywords
-        >> wait_for_keyword_load
-    )
+    (gce_instance_stop_keywords >> load_keywords >> wait_for_keyword_load)
 
     curr_downstream_query = wait_for_keyword_load
     # add any tables we want in production that aren't breakdowns
     production_queries = [
-        ("cluster_assignment", production_dataset),
+        ("cluster_assignment", staging_dataset),
     ]
-    with open(f"{DAGS_DIR}/{sequence_dir}/patent_clustering_query_sequence.csv") as f:
+    with open(f"{DAGS_DIR}/{sequence_dir}/cluster_breakdown_sequences.csv") as f:
         for line in csv.DictReader(get_clean_lines(f)):
             if line["production_dataset"]:
                 production_queries.append(
@@ -630,9 +801,6 @@ with DAG(
 
     curr_downstream_query >> wait_for_queries
 
-    # TODO (Rebecca and Katherine): Add SQL checks and make sure they're set up right
-    # Update the below to make sure production tables transfer and non-production ones don't
-
     checks = []
     for query in os.listdir(f"{DAGS_DIR}/{sql_dir}"):
         if not query.startswith("check_"):
@@ -646,9 +814,6 @@ with DAG(
         )
 
     wait_for_checks = DummyOperator(task_id="wait_for_checks")
-
-    # TODO: Rebecca and Katherine: deal with backups
-    # the only non-production backups we want are whatever the FAISS outputs are
 
     copy_cpc_embeddings = GCSToGCSOperator(
         task_id="copy_cpc_embeddings",
@@ -669,7 +834,7 @@ with DAG(
     )
 
     copy_indexes = GCSToGCSOperator(
-        task_id="copy_text_embeddings",
+        task_id="copy_indexes",
         source_bucket="airflow-data-exchange",
         source_objects=["patent_clusters/indexes"],
         destination_bucket="airflow-data-exchange",
@@ -700,7 +865,7 @@ with DAG(
     wait_for_production_backups = DummyOperator(task_id="wait_for_production_backups")
     wait_for_production_backups >> non_production_backups >> success_alert
 
-    with open(f"{DAGS_DIR}/schemas/{production_dataset}/table_descriptions.json") as f:
+    with open(f"{DAGS_DIR}/{schema_dir}/table_descriptions.json") as f:
         table_desc = json.loads(f.read())
     for table, dataset in production_queries:
         prod_table_name = f"{dataset}.{table}"
@@ -714,7 +879,7 @@ with DAG(
         pop_descriptions = PythonOperator(
             task_id="populate_column_documentation_for_" + table,
             op_kwargs={
-                "input_schema": f"{os.environ.get('DAGS_FOLDER')}/{schema_dir}/{table}.json",
+                "input_schema": f"{DAGS_DIR}/{schema_dir}/{table}.json",
                 "table_name": prod_table_name,
                 "table_description": table_desc[table],
             },

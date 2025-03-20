@@ -55,6 +55,6 @@ ipc_selection AS (
 
 SELECT
   family_id,
-  COALESCE(cpc_text, ipc_text) AS cpc_text
+  COALESCE(cpc_text, ipc_text) AS text
 FROM ipc_selection
 FULL OUTER JOIN cpc_selection USING (family_id)

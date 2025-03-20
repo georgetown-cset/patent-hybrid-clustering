@@ -1,7 +1,7 @@
 WITH dummy_references AS (
   SELECT DISTINCT
     patent_id,
-    COALESCE(family_id, "X-" || patent_id) AS family_id,
+    COALESCE(new_metadata.family_id, "X-" || patent_id) AS family_id,
     patent_reference
   FROM
     unified_patents.references
