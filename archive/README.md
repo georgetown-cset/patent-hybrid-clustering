@@ -1,0 +1,1 @@
+This folder stores all the experiments and files created in the development of the hybrid patent clusters.
