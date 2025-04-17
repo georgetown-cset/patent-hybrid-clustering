@@ -14,6 +14,13 @@ archive/cpc_codes/FullCPCDefinitionXML202401/*
 archive/cpc_codes/CPCSchemeXML202401/*
 archive/scripts/data/*
 
+*/evaluation_metrics/data/*.json
+*/evaluation_metrics/data/*.pckl
+*/evaluation_metrics/save_bert*
+*/cpc_codes/FullCPCDefinitionXML202401/*
+*/cpc_codes/CPCSchemeXML202401/*
+*/scripts/data/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
