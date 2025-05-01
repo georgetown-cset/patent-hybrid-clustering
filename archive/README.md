@@ -6,3 +6,4 @@ Important folders are:
 3. evaluation_metrics: Some of the small scale experiments and testing
 4. faiss: Implementing the faiss algorithm, and updating the faiss dag
 5. sql: Old sql scripts used for extracting evaluation metrics during development
+6. visualizations: Folder for generating optimal cluster layout for visualization
