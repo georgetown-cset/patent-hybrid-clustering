@@ -1,3 +1,4 @@
+-- Check that assignee_type fields that shouldn't be null aren't
 SELECT LOGICAL_AND(cluster_id IS NOT NULL)
   AND LOGICAL_AND(Company IS NOT NULL)
   AND LOGICAL_AND(Education IS NOT NULL)

@@ -1,3 +1,4 @@
+-- Combine all three of our weight features into one
 -- In this updated version of combined weights, we filter out any patents from the map with no text
 WITH get_clean_weights AS (
   SELECT

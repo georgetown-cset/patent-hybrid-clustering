@@ -1,3 +1,4 @@
+-- Check that most_cited_patent_families fields that shouldn't be null aren't
 -- Not every patent family has a title
 SELECT LOGICAL_AND(family_id IS NOT NULL)
   AND LOGICAL_AND(cluster_id IS NOT NULL)

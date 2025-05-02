@@ -1,3 +1,4 @@
+-- Attach back in removed patents to clusters
 CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_wave1 AS (
   WITH
   cluster_sizes AS (

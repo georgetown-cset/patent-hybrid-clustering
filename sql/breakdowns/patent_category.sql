@@ -1,3 +1,5 @@
+-- Find top three patent categories for each cluster and their percentages
+
 /* aggregate patent category names and percentages into a string for presentation */
 WITH
 ca_tab AS (

@@ -19,7 +19,9 @@ from apache_beam.ml.transforms.embeddings.huggingface import (
 from apache_beam.options.pipeline_options import PipelineOptions
 
 
-def run(input_data: str, output_data: str, model_name: str, pipeline_args: dict) -> None:
+def run(
+    input_data: str, output_data: str, model_name: str, pipeline_args: dict
+) -> None:
     """
     Use the specified model to generate embeddings for `input_data`, and write them to `output_data`.
     The default input directory contains the results of this query, exported to JSONL

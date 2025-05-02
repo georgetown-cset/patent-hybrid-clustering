@@ -1,3 +1,5 @@
+-- Get cluster family text to run keyword extraction
+
 -- Get dummy families
 WITH
 families_with_dummies AS (

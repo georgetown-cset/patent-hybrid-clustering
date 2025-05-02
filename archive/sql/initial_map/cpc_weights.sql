@@ -1,3 +1,4 @@
+-- Get initial map CPC weights
 SELECT
   tmp.cpc_embeddings_HNSW_out_20240720.family_id,
   similar.family_id AS family_reference,

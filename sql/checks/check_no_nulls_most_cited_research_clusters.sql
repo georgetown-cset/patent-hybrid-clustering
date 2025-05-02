@@ -1,3 +1,4 @@
+-- Check that most_cited_research_clusters fields that shouldn't be null aren't
 -- Keywords can be null if a research cluster has no keywords
 SELECT LOGICAL_AND(research_cluster_id IS NOT NULL)
   AND LOGICAL_AND(cluster_id IS NOT NULL)

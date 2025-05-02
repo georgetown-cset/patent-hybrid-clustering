@@ -20,12 +20,12 @@ import json
 import os
 import pickle
 import shutil
-from numpy.typing import ArrayLike
 
 import faiss
 
 # import line_profiler
 import numpy as np
+from numpy.typing import ArrayLike
 from tqdm import tqdm
 
 TOP_N = 11

@@ -1,8 +1,8 @@
 import csv
 import json
 import os
-from datetime import datetime
 import typing
+from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator

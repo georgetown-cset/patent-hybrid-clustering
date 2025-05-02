@@ -1,3 +1,5 @@
+-- Calculate citation weights from family reference table
+
 WITH
 weights AS (
   SELECT

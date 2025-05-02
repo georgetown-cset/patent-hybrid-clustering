@@ -1,10 +1,10 @@
 import json
+from typing import Optional
 
 import pycld2 as cld2
 import regex
 from google.cloud import bigquery
 from google.cloud import translate_v2 as translate
-from typing import Optional
 
 
 class Translator:

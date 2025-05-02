@@ -37,7 +37,9 @@ class Translator:
         data_raw = []
         for filename in data_files:
             with open(
-                os.path.join(data_folder, "input_data/new_patents_to_translate", filename),
+                os.path.join(
+                    data_folder, "input_data/new_patents_to_translate", filename
+                ),
                 "r",
             ) as fil:
                 json_list = list(fil)

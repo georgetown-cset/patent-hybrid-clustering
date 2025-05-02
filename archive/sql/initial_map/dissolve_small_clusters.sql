@@ -1,3 +1,4 @@
+-- Dissolve any cluster under size 50 in the original clustering
 CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassigned AS (
   WITH
   all_clusters AS (
