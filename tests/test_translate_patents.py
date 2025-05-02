@@ -2,7 +2,7 @@ import unittest
 
 import regex
 
-import scripts.translate_patents as translate_patents
+import archive.scripts.translate_patents as translate_patents
 
 
 class TestTranslate(unittest.TestCase):

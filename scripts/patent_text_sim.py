@@ -9,13 +9,14 @@ from wordfreq import zipf_frequency
 
 
 class Postprocessor:
-    def __init__(self):
+    def __init__(self) -> None:
         """
         A class to postprocess phrases from yake for science map purposes
+        :return None
         """
         self.already_seen = defaultdict(set)
 
-    def build_already_seen(self, cluster: int, phrase: str):
+    def build_already_seen(self, cluster: int, phrase: str) -> None:
         """
         Builds a list of words that have already been seen in our multi-word phrases for each cluster.
         :param cluster: The cluster whose phrases we're evaluating
@@ -34,7 +35,7 @@ class Postprocessor:
         in the same cluster, or if it is a very common word in English.
         :param cluster: The cluster containing the phrases
         :param phrase: The phrase
-        :return:
+        :return: Cleaned up phrase or None
         """
         # if phrase is not a single word
         if len(phrase.split()) > 1:
@@ -56,6 +57,7 @@ class Postprocessor:
 def get_cluster_text(text_dir: str) -> defaultdict(str):
     """
     Read in cluster text to use in yake algorithm.
+    :param text_dir:  Directory of files of cluster text to read
     :return: clust_text (dict of extracted phrases for clusters)
     """
     clust_text = defaultdict(str)
@@ -97,6 +99,7 @@ def extract_phrases(text_dir: str, output_dir: str) -> None:
     Runs phrase extraction
     :param text_dir The directory of text
     :param output_dir THe output directory
+    :return None
     """
     print("Get cluster title + abstracts")
     cluster_text = get_cluster_text(text_dir)

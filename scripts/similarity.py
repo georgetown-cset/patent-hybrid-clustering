@@ -20,6 +20,7 @@ import json
 import os
 import pickle
 import shutil
+from numpy.typing import ArrayLike
 
 import faiss
 
@@ -32,7 +33,7 @@ OUTPUT_PREFIX = "new_"
 
 
 # @profile  # noqa: F821
-def get_IndexFlatL2(np_embeddings, embedding_size: int):
+def get_IndexFlatL2(np_embeddings: ArrayLike, embedding_size: int):
     """
     Generates a faiss IndexFlatL2
     :param np_embeddings: Embeddings to generate the index from
@@ -45,7 +46,7 @@ def get_IndexFlatL2(np_embeddings, embedding_size: int):
 
 
 # @profile  # noqa: F821
-def get_IndexFlatIP(np_embeddings, embedding_size: int):
+def get_IndexFlatIP(np_embeddings: ArrayLike, embedding_size: int):
     """
     Generates a faiss IndexFlatIP
     :param np_embeddings: Embeddings to generate the index from
@@ -58,7 +59,7 @@ def get_IndexFlatIP(np_embeddings, embedding_size: int):
 
 
 # @profile  # noqa: F821
-def get_IndexIVFFlat(np_embeddings, embedding_size: int):
+def get_IndexIVFFlat(np_embeddings: ArrayLike, embedding_size: int):
     """
     Generates a faiss IndexIVFFlat
     :param np_embeddings: Embeddings to generate the index from
@@ -73,7 +74,7 @@ def get_IndexIVFFlat(np_embeddings, embedding_size: int):
 
 
 # @profile  # noqa: F821
-def get_IndexHNSWFlat(np_embeddings, embedding_size: int):
+def get_IndexHNSWFlat(np_embeddings: ArrayLike, embedding_size: int):
     """
     Generates a faiss IndexHNSWFlat
     :param np_embeddings: Embeddings to generate the index from
