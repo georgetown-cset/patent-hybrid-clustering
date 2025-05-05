@@ -1,3 +1,5 @@
+-- Assign new patents to their clusters
+
 WITH
 cluster_sizes AS (
   SELECT

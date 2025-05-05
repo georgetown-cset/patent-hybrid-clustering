@@ -1,3 +1,5 @@
+-- Get the original patents to translate
+
 CREATE OR REPLACE TABLE staging_patent_clusters.patents_to_translate AS (
   SELECT
     *

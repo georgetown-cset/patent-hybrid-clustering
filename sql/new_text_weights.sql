@@ -1,3 +1,5 @@
+-- Get text weights for all the new patents being added to the clustering
+
 SELECT
   new_most_similar_text.family_id,
   similar.family_id AS family_reference,

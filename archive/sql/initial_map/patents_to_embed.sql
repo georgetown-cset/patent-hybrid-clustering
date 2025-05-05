@@ -1,3 +1,5 @@
+-- Get the original patents to embed for similarity evaluation
+
 -- Get the patents that don't need to be translated
 WITH
 translation_not_needed AS (

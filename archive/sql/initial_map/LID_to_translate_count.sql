@@ -1,3 +1,5 @@
+-- Figure out how much text we have to translate to calculate cost
+
 SELECT
   COUNT(DISTINCT family_id) AS num_families,
   SUM(LENGTH(titles_original)) AS title_chars,

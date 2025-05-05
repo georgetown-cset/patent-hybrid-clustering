@@ -1,3 +1,6 @@
+-- Get the metadata for patents that have no already been clustered
+-- Exclude plant and design patents and null text
+
 WITH get_original_set AS (
   SELECT DISTINCT
     metadata.*

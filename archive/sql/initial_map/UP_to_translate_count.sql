@@ -1,3 +1,5 @@
+-- Get count of patents needing translation, for cost estimates
+
 SELECT
   COUNT(DISTINCT family_id) AS num_families,
   SUM(LENGTH(title_original)) AS title_chars,

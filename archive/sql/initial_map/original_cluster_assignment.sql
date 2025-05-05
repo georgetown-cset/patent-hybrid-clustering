@@ -1,3 +1,5 @@
+-- Get final cluster assignment for the original map
+
 WITH
 cluster_sizes AS (
   SELECT

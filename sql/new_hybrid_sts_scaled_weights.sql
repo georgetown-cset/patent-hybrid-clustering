@@ -1,4 +1,8 @@
--- hard-coded in alpha and beta
+-- Scale the new weights for the patents being added to the clustering
+-- Since the clustering has already been done, and we're just adding in new patents,
+-- we have a hard-coded in alpha and beta; we don't want to try to adjust these
+-- as we want the alpha and beta to be the same for every patent in the clustering
+-- and we don't want to adjust the weights for the patents that have already been clustered
 WITH get_alpha_beta AS (
   SELECT
     0.91078609897767326 AS alpha,

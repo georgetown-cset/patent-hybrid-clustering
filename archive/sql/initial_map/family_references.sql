@@ -1,3 +1,5 @@
+-- Conference patent-to-patent references into patent-family-to-patent-family references
+
 WITH dummy_references AS (
   SELECT DISTINCT
     patent_id,

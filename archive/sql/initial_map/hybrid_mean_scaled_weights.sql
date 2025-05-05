@@ -1,4 +1,6 @@
--- Mean-scaling the weights
+-- Taking original weights and apply mean scaling
+-- This is an alternative to our network-sum-based scaling (STS scaling)
+
 WITH sums AS (
   SELECT
     avg(weight_citation) AS mean_citation,

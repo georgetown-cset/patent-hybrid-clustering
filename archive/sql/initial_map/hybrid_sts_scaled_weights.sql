@@ -1,4 +1,6 @@
+-- Take the network weights and apply network-sum-based (STS) scaling
 -- Reweighting to halve the weight of CPCs and split the new weight between citations and text
+
 WITH sums AS (
   SELECT
     sum(weight_citation) AS sum_DC,

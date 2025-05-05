@@ -1,3 +1,5 @@
+-- Join old most_similar_text table with updated most_similar_text table for current version
+
 WITH all_ids AS (
   SELECT DISTINCT family_id
   FROM

@@ -1,3 +1,6 @@
+-- Get new patent text to translate.
+-- We only translate text if LID identifies it as none of the languages covered by our model.
+
 WITH
 LID_families AS (
   SELECT

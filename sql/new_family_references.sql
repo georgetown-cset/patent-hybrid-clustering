@@ -1,3 +1,5 @@
+-- Get patent-family to patent-family references for all the new patents being added
+
 WITH dummy_references AS (
   SELECT DISTINCT
     patent_id,

@@ -1,3 +1,5 @@
+-- Build citation weights table for patent families being added to the clustering
+
 WITH
 weights AS (
   SELECT

@@ -1,3 +1,5 @@
+-- Get new patent text to be embedded for similarity evaluation
+
 WITH
 -- get patents that we translated
 translated AS (

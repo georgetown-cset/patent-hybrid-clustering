@@ -1,3 +1,5 @@
+-- Join original most_similar_cpc table with new most_similar_cpc table for updated version
+
 WITH all_ids AS (
   SELECT DISTINCT family_id
   FROM
