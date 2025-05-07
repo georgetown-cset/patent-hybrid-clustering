@@ -1,5 +1,10 @@
 This folder stores all the experiments and files created in the development of the hybrid patent clusters.
 
+There are three categories of work here:
+1. Work used in determining which techniques or models should be incorporated into the final clusters. This often includes code for techniques or models that weren't ultimately incorporated, but which we tested for this purpose. It also includes cost analyses, comparisons of various techniques to determine the best option, and similar.
+2. Work used to build our initial clustering. This is in the archive because we reserve the core repository for the clustering update code -- as this is what is actively in use. However, this is important to retain so that we can recluster in the future.
+3. Work used to analyze our clustering and evaluate its quality (including visualizing the clustering). This is key code to understand how we evaluate the clustering, but is not needed for the actual cluster update process.
+
 What is included:
 
 ###[cpc_codes](archive/cpc_codes)
