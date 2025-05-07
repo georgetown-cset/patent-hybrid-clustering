@@ -71,7 +71,7 @@ def get_cluster_text(text_dir: str) -> defaultdict(str):
     return clust_text
 
 
-def run_yake(clust_text) -> list:
+def run_yake(clust_text: defaultdict(str)) -> list:
     """
     Run yake phrase extraction algorithm on cluster texts
     :param clust_text: defaultdict of cluster texts
