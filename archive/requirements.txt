@@ -1,0 +1,13 @@
+alive_progress
+pandas
+igraph
+numpy
+torch
+torchvision
+torchaudio
+accelerate
+transformers
+scikit-learn
+matplotlib
+seaborn
+networkx

@@ -42,7 +42,11 @@ The repository is designed to work with `pre-commit` in order to ensure all test
 - `pre-commit install`
 - `pre-commit run --all-files`
 
+FAISS will not install through this process, but generally does not need to be installed locally (at least not for the setup of the current update pipeline.) If you need to install FAISS locally, see [here](https://github.com/facebookresearch/faiss/blob/main/INSTALL.md).
+
 The update pipeline is designed to be used in an Airflow pipeline inside of Google Cloud. It could likely be adapted relatively easily to a different cloud environment like AWS. Similarly, the SQL itself is designed to work in Google's BigQuery environment, and the pipeline depends on a number of other Google Cloud environments.
+
+There is a separate [requirements.txt](archive/requirements.txt) in the archive directory for requirements that are only needed for code in the archive directory. Requirements needed in both places are only contained in the main [requirements.txt](requirements.txt).
 
 To update the DAG, run:
 
