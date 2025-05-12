@@ -1,22 +1,22 @@
+"""
+This script generates 100 layouts of patent clusters, then selects the layout with the least amount of deviation from
+the average as the final layout. It takes as input the BQ table where the cluster network is stored, and generates
+101x2 data files (100 x-coordinates, 100 y-coordinates, and the best x and best y).
+Outputs are saved in a folder as .txt files.
+"""
+
 import argparse
 import csv
-import multiprocessing as mp
 import time
 
 import igraph as ig
 import numpy as np
 import pandas as pd
 from google.cloud import bigquery
- """
- This script generates 100 layouts of patent clusters, then selects the layout with the least amount of deviation from 
- the average as the final layout. It takes as input the BQ table where the cluster network is stored, and generates
- 101x2 data files (100 x-coordinates, 100 y-coordinates, and the best x and best y).
- Outputs are saved in a folder as .txt files.
- """
 
 def find_edge_graph(table: str):
     """
-    Conenc with bq and downlaod the edges
+    Connect with bq and downlaod the edges
     :param table: Name of the table
     :return: edge graph of the network
     """
