@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from google.cloud import bigquery
 
+
 def find_edge_graph(table: str):
     """
     Connect with bq and downlaod the edges

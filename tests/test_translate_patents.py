@@ -5,10 +5,13 @@ import regex
 import archive.scripts.translate_patents as translate_patents
 import scripts.translate_new_patents as translate_new_patents
 
+
 class TestTranslate(unittest.TestCase):
     def test_init(self):
         translator = translate_patents.Translator("../data/test_translated.jsonl")
-        new_translator = translate_new_patents.Translator("../data/test_translated.jsonl")
+        new_translator = translate_new_patents.Translator(
+            "../data/test_translated.jsonl"
+        )
         for translate in [translator, new_translator]:
             self.assertEqual(translate.max_chars_to_translate, 25 * 10**6)
             self.assertEqual(translate.patents, [])
@@ -18,7 +21,9 @@ class TestTranslate(unittest.TestCase):
 
     def test_translate_text(self):
         translator = translate_patents.Translator("../data/test_translated.jsonl")
-        new_translator = translate_new_patents.Translator("../data/test_translated.jsonl")
+        new_translator = translate_new_patents.Translator(
+            "../data/test_translated.jsonl"
+        )
         for translate in [translator, new_translator]:
             text = (
                 "Fremgangsmåte for konservering av fullmodne poteter og "
@@ -37,7 +42,9 @@ class TestTranslate(unittest.TestCase):
 
     def test_remove_bad_chars(self):
         translator = translate_patents.Translator("../data/test_translated.jsonl")
-        new_translator = translate_new_patents.Translator("../data/test_translated.jsonl")
+        new_translator = translate_new_patents.Translator(
+            "../data/test_translated.jsonl"
+        )
         for translate in [translator, new_translator]:
             bad_text = (
                 "Fremgangsmåte \x96for konservering av fullmodne poteter og "
@@ -53,7 +60,9 @@ class TestTranslate(unittest.TestCase):
 
     def test_validate_translation(self):
         translator = translate_patents.Translator("../data/test_translated.jsonl")
-        new_translator = translate_new_patents.Translator("../data/test_translated.jsonl")
+        new_translator = translate_new_patents.Translator(
+            "../data/test_translated.jsonl"
+        )
         for translate in [translator, new_translator]:
             text = (
                 "Method for the preservation of fully ripe potatoes "

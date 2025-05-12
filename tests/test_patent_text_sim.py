@@ -1,9 +1,10 @@
 import unittest
-import scripts.patent_text_sim as patent_text_sim
 from collections import defaultdict
 
-class TestTextSim(unittest.TestCase):
+import scripts.patent_text_sim as patent_text_sim
 
+
+class TestTextSim(unittest.TestCase):
     def test_init(self):
         post = patent_text_sim.Postprocessor()
         self.assertEqual(type(post.already_seen), type(defaultdict(set)))
@@ -58,5 +59,6 @@ class TestTextSim(unittest.TestCase):
         cleaned = post.remove_generics(0, "yes")
         self.assertIsNone(cleaned)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

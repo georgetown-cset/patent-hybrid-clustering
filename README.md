@@ -11,9 +11,9 @@ Contained in this repository are the following:
 
 Code in the [archive](archive/) folder is described in the [archive README](archive/README.md). The other code in the repository is as follows:
 
-###[schemas](schemas/): 
+###[schemas](schemas/):
 Schemas of all relevant SQL tables for the final clustering. Intermediate tables and those used in the cluster-building process do not have schemas.
-###[scripts](scripts/): 
+###[scripts](scripts/):
 Scripts used for updating the final clustering with new data.
 ###[sequences](sequences/):
 CSVs containing the sequences that SQL queries run during the cluster update process.
