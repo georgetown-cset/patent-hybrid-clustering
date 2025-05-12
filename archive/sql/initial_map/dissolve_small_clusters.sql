@@ -1,7 +1,14 @@
 -- Dissolve any cluster under size 50 in the original clustering
+-- and add them back to the cluster assignment by finding the clusters
+-- with which they have the most connected weight, scalled by the square root
+-- of the cluster to account for the fact that larger clusters may simply have more
+-- connections and therefore a larger net connection weight
+
 CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassigned AS (
   WITH
   all_clusters AS (
+    -- Get the data from the latest clustering, here from Dec 11 2024. Need to change this
+    -- if re-doing the map
     SELECT
       *
     FROM
@@ -9,6 +16,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   cluster_sizes AS (
+    -- find clutser sizes, this is important for rescaling the best weights
     SELECT
       cluster_id,
       COUNT(*) AS size
@@ -17,6 +25,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   large_cluster_assignments AS (
+    -- Finding the clusters with 50 or more patents in them
     SELECT
       family_id,
       cluster_id
@@ -25,6 +34,8 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   patent_cluster_weights AS (
+    -- Finding link weights between patents, keeping the cluster ids from the large
+    -- clusters. Need to change where the weights are coming from if re-running the code
     SELECT DISTINCT
       id AS family_id,
       fam.cluster_id AS family_cluster,
@@ -37,6 +48,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   ref_weights AS (
+    -- Get patent-to-cluster weights from references
     SELECT
       family_id,
       ref_cluster AS cluster_id,
@@ -47,6 +59,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   cit_weights AS (
+    -- Get patent-to-cluster weights from citations
     SELECT
       ref_id AS family_id,
       family_cluster AS cluster_id,
@@ -57,6 +70,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   total_weights AS (
+    -- Get patent-to-cluster weights from all links, scaled by root of cluster size
     SELECT
       family_id,
       cluster_id,
@@ -67,6 +81,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_small_reassig
   ),
 
   weight_rankings AS (
+    -- Finding the top cluster match
     SELECT
       family_id,
       ARRAY_AGG(cluster_id IGNORE NULLS ORDER BY scaled_total_weight DESC)[0] AS cluster_id

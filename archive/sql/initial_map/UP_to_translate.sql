@@ -26,7 +26,7 @@ CREATE OR REPLACE TABLE staging_patent_clusters.UP_to_translate AS (
   model_check AS (
     SELECT DISTINCT family_id
     FROM model_check_stage
-    # Check for model coverage in a patent family's aggregated languages.
+    -- Check for model coverage in a patent family's aggregated languages.
     WHERE staging_patent_clusters.CHECKLANGUAGES(langs) IS FALSE
   )
 

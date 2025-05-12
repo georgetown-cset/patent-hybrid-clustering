@@ -1,4 +1,6 @@
--- Attach back in removed patents to clusters
+-- Attach back in removed patents to clusters (patents removed during the pruning process that need to be
+-- assigned a cluster). Done by finding the clusters with which each patent has the largest net weight of
+-- links, scaled by the square root of the size of the cluster.
 CREATE OR REPLACE TABLE staging_patent_clusters.cluster_assignment_wave1 AS (
   WITH
   cluster_sizes AS (

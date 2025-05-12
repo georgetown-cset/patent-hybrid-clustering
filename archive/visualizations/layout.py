@@ -7,9 +7,19 @@ import igraph as ig
 import numpy as np
 import pandas as pd
 from google.cloud import bigquery
-
+ """
+ This script generates 100 layouts of patent clusters, then selects the layout with the least amount of deviation from 
+ the average as the final layout. It takes as input the BQ table where the cluster network is stored, and generates
+ 101x2 data files (100 x-coordinates, 100 y-coordinates, and the best x and best y).
+ Outputs are saved in a folder as .txt files.
+ """
 
 def find_edge_graph(table: str):
+    """
+    Conenc with bq and downlaod the edges
+    :param table: Name of the table
+    :return: edge graph of the network
+    """
     client = bigquery.Client(project="gcp-cset-projects")
 
     cluster_edge_query = f"""
@@ -40,8 +50,10 @@ def find_edge_graph(table: str):
 
 def layout_i(i: int, Gm) -> None:
     """
-    :param i:
+    Generate a single layout from the graph of clusters
+    :param i: The label for this graph, ideally the count number i.e. the ith layout generated
     :param Gm: igraph object with edges and nodes of hybrid graph
+    :return: None, but saves the layout to two files: 'layout/x{i}.txt" and "layout/y{i}.txt"
     """
     # get layout
     coords = Gm.layout(layout="drl", weights="weight")
@@ -54,7 +66,8 @@ def run_multi_layout(n_layouts: int, Gm) -> None:
     """
     :param n_layouts: number of layouts to compute
     :param Gm: igraph object with the edges and nodes of the hybrid graph
-    :return:
+    :return: Doesn't return anything, but generates n_layouts number of layouts, which are all saved in the layout/
+    directory
     """
     for i in range(n_layouts):
         layout_i(i, Gm)
@@ -70,6 +83,13 @@ def run_multi_layout(n_layouts: int, Gm) -> None:
 
 
 def map_similarity_calc(n_layouts: int, j: int, data_dict: dict) -> None:
+    """
+    Finds how similar each layout generated is from the average and saves a csv file of them
+    :param n_layouts: number of layouts generated
+    :param j: which layout we're comparing to the mean
+    :param data_dict: dictionary of the x and y coordinates generated from all the layouts
+    :return: Nothing, but saves off the distances as a csv file
+    """
     r = np.array([])
     for i in range(0, n_layouts):
         if i != j:
@@ -94,11 +114,23 @@ def map_similarity_calc(n_layouts: int, j: int, data_dict: dict) -> None:
 
 
 def run_multi_map_similarity_calc(n_layouts: int, data_dict: dict) -> None:
+    """
+    Find the distances from all layouts to the average
+    :param n_layouts: Number of layouts generated
+    :param data_dict: dictionary of all the x and y coordinates for each layout
+    :return: Nothing, triggers the calculation of similarities for all layouts from all layouts
+    """
     for j in range(n_layouts):
         map_similarity_calc(n_layouts, j, data_dict)
 
 
 def find_best_layout(nodes, n_layouts: int) -> None:
+    """
+    Finds the best layout, as the one with the least variation from the others
+    :param nodes: not actually needed- from legacy code but I think it'll break if I remove it
+    :param n_layouts: number of layouts computed
+    :return: Nothing, best layout is saved as the x and y coordinates in layouts/x_best.txt and layouts/y_best.txt
+    """
     data_dict = {}
     for j in range(n_layouts):
         for k in ["x", "y"]:

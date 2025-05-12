@@ -5,7 +5,7 @@ import os
 from google.cloud import bigquery
 
 # Loading citation network based on full network
-# To load the citation weights, for each patent family, the weight from one to anther is found by
+# To load the citation weights, for each patent family, the weight from one to another is found by
 # doing 1/n where n is the number of outgoing citations (references)
 
 

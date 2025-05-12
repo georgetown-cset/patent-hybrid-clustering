@@ -1,4 +1,11 @@
 -- Get final cluster assignment for the original map
+-- After a wave of patent assignments from patents that were pruned during the clustering phase, a second wave
+-- of attachments is done. This is because some patents connect to other patents that were not initially assigned
+-- to a cluster. Doing this in waves is necessary to connect patents to clusters, then patents that connect to them
+-- which now connect to clusters. However, there is a limit to the number of waves we wish to run. Too many waves, and
+-- we kind of dilute the information - it may be better to wait for a patent update from unified patents which may
+-- contain better citations or more text information, or re-run with FAISS to get their best matches to already
+-- assigned patents.
 
 WITH
 cluster_sizes AS (
