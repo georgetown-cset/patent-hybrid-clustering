@@ -1,3 +1,6 @@
+-- Combine previous translated patents with translated patent updates to get
+-- current translated patents in the active clustering
+
 SELECT DISTINCT
   *
 FROM

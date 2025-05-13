@@ -1,3 +1,5 @@
+-- Get CPC text for all the new patents being added to the clustering
+
 /*
 Goal: get CPC text where available, or substitute IPC matches when not available.
 */

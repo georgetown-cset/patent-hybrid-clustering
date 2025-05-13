@@ -1,3 +1,5 @@
+-- Staging table for identifying the top three patent categories for each cluster
+
 -- Get dummy families
 WITH
 families_with_dummies AS (

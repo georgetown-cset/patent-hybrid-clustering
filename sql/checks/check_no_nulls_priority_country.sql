@@ -1,3 +1,4 @@
+-- Check that priority_country fields that shouldn't be null aren't
 SELECT LOGICAL_AND(cluster_id IS NOT NULL)
   AND LOGICAL_AND(country IS NOT NULL)
   AND LOGICAL_AND(country_rank IS NOT NULL)

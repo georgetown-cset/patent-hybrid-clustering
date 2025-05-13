@@ -1,3 +1,5 @@
+-- Combine together the three weight features for all the new patents being added
+
 WITH get_clean_weights AS (
   SELECT
     family_id,

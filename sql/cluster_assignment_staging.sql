@@ -1,3 +1,8 @@
+-- Take the current version of the cluster assignment and update it to
+-- account for new patent family assignments; that is, since the last run
+-- some patents that were already clustered may have been assigned to patent
+-- families and we need to place them in those families and adjust clusters
+
 -- get the dummy families we potentially want to replace
 WITH
 get_dummy_families AS (

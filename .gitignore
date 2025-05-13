@@ -7,6 +7,21 @@ cpc_codes/FullCPCDefinitionXML202401/*
 cpc_codes/CPCSchemeXML202401/*
 scripts/data/*
 
+archive/evaluation_metrics/data/*.json
+archive/evaluation_metrics/data/*.pckl
+archive/evaluation_metrics/save_bert*
+archive/cpc_codes/FullCPCDefinitionXML202401/*
+archive/cpc_codes/CPCSchemeXML202401/*
+archive/scripts/data/*
+archive/visualizations/layouts/*
+
+*/evaluation_metrics/data/*.json
+*/evaluation_metrics/data/*.pckl
+*/evaluation_metrics/save_bert*
+*/cpc_codes/FullCPCDefinitionXML202401/*
+*/cpc_codes/CPCSchemeXML202401/*
+*/scripts/data/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

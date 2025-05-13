@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import typing
 from datetime import datetime
 
 from airflow import DAG
@@ -8,7 +9,6 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
-from airflow.providers.google.cloud.hooks.dataflow import DataflowJobStatus
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryInsertJobOperator,
@@ -24,8 +24,6 @@ from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperato
 from airflow.providers.google.cloud.operators.kubernetes_engine import (
     GKEStartPodOperator,
 )
-from airflow.providers.google.cloud.sensors.dataflow import DataflowJobStatusSensor
-from airflow.providers.google.cloud.sensors.gcs import GCSObjectExistenceSensor
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import (
     BigQueryToBigQueryOperator,
 )
@@ -45,10 +43,9 @@ from dataloader.airflow_utils.defaults import (
     get_post_success,
 )
 from dataloader.scripts.populate_documentation import update_table_descriptions
-from kubernetes.client import models as k8s
 
 
-def get_clean_lines(f):
+def get_clean_lines(f: typing.TextIO):
     # Filters commented lines from a csv
     for line in f:
         if not line.startswith("#"):
@@ -84,8 +81,8 @@ with DAG(
 
     wait_for_initial_queries = DummyOperator(task_id="wait_for_initial_queries")
 
-    with open(f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequences.csv") as f:
-        for line in csv.DictReader(get_clean_lines(f)):
+    with open(f"{DAGS_DIR}/{sequence_dir}/initial_data_query_sequences.csv") as fi:
+        for line in csv.DictReader(get_clean_lines(fi)):
             query = BigQueryInsertJobOperator(
                 task_id=line["table_name"],
                 configuration={
@@ -358,13 +355,6 @@ with DAG(
         ),
     )
 
-    # dataflow_sensor_cpc = DataflowJobStatusSensor(
-    #     task_id="cpc_dataflow_sensor",
-    #     job_id="{{task_instance.xcom_pull('patent-embeddings-update-cpc')['dataflow_job_id']}}",
-    #     expected_statuses={DataflowJobStatus.JOB_STATE_DONE},
-    #     location="us-east1",
-    # )
-
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
         project_id=PROJECT_ID,
@@ -534,8 +524,8 @@ with DAG(
 
     curr_downstream_query = wait_for_faiss_load
 
-    with open(f"{DAGS_DIR}/{sequence_dir}/map_building_sequences.csv") as f:
-        for line in csv.DictReader(get_clean_lines(f)):
+    with open(f"{DAGS_DIR}/{sequence_dir}/map_building_sequences.csv") as fi:
+        for line in csv.DictReader(get_clean_lines(fi)):
             query = BigQueryInsertJobOperator(
                 task_id=line["table_name"],
                 configuration={
@@ -575,45 +565,6 @@ with DAG(
     )
 
     gce_resource_id = "keywords"
-
-    # gce_instance_create_keywords = ComputeEngineInsertInstanceOperator(
-    #     task_id=f"create_{gce_resource_id}",
-    #     project_id=PROJECT_ID,
-    #     zone=gce_zone,
-    #     body={
-    #         "name": gce_resource_id,
-    #         "machine_type": f"zones/{gce_zone}/machineTypes/n2-standard-64",
-    #         "disks": [
-    #             {
-    #                 "boot": True,
-    #                 "auto_delete": True,
-    #                 "initialize_params": {
-    #                     "disk_size_gb": "500",
-    #                     "disk_type": f"zones/{gce_zone}/diskTypes/pd-balanced",
-    #                     "source_image": "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240927",
-    #                 },
-    #             }
-    #         ],
-    #         "network_interfaces": [
-    #             {
-    #                 "access_configs": [
-    #                     {"name": "External NAT", "network_tier": "PREMIUM"}
-    #                 ],
-    #                 "stack_type": "IPV4_ONLY",
-    #                 "subnetwork": "regions/us-central1/subnetworks/default",
-    #             }
-    #         ],
-    #         "service_accounts": [
-    #             {
-    #                 "email": "dataloader@gcp-cset-projects.iam.gserviceaccount.com",
-    #                 "scopes": [
-    #                     "https://www.googleapis.com/auth/devstorage.full_control",
-    #                     "https://www.googleapis.com/auth/cloud-platform",
-    #                 ],
-    #             }
-    #         ],
-    #     },
-    # )
 
     gce_instance_start_keywords = ComputeEngineStartInstanceOperator(
         task_id=f"start-{gce_resource_id}",
@@ -668,84 +619,12 @@ with DAG(
         task_id=f"stop-{gce_resource_id}",
     )
 
-    # gce_instance_delete_keywords = ComputeEngineDeleteInstanceOperator(
-    #     task_id=f"delete_{gce_resource_id}",
-    #     project_id=PROJECT_ID,
-    #     zone=gce_zone,
-    #     resource_id=gce_resource_id,
-    # )
-
     (
-        # gce_instance_create_keywords
         gce_instance_start_keywords.as_setup()
         >> prep_environment_keywords
         >> get_keywords
         >> gce_instance_stop_keywords.as_teardown()
-        # >> gce_instance_delete_keywords
     )
-
-    # This piping is necessary to make the setup/teardown work
-    gce_instance_start_keywords >> gce_instance_stop_keywords
-    # Ensure that delete doesn't run if we're in the error -> teardown condition so we'll have a chance to review
-    # the failing data
-    # get_keywords >> gce_instance_delete_keywords
-
-    # run_keyword_extraction = GKEStartPodOperator(
-    #     task_id="run-keyword-extraction",
-    #     name="run-keyword-extraction",
-    #     project_id=PROJECT_ID,
-    #     location=GCP_ZONE,
-    #     cluster_name="cc2-task-pool",
-    #     do_xcom_push=True,
-    #     cmds=["/bin/bash"],
-    #     arguments=[
-    #         "-c",
-    #         (
-    #             f"echo 'starting keyword extraction' ; rm -r data || true &&"
-    #             f"mkdir -p data/input_data && "
-    #             f"mkdir -p data/output_data && "
-    #             f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/cluster_family_text_data data/input_data && "
-    #             f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/patent_text_sim.py . && "
-    #             f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
-    #             f"pip install yake wordfreq && "
-    #             f"python3 patent_text_sim.py --input_data_folder data/input_data/cluster_family_text_data "
-    #             f"--output_data_folder data/output_data &&"
-    #             f"gsutil -m cp -r data/output_data gs://{DATA_BUCKET}/{tmp_dir}/phrases/patent_cluster_phrases.jsonl &&"
-    #             f"touch done.txt && gsutil cp done.txt gs://{DATA_BUCKET}/{tmp_dir}/"
-    #         ),
-    #     ],
-    #     namespace="default",
-    #     image=f"gcr.io/{PROJECT_ID}/cc2-task-pool",
-    #     get_logs=True,
-    #     startup_timeout_seconds=300,
-    #     affinity={
-    #         "nodeAffinity": {
-    #             "requiredDuringSchedulingIgnoredDuringExecution": {
-    #                 "nodeSelectorTerms": [
-    #                     {
-    #                         "matchExpressions": [
-    #                             {
-    #                                 "key": "cloud.google.com/gke-nodepool",
-    #                                 "operator": "In",
-    #                                 "values": [
-    #                                     "default-pool",
-    #                                 ],
-    #                             }
-    #                         ]
-    #                     }
-    #                 ]
-    #             }
-    #         }
-    #     },
-    #     annotations={"cluster-autoscaler.kubernetes.io/safe-to-evict": "true"},
-    # )
-
-    # wait_for_keywords = GCSObjectExistenceSensor(
-    #     task_id=f"wait_for_keywords",
-    #     bucket=DATA_BUCKET,
-    #     object=f"{tmp_dir}/done.txt",
-    #     deferrable=True,
-    # )
 
     load_keywords = GCSToBigQueryOperator(
         task_id="load_keywords",
@@ -768,11 +647,12 @@ with DAG(
 
     curr_downstream_query = wait_for_keyword_load
     # add any tables we want in production that aren't breakdowns
+    # TODO: switch this from staging_dataset to production dataset in the right branch
     production_queries = [
         ("cluster_assignment", staging_dataset),
     ]
-    with open(f"{DAGS_DIR}/{sequence_dir}/cluster_breakdown_sequences.csv") as f:
-        for line in csv.DictReader(get_clean_lines(f)):
+    with open(f"{DAGS_DIR}/{sequence_dir}/cluster_breakdown_sequences.csv") as fi:
+        for line in csv.DictReader(get_clean_lines(fi)):
             if line["production_dataset"]:
                 production_queries.append(
                     (line["table_name"], line["production_dataset"])

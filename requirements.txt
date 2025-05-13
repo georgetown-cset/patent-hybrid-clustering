@@ -7,3 +7,6 @@ sentence-transformers
 google-cloud-bigquery
 google-cloud-translate
 pycld2
+regex
+yake
+wordfreq

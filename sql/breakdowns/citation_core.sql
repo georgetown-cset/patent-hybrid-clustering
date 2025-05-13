@@ -1,3 +1,5 @@
+-- Find "core" papers by cluster where core stat is defined based on cluster citation links
+
 -- Get dummy families
 WITH
 families_with_dummies AS (

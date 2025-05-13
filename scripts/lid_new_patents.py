@@ -6,12 +6,22 @@ import pycld2 as cld2
 import regex
 
 
-def remove_bad_chars(text):
+def remove_bad_chars(text: str) -> str:
+    """
+    Removes bad characters from text
+    :param text: Text to clean up
+    :return: Cleaned-up text
+    """
     RE_BAD_CHARS = regex.compile(r"[\p{Cc}\p{Cs}]+")
     return RE_BAD_CHARS.sub("", text)
 
 
-def load_data(data_folder):
+def load_data(data_folder: str) -> list:
+    """
+    Loads input data to LID
+    :param data_folder: Folder where input data is stored
+    :return: Raw input data as list
+    """
     data_files = os.listdir(os.path.join(data_folder, "input_data/new_metadata_to_lid"))
     data_raw = []
     for file in data_files:
@@ -24,7 +34,12 @@ def load_data(data_folder):
     return data_raw
 
 
-def lid(data):
+def lid(data: list) -> list:
+    """
+    Runs language id on data
+    :param data: List of raw data to LID
+    :return: Cleaned up data after LID as JSON list
+    """
     results = []
     for row in data:
         isReliable, textBytesFound, details = cld2.detect(
@@ -42,7 +57,13 @@ def lid(data):
     return results
 
 
-def save_lid(data_folder, results):
+def save_lid(data_folder: str, results: list) -> None:
+    """
+    Saves LID output
+    :param data_folder: Data folder to store output in
+    :param results: JSON list of data to output
+    :return: None
+    """
     with open(os.path.join(data_folder, "output_data/lid.jsonl"), "w") as fil:
         for row in results:
             json.dump(row, fil)

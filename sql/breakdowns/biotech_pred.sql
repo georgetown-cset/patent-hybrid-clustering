@@ -1,3 +1,5 @@
+-- Find percentage biotechnology and biotechnology subcategories by cluster
+
 -- Get dummy families
 WITH
 families_with_dummies AS (

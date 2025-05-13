@@ -1,3 +1,6 @@
+-- Combine the new patent lid results with the original patent lid results
+-- This way we have lid results for all relevant patents in our clustering
+
 SELECT DISTINCT
   patent_id,
   family_id,

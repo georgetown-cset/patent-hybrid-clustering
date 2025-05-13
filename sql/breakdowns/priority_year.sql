@@ -1,3 +1,5 @@
+-- Find counts of patent families by priority year for each cluster
+
 -- Get dummy families
 WITH
 families_with_dummies AS (

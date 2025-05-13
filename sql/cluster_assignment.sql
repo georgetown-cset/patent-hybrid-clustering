@@ -1,3 +1,4 @@
+-- Combine the previous and new cluster assignment to create the final clusters
 SELECT DISTINCT
   family_id,
   cluster_id

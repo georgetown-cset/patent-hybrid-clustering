@@ -1,3 +1,4 @@
+-- Check that most_cited_papers fields that shouldn't be null aren't
 SELECT LOGICAL_AND(merged_id IS NOT NULL)
   AND LOGICAL_AND(cluster_id IS NOT NULL)
   AND LOGICAL_AND(citations IS NOT NULL)

@@ -1,3 +1,5 @@
+-- Clean up cluster keyword data for clusters
+
 /* get distinct phrases */
 WITH
 dist_ph AS (

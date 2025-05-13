@@ -1,3 +1,5 @@
+-- Check if language is one of the languages covered by our multilingual model
+
 CREATE FUNCTION staging_patent_clusters.CHECKLANGUAGES(langs ANY TYPE)
 RETURNS BOOLEAN
 AS (

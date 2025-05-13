@@ -1,3 +1,5 @@
+-- Find top industry assignees by cluster
+
 -- Get dummy families
 WITH
 families_with_dummies AS (
