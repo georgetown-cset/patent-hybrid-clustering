@@ -31,6 +31,10 @@ jobs:
         workload_identity_provider: 'projects/855475113448/locations/global/workloadIdentityPools/github/providers/github'
         service_account: 'translate@gcp-cset-projects.iam.gserviceaccount.com'
         token_format: 'access_token'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas
     - name: Test with pytest
       run: |
         coverage run -m pytest tests
