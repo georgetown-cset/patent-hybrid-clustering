@@ -647,9 +647,8 @@ with DAG(
 
     curr_downstream_query = wait_for_keyword_load
     # add any tables we want in production that aren't breakdowns
-    # TODO: switch this from staging_dataset to production dataset in the right branch
     production_queries = [
-        ("cluster_assignment", staging_dataset),
+        ("cluster_assignment", production_dataset),
     ]
     with open(f"{DAGS_DIR}/{sequence_dir}/cluster_breakdown_sequences.csv") as fi:
         for line in csv.DictReader(get_clean_lines(fi)):

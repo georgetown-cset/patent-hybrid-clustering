@@ -17,3 +17,4 @@ patent_clusters,patent_category
 patent_clusters,phrases
 patent_clusters,priority_country
 patent_clusters,robotics_pred
+patent_clusters,priority_year
