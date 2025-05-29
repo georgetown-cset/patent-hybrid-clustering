@@ -20,65 +20,27 @@ from dataloader.airflow_utils.defaults import (
 
 args = get_default_args()
 args["on_failure_callback"] = None
-args["retries"] = 1
+args["retries"] = 0
 
 with DAG(
-    "faiss_check",
+    "faiss_for_clusters",
     default_args=args,
-    description="Runs faiss",
+    description="Runs faiss. Need to input a production dataset, "
+                + "since it is modified to allow for different clutsering tasks. Set 'production_dataset' in "
+                + "the config json. To swtich from papers to patents, need to modify the 'indexes' list in the"
+                + "DAG itself.",
     schedule_interval=None,
 ) as dag:
-    production_dataset = "patent_clusters"
+
+    production_dataset = "papers_clusters" #"{{dag_run.conf['production_dataset']}}"
     tmp_dir = f"{production_dataset}/tmp"
     schema_dir = f"{production_dataset}/schemas"
-    scripts_dir = f"{production_dataset}/scripts"  # added this
-    index_dir = f"{production_dataset}/indexes"  # added this
-    sql_dir = f"sql/{production_dataset}"
-    sequence_dir = f"sequences/{production_dataset}"
+    scripts_dir = f"{production_dataset}/scripts"
+    index_dir = f"{production_dataset}/indexes"
     staging_dataset = f"staging_{production_dataset}"
-    backups_dataset = f"{production_dataset}_backups"
-    gce_resource_id = "faiss"
+    gce_resource_id = "faiss-for-clusters-ultramem"
     # This is the only region where we can currently create a m1-ultramem-160 instance.
     gce_zone = "us-central1-a"
-
-    gce_instance_create = ComputeEngineInsertInstanceOperator(
-        task_id=f"create_{gce_resource_id}",
-        project_id=PROJECT_ID,
-        zone=gce_zone,
-        body={
-            "name": gce_resource_id,
-            "machine_type": f"zones/{gce_zone}/machineTypes/m1-ultramem-160",
-            "disks": [
-                {
-                    "boot": True,
-                    "auto_delete": True,
-                    "initialize_params": {
-                        "disk_size_gb": "2000",
-                        "disk_type": f"zones/{gce_zone}/diskTypes/pd-balanced",
-                        "source_image": "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240927",
-                    },
-                }
-            ],
-            "network_interfaces": [
-                {
-                    "access_configs": [
-                        {"name": "External NAT", "network_tier": "PREMIUM"}
-                    ],
-                    "stack_type": "IPV4_ONLY",
-                    "subnetwork": "regions/us-central1/subnetworks/default",
-                }
-            ],
-            "service_accounts": [
-                {
-                    "email": "dataloader@gcp-cset-projects.iam.gserviceaccount.com",
-                    "scopes": [
-                        "https://www.googleapis.com/auth/devstorage.full_control",
-                        "https://www.googleapis.com/auth/cloud-platform",
-                    ],
-                }
-            ],
-        },
-    )
 
     gce_instance_start = ComputeEngineStartInstanceOperator(
         task_id=f"start-{gce_resource_id}",
@@ -87,65 +49,64 @@ with DAG(
         resource_id=gce_resource_id,
     )
 
-    indexes = ["cpc", "text"]
-    embedding_dir = "{}_embeddings"
+    embedding_dir = "text_embeddings"
 
     prep_environment_sequence = [
-        "sudo apt-get -y update",
+        #"mkdir testing_test",
+        #"sudo apt-get -y update",
         f"gsutil cp gs://{DATA_BUCKET}/{scripts_dir}/similarity.py .",
-        "rm -r miniconda3 || true",
-        "rm Miniconda3-latest-Linux-x86_64.sh || true",
-        "wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-        "bash Miniconda3-latest-Linux-x86_64.sh -b",
-        "miniconda3/bin/conda install -c pytorch faiss-cpu=1.8.0",
+        #"rm -r miniconda3 || true",
+        #"rm Miniconda3-latest-Linux-x86_64.sh || true",
+        #"rm Miniconda3-py312_25.1.1-2-Linux-x86_64.sh || true",
+        #"wget https://repo.anaconda.com/miniconda/Miniconda3-py312_25.1.1-2-Linux-x86_64.sh",
+        #"bash Miniconda3-py312_25.1.1-2-Linux-x86_64.sh -b",
+        #"miniconda3/bin/conda install -c pytorch faiss-cpu=1.8.0",
+        f"rm -r {embedding_dir} || true",
+        f"mkdir {embedding_dir}",
+        f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir}/* "
+        f"{embedding_dir}/"
     ]
 
-    for index in indexes:
-        prep_environment_sequence.append(f"mkdir {embedding_dir.format(index)}")
-        prep_environment_sequence.append(
-            f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/{embedding_dir.format(index)}/* "
-            f"{embedding_dir.format(index)}/"
-        )
     prep_environment_script = " && ".join(prep_environment_sequence)
+
+    #prep_environment_script = "mkdir testing_test_baaarrrgggggssss"
 
     prep_environment = BashOperator(
         task_id="prep_environment",
-        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
-        f'--command "{prep_environment_script}"',
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone={gce_zone} "
+        f'--command="{prep_environment_script}"',
     )
 
-    gce_instance_create >> gce_instance_start.as_setup() >> prep_environment
-    curr = prep_environment
+    gce_instance_start.as_setup() >> prep_environment
 
-    similarities_dir = "{}_similarities"
-    for index in indexes:
-        get_similarities_sequence = [
-            f"miniconda3/bin/python similarity.py --input_dir {embedding_dir.format(index)} "
-            f"--output_dir {similarities_dir.format(index)} --index_file {index}.pickle "
-            f"--id_map_file {index}_map.pickle",
-            f"gsutil -m cp -r {similarities_dir.format(index)} gs://{DATA_BUCKET}/{tmp_dir}/",
-            # keep a snapshot of the last index and map
-            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle "
-            f"gs://{DATA_BUCKET}/{index_dir}/{index}.pickle_prev; "
-            f"gsutil cp new_{index}.pickle gs://{DATA_BUCKET}/{index_dir}/{index}.pickle",
-            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle "
-            f"gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle_prev; "
-            f"gsutil cp new_{index}_map.pickle gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle",
-        ]
-        get_similarities_script = (
-            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}.pickle .; "
-            f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/{index}_map.pickle .; "
-            + (" && ".join(get_similarities_sequence))
-        )
+    similarities_dir = "text_similarities"
 
-        get_embeddings = BashOperator(
-            task_id=f"get_{index}_embeddings",
-            bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone {gce_zone} "
-            f'--command "{get_similarities_script}"',
-        )
+    get_similarities_sequence = [
+        f"miniconda3/bin/python similarity.py --input_dir {embedding_dir} "
+        f"--output_dir {similarities_dir} --index_file text.pickle "
+        f"--id_map_file text_map.pickle",
+        f"gsutil -m cp -r {similarities_dir} gs://{DATA_BUCKET}/{tmp_dir}/",
+        # keep a snapshot of the last index and map
+        f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/text.pickle "
+        f"gs://{DATA_BUCKET}/{index_dir}/text.pickle_prev; "
+        f"gsutil cp new_text.pickle gs://{DATA_BUCKET}/{index_dir}/text.pickle",
+        f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/text_map.pickle "
+        f"gs://{DATA_BUCKET}/{index_dir}/text_map.pickle_prev; "
+        f"gsutil cp new_text_map.pickle gs://{DATA_BUCKET}/{index_dir}/text_map.pickle",
+    ]
+    get_similarities_script = (
+        f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/text.pickle .; "
+        f"gsutil cp gs://{DATA_BUCKET}/{index_dir}/text_map.pickle .; "
+        + (" && ".join(get_similarities_sequence))
+    )
 
-        curr >> get_embeddings
-        curr = get_embeddings
+    #get_similarities_script = "mkdir testing_testing_part2_aaahhhhh"
+
+    get_embeddings = BashOperator(
+        task_id=f"get_text_embeddings",
+        bash_command=f"gcloud compute ssh airflow@{gce_resource_id} --zone={gce_zone} "
+        f'--command="{get_similarities_script}"',
+    )
 
     gce_instance_stop = ComputeEngineStopInstanceOperator(
         project_id=PROJECT_ID,
@@ -154,32 +115,25 @@ with DAG(
         task_id=f"stop-{gce_resource_id}",
     )
 
-    gce_instance_delete = ComputeEngineDeleteInstanceOperator(
-        task_id=f"delete_{gce_resource_id}",
-        project_id=PROJECT_ID,
-        zone=gce_zone,
-        resource_id=gce_resource_id,
-    )
-
-    curr >> gce_instance_stop.as_teardown() >> gce_instance_delete
+    prep_environment >> get_embeddings >> gce_instance_stop.as_teardown() #>> gce_instance_delete
     # This piping is necessary to make the setup/teardown work
-    gce_instance_start >> gce_instance_stop
+    #gce_instance_start >> gce_instance_stop >> gce_instance_delete
     # Ensure that delete doesn't run if we're in the error -> teardown condition so we'll have a chance to review
     # the failing data
-    curr >> gce_instance_delete
 
-    for index in indexes:
-        import_embeddings = GCSToBigQueryOperator(
-            task_id=f"import_{index}_embeddings",
-            bucket=DATA_BUCKET,
-            source_objects=[f"{tmp_dir}/{similarities_dir.format(index)}/*"],
-            schema_object=f"{schema_dir}/most_similar.json",
-            destination_project_dataset_table=f"{staging_dataset}.most_similar_{index}",
-            source_format="NEWLINE_DELIMITED_JSON",
-            create_disposition="CREATE_IF_NEEDED",
-            # note that this is write append - be careful to clean the table out if you want to retry
-            write_disposition="WRITE_APPEND",
-            retries=0,
-        )
+    import_embeddings = GCSToBigQueryOperator(
+        task_id=f"import_text_embeddings",
+        bucket=DATA_BUCKET,
+        source_objects=[f"{tmp_dir}/{similarities_dir}/*"],
+        schema_object=f"{schema_dir}/most_similar.json",
+        destination_project_dataset_table=f"{staging_dataset}.most_similar_text",
+        source_format="NEWLINE_DELIMITED_JSON",
+        create_disposition="CREATE_IF_NEEDED",
+        # note that this is write append - be careful to clean the table out if you want to retry
+        write_disposition="WRITE_APPEND",
+        retries=0,
+    )
 
-        gce_instance_delete >> import_embeddings
+    #gce_instance_delete >> import_embeddings
+
+    gce_instance_stop.as_teardown() >> import_embeddings

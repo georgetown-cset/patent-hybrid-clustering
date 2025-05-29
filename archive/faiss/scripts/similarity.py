@@ -126,16 +126,16 @@ def run(
         with open(os.path.join(input_dir, fi)) as f:
             for line in f:
                 js = json.loads(line)
-                if js["family_id"] in seen_family_ids:
-                    print("warning, duplicate family_id: " + js["family_id"])
+                if js["merged_id"] in seen_family_ids:
+                    print("warning, duplicate family_id: " + js["merged_id"])
                     continue
-                seen_family_ids.add(js["family_id"])
+                seen_family_ids.add(js["merged_id"])
                 if not embedding_size:
                     embedding_size = len(js["text"])
                 norm = np.linalg.norm(js["text"])
                 norm_vec = [i / norm for i in js["text"]]
                 embeddings.append(np.array(norm_vec))
-                numeric_to_family_id[curr_id] = js["family_id"]
+                numeric_to_family_id[curr_id] = js["merged_id"]
                 curr_id += 1
     print(f"Indexing {len(embeddings)} text embeddings")
     np_embeddings = np.array(embeddings)
@@ -169,9 +169,9 @@ def run(
                 os.path.join(output_dir, f"top_{TOP_N}_{num_id / file_length}.jsonl"),
                 mode="w",
             )
-        row = {"family_id": numeric_to_family_id[num_id + min_id]}
+        row = {"merged_id": numeric_to_family_id[num_id + min_id]}
         row["most_similar"] = [
-            {"family_id": numeric_to_family_id[sim_id], "similarity": sim}
+            {"merged_id": numeric_to_family_id[sim_id], "similarity": sim}
             for sim, sim_id in zip(sims, sim_ids)
             if sim_id != -1
         ]
