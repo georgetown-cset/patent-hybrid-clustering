@@ -9,6 +9,6 @@ gsutil cp sql/checks/* gs://us-east1-production-cc2-202-b42a7a54-bucket/dags/sql
 gsutil cp schemas/* gs://airflow-data-exchange/patent_clusters/schemas/
 gsutil cp schemas/* gs://us-east1-production-cc2-202-b42a7a54-bucket/dags/patent_clusters/schemas/
 gsutil cp scripts/* gs://airflow-data-exchange/patent_clusters/model/
-gsutil cp experiments/faiss/similarity.py gs://airflow-data-exchange/patent_clusters/scripts/
-gsutil cp experiments/get_embeddings* gs://us-east1-production-cc2-202-b42a7a54-bucket/dags/patent_clusters/
+gsutil cp scripts/similarity.py gs://airflow-data-exchange/patent_clusters/scripts/
 gsutil cp sequences/* gs://us-east1-production-cc2-202-b42a7a54-bucket/dags/sequences/patent_clusters/
+gsutil cp scripts/get_embeddings* gs://us-east1-production-cc2-202-b42a7a54-bucket/dags/patent_clusters/

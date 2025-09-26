@@ -3,7 +3,7 @@
 
 SELECT DISTINCT
   patent_id,
-  family_id,
+  metadata.family_id,
   CAST(reliable AS BOOL) AS reliable,
   language_long,
   patent_lid.language
