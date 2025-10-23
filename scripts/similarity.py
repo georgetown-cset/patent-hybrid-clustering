@@ -124,6 +124,8 @@ def run(
     min_id = curr_id
     embedding_size = None
     for fi in tqdm(os.listdir(input_dir)):
+        if os.path.isdir(os.path.join(input_dir, fi)):
+            continue
         with open(os.path.join(input_dir, fi)) as f:
             for line in f:
                 js = json.loads(line)

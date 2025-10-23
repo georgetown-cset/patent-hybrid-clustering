@@ -86,7 +86,7 @@ class Translator:
                 try:
                     result = self.translate_client.translate(text, target_language="en")
                 except:  # noqa: E722
-                    time.wait(30)
+                    time.sleep(30)
             return result["translatedText"]
 
     def remove_bad_chars(self, text: str) -> str:

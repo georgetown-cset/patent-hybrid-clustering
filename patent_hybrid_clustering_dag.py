@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import os
@@ -53,6 +54,8 @@ def get_clean_lines(f: typing.TextIO):
 
 
 args = get_default_args(pocs=["Rebecca", "Katherine"])
+args["retries"] = 1
+
 
 with DAG(
     "patent_hybrid_clustering",
@@ -70,6 +73,7 @@ with DAG(
     staging_dataset = f"staging_{production_dataset}"
     backups_dataset = f"{production_dataset}_backups"
     gce_resource_id = "faiss"
+    gce_embed_id = "patent-clusters-embed"
     # This is the only region where we can currently create a m1-ultramem-160 instance.
     gce_zone = "us-central1-a"
 
@@ -131,6 +135,7 @@ with DAG(
                 f"mkdir -p data/output_data && "
                 f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_metadata_to_lid/ data/input_data && "
                 f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/lid_new_patents.py . && "
+                f"apt-get update && "
                 f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
                 f"pip install pycld2 regex && "
                 f"python3 lid_new_patents.py --data_folder data && "
@@ -219,6 +224,7 @@ with DAG(
                 f"mkdir -p data/output_data && "
                 f"gsutil -m cp -r gs://{DATA_BUCKET}/{tmp_dir}/new_patents_to_translate data/input_data && "
                 f"gsutil -m cp gs://{DATA_BUCKET}/{production_dataset}/model/translate_new_patents.py . && "
+                f"apt-get update && "
                 f"apt install -y python3-venv && python3 -m venv .venv && source .venv/bin/activate && "
                 f"pip install pycld2 regex google-cloud-translate && "
                 f"python3 translate_new_patents.py --data_folder data && "
@@ -293,39 +299,6 @@ with DAG(
         force_rerun=True,
     )
 
-    dataflow_options = {
-        "project": "gcp-cset-projects",
-        "disk_size_gb": "30",
-        "max_num_workers": "100",
-        "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embeddings_tmp/",
-        "save_main_session": True,
-        "requirements_file": f"{DAGS_DIR}/{production_dataset}/get_embeddings_requirements.txt",
-    }
-
-    run_text_embedding = BeamRunPythonPipelineOperator(
-        py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
-        runner="DataflowRunner",
-        task_id="run_text_embedding",
-        default_pipeline_options=dataflow_options,
-        pipeline_options={
-            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_input/data*",
-            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/text_embeddings/output",
-            "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-        },
-        py_requirements=["apache_beam[gcp]", "sentence-transformers"],
-        dataflow_config=DataflowConfiguration(
-            job_name="patent-embeddings-update",
-            location="us-east1",
-            wait_until_finished=True,
-        ),
-    )
-
-    dataflow_options[
-        "temp_location"
-    ] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
-
-    dataflow_options["machine_type"] = "n1-standard-4"
-
     export_patent_cpcs_to_embed = BigQueryToGCSOperator(
         task_id="export_patent_cpcs_to_embed",
         source_project_dataset_table=f"{staging_dataset}.new_cpc_text",
@@ -334,32 +307,171 @@ with DAG(
         force_rerun=True,
     )
 
-    # Notes for trying to make sensor work:
-    # Try setting wait_until_finished to False
-
-    run_cpc_embedding = BeamRunPythonPipelineOperator(
-        py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
-        runner="DataflowRunner",
-        task_id="run_cpc_embedding",
-        default_pipeline_options=dataflow_options,
-        pipeline_options={
-            "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*",
-            "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/cpc_embeddings/output",
-            "model": "sentence-transformers/all-mpnet-base-v2",
+    embedding_instance_create = ComputeEngineInsertInstanceOperator(
+        task_id=f"create_{gce_embed_id}",
+        project_id=PROJECT_ID,
+        zone=gce_zone,
+        body={
+            "name": gce_embed_id,
+            "machine_type": f"zones/{gce_zone}/machineTypes/e2-standard-2",
+            "disks": [
+                {
+                    "boot": True,
+                    "auto_delete": True,
+                    "initialize_params": {
+                        "disk_size_gb": "20",
+                        "disk_type": f"zones/{gce_zone}/diskTypes/pd-balanced",
+                        "source_image": "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240927",
+                    },
+                }
+            ],
+            "network_interfaces": [
+                {
+                    "access_configs": [
+                        {"name": "External NAT", "network_tier": "PREMIUM"}
+                    ],
+                    "stack_type": "IPV4_ONLY",
+                    "subnetwork": "regions/us-central1/subnetworks/default",
+                }
+            ],
+            "service_accounts": [
+                {
+                    "email": "dataloader@gcp-cset-projects.iam.gserviceaccount.com",
+                    "scopes": [
+                        "https://www.googleapis.com/auth/devstorage.full_control",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                }
+            ],
         },
-        py_requirements=["apache_beam[gcp]", "sentence-transformers"],
-        dataflow_config=DataflowConfiguration(
-            job_name="patent-embeddings-update-cpc",
-            location="us-east1",
-            wait_until_finished=True,
-        ),
     )
+
+    embedding_instance_start = ComputeEngineStartInstanceOperator(
+        project_id=PROJECT_ID,
+        zone=gce_zone,
+        resource_id=gce_embed_id,
+        task_id="start-" + gce_embed_id,
+    )
+
+    command_template = (
+        f"gcloud compute ssh airflow@{gce_embed_id} --zone {gce_zone} "
+        + '--command "{}"'
+    )
+
+    text_embeddings_commands = [
+        "rm -rf run_dir || true",
+        "mkdir run_dir",
+        "cd run_dir",
+        f"gsutil cp -r gs://{DATA_BUCKET}/{production_dataset}/model/get_embeddings.py .",
+        f"gsutil cp -r gs://{DATA_BUCKET}/{production_dataset}/model/get_embeddings_requirements.txt .",
+        "sudo apt update",
+        "sudo apt install -y python3-venv",
+        "python3 -m venv venv",
+        "source venv/bin/activate",
+        "pip install -r get_embeddings_requirements.txt",
+    ]
+    cpc_embeddings_commands = copy.deepcopy(text_embeddings_commands)
+    text_embeddings_commands.append(
+        f"python3 get_embeddings.py --runner=DataflowRunner --project=gcp-cset-projects --disk_size_gb=30"
+        f" --max_num_workers=100 --temp_location=gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_tmp/"
+        f" --save_main_session --requirements_file=get_embeddings_requirements.txt"
+        f" '--input_data=gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_input/data*' --region us-east1"
+        f" --output_data=gs://{DATA_BUCKET}/{tmp_dir}/text_embeddings/output --model=sentence-transformers/"
+        f"paraphrase-multilingual-MiniLM-L12-v2 --job_name patent-embeddings"
+    )
+
+    run_text_embeddings = BashOperator(
+        task_id="run-text-embeddings",
+        bash_command=command_template.format(" && ".join(text_embeddings_commands)),
+    )
+
+    cpc_embeddings_commands.append(
+        f"python3 get_embeddings.py --runner=DataflowRunner --project=gcp-cset-projects --disk_size_gb=30"
+        f" --max_num_workers=100 --temp_location=gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_tmp/"
+        f" --requirements_file=get_embeddings_requirements.txt --model=sentence-transformers/all-mpnet-base-v2"
+        f" '--input_data=gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*' --save_main_session --region us-east1"
+        f" --output_data=gs://{DATA_BUCKET}/{tmp_dir}/cpc_embeddings/output --job_name patent-cpc-embeddings"
+    )
+
+    run_cpc_embeddings = BashOperator(
+        task_id="run-cpc-embeddings",
+        bash_command=command_template.format(" && ".join(cpc_embeddings_commands)),
+    )
+
+    embedding_instance_stop = ComputeEngineStopInstanceOperator(
+        project_id=PROJECT_ID,
+        zone=gce_zone,
+        resource_id=gce_embed_id,
+        task_id="stop-" + gce_embed_id,
+    )
+
+    embedding_instance_delete = ComputeEngineDeleteInstanceOperator(
+        task_id=f"delete_{gce_embed_id}",
+        project_id=PROJECT_ID,
+        zone=gce_zone,
+        resource_id=gce_embed_id,
+    )
+
+    # dataflow_options = {
+    #     "project": "gcp-cset-projects",
+    #     "disk_size_gb": "30",
+    #     "max_num_workers": "100",
+    #     "temp_location": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embeddings_tmp/",
+    #     "save_main_session": True,
+    #     "requirements_file": f"{DAGS_DIR}/{production_dataset}/get_embeddings_requirements.txt",
+    # }
+    #
+    # run_text_embedding = BeamRunPythonPipelineOperator(
+    #     py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
+    #     runner="DataflowRunner",
+    #     task_id="run_text_embedding",
+    #     default_pipeline_options=dataflow_options,
+    #     pipeline_options={
+    #         "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_input/data*",
+    #         "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/text_embeddings/output",
+    #         "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    #     },
+    #     py_requirements=["apache_beam[gcp]"],
+    #     dataflow_config=DataflowConfiguration(
+    #         job_name="patent-embeddings-update",
+    #         location="us-east1",
+    #         wait_until_finished=True,
+    #     ),
+    # )
+    #
+    # dataflow_options[
+    #     "temp_location"
+    # ] = f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_tmp/"
+    #
+    # dataflow_options["machine_type"] = "n1-standard-4"
+    #
+    #
+    #
+    # # Notes for trying to make sensor work:
+    # # Try setting wait_until_finished to False
+    #
+    # run_cpc_embedding = BeamRunPythonPipelineOperator(
+    #     py_file=f"{DAGS_DIR}/{production_dataset}/get_embeddings.py",
+    #     runner="DataflowRunner",
+    #     task_id="run_cpc_embedding",
+    #     default_pipeline_options=dataflow_options,
+    #     pipeline_options={
+    #         "input_data": f"gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*",
+    #         "output_data": f"gs://airflow-data-exchange/{production_dataset}/tmp/cpc_embeddings/output",
+    #         "model": "sentence-transformers/all-mpnet-base-v2",
+    #     },
+    #     py_requirements=["apache_beam[gcp]"],
+    #     dataflow_config=DataflowConfiguration(
+    #         job_name="patent-embeddings-update-cpc",
+    #         location="us-east1",
+    #         wait_until_finished=True,
+    #     ),
+    # )
 
     gce_instance_create = ComputeEngineInsertInstanceOperator(
         task_id=f"create_{gce_resource_id}",
         project_id=PROJECT_ID,
         zone=gce_zone,
-        impersonation_chain="dataloader@gcp-cset-projects.iam.gserviceaccount.com",
         body={
             "name": gce_resource_id,
             "machine_type": f"zones/{gce_zone}/machineTypes/m1-ultramem-160",
@@ -406,12 +518,19 @@ with DAG(
         >> load_patent_translations
         >> patent_text_to_embed
         >> export_patents_to_embed
-        >> run_text_embedding
         >> export_patent_cpcs_to_embed
-        >> run_cpc_embedding
-        # >> dataflow_sensor_cpc
+        >> embedding_instance_create
+        >> embedding_instance_start
+        >> run_text_embeddings
+        >> run_cpc_embeddings
+        >> embedding_instance_stop.as_teardown(setups=embedding_instance_start)
+        >> embedding_instance_delete
         >> gce_instance_create
     )
+
+    # ensure that machine doesn't get deleted if something goes wrong (and we end up in the teardown condition)
+    run_text_embeddings >> embedding_instance_delete
+    run_cpc_embeddings >> embedding_instance_delete
 
     gce_instance_start = ComputeEngineStartInstanceOperator(
         task_id=f"start-{gce_resource_id}",
@@ -425,11 +544,13 @@ with DAG(
 
     prep_environment_sequence = [
         "sudo apt-get -y update",
+        "sudo apt-get -y install gcc make python-pip",
         f"gsutil cp gs://{DATA_BUCKET}/{scripts_dir}/similarity.py .",
         "rm -r miniconda3 || true",
         "rm Miniconda3-latest-Linux-x86_64.sh || true",
-        "wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-        "bash Miniconda3-latest-Linux-x86_64.sh -b",
+        "rm Miniconda3-py312_25.1.1-2-Linux-x86_64.sh || true",
+        "wget https://repo.anaconda.com/miniconda/Miniconda3-py312_25.1.1-2-Linux-x86_64.sh",
+        "bash Miniconda3-py312_25.1.1-2-Linux-x86_64.sh -b -u",
         "miniconda3/bin/conda install -c pytorch faiss-cpu=1.8.0",
     ]
 
