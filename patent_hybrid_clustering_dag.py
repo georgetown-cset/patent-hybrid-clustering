@@ -319,7 +319,7 @@ with DAG(
                     "boot": True,
                     "auto_delete": True,
                     "initialize_params": {
-                        "disk_size_gb": "20",
+                        "disk_size_gb": "30",
                         "disk_type": f"zones/{gce_zone}/diskTypes/pd-balanced",
                         "source_image": "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20240927",
                     },
