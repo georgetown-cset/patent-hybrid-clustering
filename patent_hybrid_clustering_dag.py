@@ -368,6 +368,8 @@ with DAG(
         "sudo apt install -y python3-venv",
         "python3 -m venv venv",
         "source venv/bin/activate",
+        "pip install --upgrade pip",
+        "pip install wheel",
         "pip install -r get_embeddings_requirements.txt",
     ]
     cpc_embeddings_commands = copy.deepcopy(text_embeddings_commands)
