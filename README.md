@@ -46,7 +46,7 @@ FAISS will not install through this process, but generally does not need to be i
 
 The update pipeline is designed to be used in an Airflow pipeline inside of Google Cloud. It could likely be adapted relatively easily to a different cloud environment like AWS. Similarly, the SQL itself is designed to work in Google's BigQuery environment, and the pipeline depends on a number of other Google Cloud environments.
 
-There is a separate [requirements.txt](archive/requirements.txt) in the archive directory for requirements that are only needed for code in the archive directory. Requirements needed in both places are only contained in the main [requirements.txt](requirements.txt).
+There is a separate [requirements.txt](archive/requirements.txt) in the archive directory for requirements that are only needed for code in the archive directory. Requirements needed in both places are only contained in the main [requirements.txt](requirements.txt). There is also a separate [get_embeddings_requirements.txt](scripts/get_embeddings_requirements.txt) for requirements that are only needed on the embedding VMs to run sentence embeddings; these are not included locally as they are very large and otherwise break Github actions.
 
 To update the DAG, run:
 
