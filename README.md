@@ -11,20 +11,23 @@ Contained in this repository are the following:
 
 Code in the [archive](archive/) folder is described in the [archive README](archive/README.md). The other code in the repository is as follows:
 
-###[schemas](schemas/):
+### [schemas](schemas/):
 Schemas of all relevant SQL tables for the final clustering. Intermediate tables and those used in the cluster-building process do not have schemas.
-###[scripts](scripts/):
+
+### [scripts](scripts/):
 Scripts used for updating the final clustering with new data.
-###[sequences](sequences/):
+
+### [sequences](sequences/):
 CSVs containing the sequences that SQL queries run during the cluster update process.
-###[sql](sql/):
+
+### [sql](sql/):
 SQL code used in the cluster process. The sql in the main directory is used for the actual updating of the clusters themselves.
 
 [sql/breakdowns](sql/breakdowns): SQL code to create breakdowns of the clusters based on a variety of features and connect the clusters to the research literature.
 
 [sql/checks](sql/checks): SQL code to validate the outputs in resultant tables after the clustering update has run.
 
-###[tests](tests/):
+### [tests](tests/):
 Unit tests for various scripts used in the update process.
 
 There are two primary scripts in the top-level directory, used to build the Airflow pipeline:
