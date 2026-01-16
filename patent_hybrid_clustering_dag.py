@@ -392,7 +392,8 @@ with DAG(
         f" --max_num_workers=100 --temp_location=gs://{DATA_BUCKET}/{tmp_dir}/text_embedding_tmp/"
         f" --requirements_file=get_embeddings_requirements.txt --model=sentence-transformers/all-mpnet-base-v2"
         f" '--input_data=gs://{DATA_BUCKET}/{tmp_dir}/cpc_embedding_input/data*' --save_main_session --region us-east1"
-        f" --output_data=gs://{DATA_BUCKET}/{tmp_dir}/cpc_embeddings/output --job_name patent-cpc-embeddings"
+        f" --output_data=gs://{DATA_BUCKET}/{tmp_dir}/cpc_embeddings/output --job_name patent-cpc-embeddings "
+        f"--worker_machine_type=n1-standard-2"
     )
 
     run_cpc_embeddings = BashOperator(

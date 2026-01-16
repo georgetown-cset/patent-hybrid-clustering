@@ -105,12 +105,12 @@ org_type AS (
   LEFT JOIN (
     SELECT DISTINCT
       id,
-      IF(org_type = "Company", 1, 0) AS Company_auth,
-      IF(org_type = "Education", 1, 0) AS Education_auth,
+      IF(org_type = "company", 1, 0) AS Company_auth,
+      IF(org_type = "education", 1, 0) AS Education_auth,
       IF(
-        org_type = "Nonprofit" OR org_type = "Healthcare" OR org_type = "Facility" OR org_type = "Other", 1, 0
+        org_type = "nonprofit" OR org_type = "healthcare" OR org_type = "facility" OR org_type = "other", 1, 0
       ) AS Nonprofit_auth,
-      IF(org_type = "Archive" OR org_type = "Government", 1, 0) AS Government_auth
+      IF(org_type = "archive" OR org_type = "government", 1, 0) AS Government_auth
     FROM
       gcp_cset_ror.ror
     CROSS JOIN
