@@ -780,27 +780,27 @@ with DAG(
                 production_queries.append(
                     (line["table_name"], line["production_dataset"])
                 )
-                query = BigQueryInsertJobOperator(
-                    task_id=line["table_name"],
-                    configuration={
-                        "query": {
-                            "query": "{% include '"
-                            + f"{sql_dir}/{line['table_name']}.sql"
-                            + "' %}",
-                            "useLegacySql": False,
-                            "destinationTable": {
-                                "projectId": PROJECT_ID,
-                                "datasetId": staging_dataset,
-                                "tableId": line["table_name"],
-                            },
-                            "allowLargeResults": True,
-                            "createDisposition": "CREATE_IF_NEEDED",
-                            "writeDisposition": "WRITE_TRUNCATE",
-                        }
-                    },
-                )
-                curr_downstream_query >> query
-                curr_downstream_query = query
+            query = BigQueryInsertJobOperator(
+                task_id=line["table_name"],
+                configuration={
+                    "query": {
+                        "query": "{% include '"
+                        + f"{sql_dir}/{line['table_name']}.sql"
+                        + "' %}",
+                        "useLegacySql": False,
+                        "destinationTable": {
+                            "projectId": PROJECT_ID,
+                            "datasetId": staging_dataset,
+                            "tableId": line["table_name"],
+                        },
+                        "allowLargeResults": True,
+                        "createDisposition": "CREATE_IF_NEEDED",
+                        "writeDisposition": "WRITE_TRUNCATE",
+                    }
+                },
+            )
+            curr_downstream_query >> query
+            curr_downstream_query = query
 
     curr_downstream_query >> wait_for_queries
 
