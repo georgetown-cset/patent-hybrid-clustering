@@ -1,4 +1,6 @@
 production_dataset,table_name
+,patents_last_10_years
+,modularity
 patent_clusters,academic_assignees
 patent_clusters,ai_pred
 patent_clusters,assignee_type
@@ -18,3 +20,11 @@ patent_clusters,phrases
 patent_clusters,priority_country
 patent_clusters,robotics_pred
 patent_clusters,priority_year
+,cross_filing
+,citing_to_cited
+,nlinks
+patent_clusters,import_export_view
+patent_clusters,sum_imports_exports
+,cross_filings_base
+,cross_filings
+,growth

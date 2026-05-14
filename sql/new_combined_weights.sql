@@ -14,7 +14,7 @@ WITH get_clean_weights AS (
   WHERE text IS NOT NULL
 )
 
-SELECT
+SELECT DISTINCT
   get_clean_weights.family_id,
   family_reference,
   weight_citation,

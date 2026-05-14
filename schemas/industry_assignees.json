@@ -19,6 +19,12 @@
     },
     {
     "mode": "NULLABLE",
+    "name": "country",
+    "type": "STRING",
+    "description": "Country of the industry assignee."
+    },
+    {
+    "mode": "NULLABLE",
     "name": "NPF_industry_assignee",
     "type": "INTEGER",
     "description": "Number of patent families from industry assignee in a cluster."
@@ -37,8 +43,8 @@
     },
     {
     "mode": "REQUIRED",
-    "name": "NPF",
+    "name": "NPF_last_10_years",
     "type": "INTEGER",
-    "description": "Number of patent families in a cluster."
+    "description": "Number of patent families in a cluster with priority dates from the past 10 years."
     }
 ]

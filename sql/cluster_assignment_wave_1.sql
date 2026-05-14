@@ -3,7 +3,7 @@ cluster_sizes AS (
   SELECT
     cluster_id,
     COUNT(*) AS size
-  FROM staging_patent_clusters.cluster_assignment_wave_1
+  FROM staging_patent_clusters.cluster_assignment_pre_wave
   GROUP BY cluster_id
 ),
 
@@ -15,8 +15,8 @@ patent_cluster_weights AS (
     ref.cluster_id AS ref_cluster,
     weight
   FROM staging_patent_clusters.hybrid_sts_scaled_weights_latest
-  LEFT JOIN staging_patent_clusters.cluster_assignment_wave_1 AS fam ON id = fam.family_id
-  LEFT JOIN staging_patent_clusters.cluster_assignment_wave_1 AS ref ON ref_id = ref.family_id
+  LEFT JOIN staging_patent_clusters.cluster_assignment_pre_wave AS fam ON id = fam.family_id
+  LEFT JOIN staging_patent_clusters.cluster_assignment_pre_wave AS ref ON ref_id = ref.family_id
 ),
 
 ref_weights AS (
@@ -66,4 +66,4 @@ UNION DISTINCT
 SELECT DISTINCT
   family_id,
   cluster_id
-FROM staging_patent_clusters.cluster_assignment_wave_1
+FROM staging_patent_clusters.cluster_assignment_pre_wave

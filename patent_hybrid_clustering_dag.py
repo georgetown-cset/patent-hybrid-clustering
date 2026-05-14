@@ -857,7 +857,8 @@ with DAG(
         for table_name in [
             "most_similar_cpc",
             "most_similar_text",
-            "hybrid_sts_scaled_weights",
+            "new_citation_weights",
+            "new_hybrid_sts_scaled_weights",
             "patent_lid",
             "translated_patents",
         ]

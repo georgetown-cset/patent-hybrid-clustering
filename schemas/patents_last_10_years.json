@@ -1,0 +1,26 @@
+[
+    {
+    "mode": "NULLABLE",
+    "name": "patent_id",
+    "type": "STRING",
+    "description": "The patent id."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "score",
+    "type": "STRING",
+    "description": "The patent family id, or a dummy family id if one doesn't exist."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "first_priority_date",
+    "type": "DATE",
+    "description": "The patent first priority date."
+    }
+]

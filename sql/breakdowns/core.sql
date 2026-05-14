@@ -288,7 +288,8 @@ get_ordering AS (
 family_title_date AS (
   SELECT DISTINCT
     family_id,
-    title
+    title,
+    patent_id
   FROM
     get_ordering
   WHERE ordering = 1
@@ -300,18 +301,27 @@ title_core AS (
     family_id,
     CONCAT(
       IF(family_title_date.title IS NULL, '', family_title_date.title), ', ', COALESCE(priority_year, patent_year)
-    ) AS core_title
+    ) AS core_title,
+    COALESCE(priority_year, patent_year) as year,
+      ANY_VALUE(family_title_date.patent_id) as patent_id,
   FROM
     title_date_info
   LEFT JOIN
     family_title_date
     USING
       (family_id)
+  GROUP BY
+    family_id,
+    core_title,
+    year
 )
 
 SELECT DISTINCT
-  cluster_id,
+  top_core.cluster_id,
   id AS family_id,
+  patent_id,
+  year,
+  COALESCE(citations, 0) as citations,
   core_stat,
   core_rank,
   core_title
@@ -321,6 +331,8 @@ LEFT JOIN
   title_core
   ON
     top_core.id = title_core.family_id
+LEFT JOIN
+  staging_patent_clusters.patents_with_citations USING (family_id)
 ORDER BY
   cluster_id,
   core_rank

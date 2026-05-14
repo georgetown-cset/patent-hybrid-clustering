@@ -41,7 +41,8 @@ family_assignees AS (
   SELECT
     patent_id,
     clusters.family_id,
-    assignee,
+    INITCAP(assignee) AS assignee,
+    country,
     ror_id
   FROM
     clusters
@@ -72,6 +73,7 @@ priority_assignees AS (
     patent_id,
     family_assignees.family_id,
     assignee,
+    country,
     ror_id
   FROM
     family_assignees
@@ -95,6 +97,7 @@ assignees AS (
     clusters.family_id,
     cluster_id,
     assignee AS academic_assignee,
+    country,
     ror_id
   FROM
     clusters
@@ -103,6 +106,7 @@ assignees AS (
       patent_id,
       family_id,
       assignee,
+      country,
       ror_id
     FROM
       priority_assignees
@@ -113,7 +117,7 @@ assignees AS (
           gcp_cset_ror.ror,
           UNNEST(types) AS org_type
         WHERE
-          org_type = "Education")
+          org_type = "education")
     )
     USING
       (patent_id)
@@ -125,13 +129,15 @@ assignee_rank_tab AS (
     cluster_id,
     academic_assignee,
     COUNT(DISTINCT family_id) AS NPF_academic_assignee,
-    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS academic_assignee_rank
+    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS academic_assignee_rank,
+    country
   FROM (
     SELECT
       patent_id,
       family_id,
       cluster_id,
       academic_assignee,
+      country,
       ror_id
     FROM
       assignees
@@ -140,7 +146,8 @@ assignee_rank_tab AS (
     academic_assignee IS NOT NULL
   GROUP BY
     cluster_id,
-    academic_assignee
+    academic_assignee,
+    country
 ),
 
 -- get top 10 assignees
@@ -191,6 +198,7 @@ SELECT
   cluster_id,
   academic_assignee,
   academic_assignee_rank,
+  country,
   NPF_academic_assignee,
   NPF_top10_academic_assignees,
   NPF_missing_all_academic_assignees,

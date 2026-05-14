@@ -162,14 +162,9 @@ original_assignments_minus_replacements AS (
   FROM
     staging_patent_clusters.cluster_assignment
   LEFT JOIN
-    non_duplicated
-    USING
-      (family_id)
-  LEFT JOIN
-    link_to_clusters
-    USING
-      (family_id)
-  WHERE non_duplicated.family_id IS NULL AND link_to_clusters.family_id IS NULL
+    dummy_replacement_families
+    ON cluster_assignment.family_id = dummy_replacement_families.dummy_family_to_remove
+  WHERE dummy_replacement_families.dummy_family_to_remove IS NULL
 )
 
 SELECT DISTINCT
