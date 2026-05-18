@@ -42,38 +42,38 @@ unpivoted AS (
 
 -- In addition to ranking here we also want to eliminate any fields that have 0 patents
 -- We also want to change all our names to better names
-ranked_fields as (
+ranked_fields AS (
   SELECT
     cluster_id,
-    field_name as subfield,
+    field_name AS subfield,
     percentage,
     ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY percentage DESC) AS robotics_rank
   FROM unpivoted
   LEFT JOIN
-  staging_patent_clusters.subfield_mappings
-    USING(subfield)
+    staging_patent_clusters.subfield_mappings
+    USING (subfield)
   WHERE percentage > 0
 ),
 
 -- We only want the top three fields or any field with at least 10% of patents in that cluster
 -- that are in that field
-filter_fields as (
-SELECT
-  cluster_id,
-  subfield,
-  subfield || ' (' || ROUND(percentage * 100, 1) || '%)' as text,
-  percentage,
-  robotics_rank
-FROM
-  ranked_fields
-WHERE robotics_rank <= 3
-OR percentage >= 0.1
-ORDER BY cluster_id, robotics_rank
+filter_fields AS (
+  SELECT
+    cluster_id,
+    subfield,
+    subfield || ' (' || ROUND(percentage * 100, 1) || '%)' AS text,
+    percentage,
+    robotics_rank
+  FROM
+    ranked_fields
+  WHERE robotics_rank <= 3
+    OR percentage >= 0.1
+  ORDER BY cluster_id, robotics_rank
 )
 
 SELECT
   cluster_id,
-  ARRAY_AGG(STRUCT(subfield as name, percentage) ORDER BY robotics_rank) as robotics_fields,
+  ARRAY_AGG(STRUCT(subfield AS name, percentage) ORDER BY robotics_rank) AS robotics_fields, --noqa: L029
   STRING_AGG(text, ", ") AS robotics_fields_agg
 FROM
   filter_fields

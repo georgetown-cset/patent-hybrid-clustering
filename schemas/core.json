@@ -13,6 +13,24 @@
     },
     {
     "mode": "REQUIRED",
+    "name": "patent_id",
+    "type": "STRING",
+    "description": "A sample patent id from the family."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year",
+    "type": "STRING",
+    "description": "Priority year."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "citations",
+    "type": "INTEGER",
+    "description": "Number of citations."
+    },
+    {
+    "mode": "REQUIRED",
     "name": "core_stat",
     "type": "INTEGER",
     "description": "Core patent family score: N_in_cluster * patent_family_share_in_cluster_connections * Ln(weight links + 1)/(age+1)"

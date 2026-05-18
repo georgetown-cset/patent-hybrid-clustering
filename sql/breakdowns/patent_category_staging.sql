@@ -199,7 +199,7 @@ ordered_percentages AS (
     USING (cluster_id)
 ),
 
-category_link as (
+category_link AS (
   SELECT DISTINCT
     category,
     category_name,
@@ -221,7 +221,7 @@ FROM
   ordered_percentages
 LEFT JOIN
   category_link
-    USING (category)
+  USING (category)
 WHERE
   cat_rank <= 3
 ORDER BY

@@ -7,34 +7,44 @@ This repository contains code to build and update a clustering of patents using 
 Contained in this repository are the following:
 
 1. An Airflow pipeline and supporting code to run updates of the patent clustering
-2. An [archive](archive/README.md) of code that was used to research, create, and evaluate the original patent clustering.
+2. An additional Airflow pipeline and supporting code to transform the patent clustering data into production-ready Map of Patents data capable of being transferred to the Cloud SQL instance for use by Map of Patents.
+3. An [archive](archive/README.md) of code that was used to research, create, and evaluate the original patent clustering.
 
 Code in the [archive](archive/) folder is described in the [archive README](archive/README.md). The other code in the repository is as follows:
 
 ### [schemas](schemas/):
 Schemas of all relevant SQL tables for the final clustering. Intermediate tables and those used in the cluster-building process do not have schemas.
 
+### [map_of_patents_schemas](map_of_patents_schemas/):
+Schemas of the tables for the production Map of Patents tables used in the second Airflow pipeline.
+
 ### [scripts](scripts/):
 Scripts used for updating the final clustering with new data.
 
 ### [sequences](sequences/):
-CSVs containing the sequences that SQL queries run during the cluster update process.
+CSVs containing the sequences that SQL queries run during the cluster update process. Sequences here are for both pipelines.
 
 ### [sql](sql/):
-SQL code used in the cluster process. The sql in the main directory is used for the actual updating of the clusters themselves.
+SQL code used in the cluster process and production pipeline. The sql in the main directory is used for the actual updating of the clusters themselves.
 
 [sql/breakdowns](sql/breakdowns): SQL code to create breakdowns of the clusters based on a variety of features and connect the clusters to the research literature.
 
 [sql/checks](sql/checks): SQL code to validate the outputs in resultant tables after the clustering update has run.
 
+[sql/map_of_patents](sql/map_of_patents): SQL code for tables to create the production Map of Patents.
+
+[sql/map_of_patents_checks](sql/map_of_patents_checks): SQL code to validate the outputs of the production Map of Patents tables
+
 ### [tests](tests/):
 Unit tests for various scripts used in the update process.
 
-There are two primary scripts in the top-level directory, used to build the Airflow pipeline:
+There are four primary scripts in the top-level directory, used to build the Airflow pipelines:
 
 [patent_hybrid_clusters_dag.py](patent_hybrid_clusters_dag.py): The script to build the actual Airflow update DAG.
 
 [push_to_airflow.sh](push_to_airflow.sh): The script to push all relevant files into GCS so that Airflow has access to them for running.
+
+The other two don't exist yet, but will be DAG scripts and airflow scripts for the production pipeline.
 
 
 # Setup and Running
@@ -51,8 +61,14 @@ The update pipeline is designed to be used in an Airflow pipeline inside of Goog
 
 There is a separate [requirements.txt](archive/requirements.txt) in the archive directory for requirements that are only needed for code in the archive directory. Requirements needed in both places are only contained in the main [requirements.txt](requirements.txt). There is also a separate [get_embeddings_requirements.txt](scripts/get_embeddings_requirements.txt) for requirements that are only needed on the embedding VMs to run sentence embeddings; these are not included locally as they are very large and otherwise break Github actions.
 
-To update the DAG, run:
+To update the patent clusters DAG, run:
 
 `./push_to_airflow.sh`
 
 The DAG runs automatically; currently it is triggered by a different pipeline in our data workflow (which updates earlier-stage patent data).
+
+To update the map of patents production DAG, run:
+
+(We will put the second airflow bash script here)
+
+The DAG will run automatically; we'll trigger it using the patent clusters DAG. We separate these two DAGs from each other to allow for easy separation of updates, and to easily run one without the other (if we want to run patent clusters updates without productions updates, we need only disable the trigger).

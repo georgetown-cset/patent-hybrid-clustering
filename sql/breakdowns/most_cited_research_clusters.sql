@@ -193,9 +193,9 @@ title_summary AS (
     cluster_title,
     cluster_summary
   FROM cit_rank
-    LEFT JOIN
+  LEFT JOIN
     map_of_science.cluster_titles_summaries
-      ON research_cluster_id = cluster_titles_summaries.cluster_id
+    ON research_cluster_id = cluster_titles_summaries.cluster_id
 )
 
 SELECT DISTINCT
@@ -210,7 +210,7 @@ FROM
   cit_keyword
 LEFT JOIN
   title_summary
-    USING (research_cluster_id)
+  USING (research_cluster_id)
 ORDER BY
   cluster_id,
   citation_rank

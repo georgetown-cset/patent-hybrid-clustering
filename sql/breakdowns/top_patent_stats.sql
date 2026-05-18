@@ -5,12 +5,12 @@ core_stats AS (
     family_id,
     cluster_id,
     core_title AS title,
-    "https://patents.google.com/patent/" || REPLACE(patent_id, "-", "") as google_patent,
+    "https://patents.google.com/patent/" || REPLACE(patent_id, "-", "") AS google_patent,
     year,
     core_stat,
     citations,
     NULL AS citation_rank,
-    core_rank,
+    core_rank
   FROM
     staging_patent_clusters.core
 ),
@@ -20,7 +20,7 @@ most_cited_stats AS (
     family_id,
     cluster_id,
     most_cited_title AS title,
-    "https://patents.google.com/patent/" || REPLACE(patent_id, "-", "") as google_patent,
+    "https://patents.google.com/patent/" || REPLACE(patent_id, "-", "") AS google_patent,
     year,
     NULL AS core_stat,
     citations,
@@ -31,17 +31,17 @@ most_cited_stats AS (
 ),
 
 all_cluster_patents AS (
-    SELECT
-      family_id,
-      cluster_id
-    FROM
-      core_stats
-    UNION DISTINCT
-    SELECT
-      family_id,
-      cluster_id
-    FROM
-      most_cited_stats
+  SELECT
+    family_id,
+    cluster_id
+  FROM
+    core_stats
+  UNION DISTINCT
+  SELECT
+    family_id,
+    cluster_id
+  FROM
+    most_cited_stats
 ),
 
 paper_stats AS (
@@ -93,7 +93,7 @@ FROM
   paper_stats
 WHERE
   ((citation_rank <= 10)
-  OR (core_rank <= 10))
+    OR (core_rank <= 10))
   AND year IS NOT NULL
 GROUP BY
   cluster_id

@@ -151,18 +151,16 @@ get_ordering AS (
 
 -- Group title and year by family
 family_title_date AS (
-  SELECT DISTINCT
+  SELECT
     family_id,
-    COALESCE(title, title_original) AS title,
-    priority_year,
+    MAX(COALESCE(title, title_original)) AS title,
+    MIN(priority_year) AS priority_year,
     ANY_VALUE(patent_id) AS patent_id
   FROM
     get_ordering
   WHERE ordering = 1
   GROUP BY
-    family_id,
-    title,
-    priority_year
+    family_id
 ),
 
 -- get distinct cited patents
@@ -192,9 +190,9 @@ cit_rank AS (
 
 SELECT DISTINCT
   family_id,
-  cluster_id,
-  priority_year as year,
-  patent_id,
+  cit_rank.cluster_id,
+  priority_year AS year,
+  COALESCE(family_title_date.patent_id, clusters.patent_id) AS patent_id,
   citations,
   citation_rank,
   title AS most_cited_title
@@ -204,6 +202,9 @@ LEFT JOIN
   family_title_date
   USING
     (family_id)
+LEFT JOIN
+  clusters
+  USING (family_id)
 ORDER BY
   cluster_id,
   citation_rank

@@ -50,7 +50,7 @@ robotics_tab AS (
     CAST(Robot_Type__Telepresence AS INT64) AS Robot_Type__Telepresence,
     CAST(Robot_Type__Transportation AS INT64) AS Robot_Type__Transportation,
     CAST(Robot_Type__Underwater AS INT64) AS Robot_Type__Underwater,
-    CAST(Robot_Feature__Artificial_Intelligence AS INT64) AS  Robot_Feature__Artificial_Intelligence,
+    CAST(Robot_Feature__Artificial_Intelligence AS INT64) AS Robot_Feature__Artificial_Intelligence,
     CAST(Robot_Feature__Physical_Components AS INT64) AS Robot_Feature__Physical_Components,
     CAST(Robot_Feature__Control_Systems AS INT64) AS Robot_Feature__Control_Systems,
     CAST(Robot_Feature__Sensors_Measurement AS INT64) AS Robot_Feature__Sensors_Measurement,

@@ -1,14 +1,5 @@
- /* get clusters */
+/* get clusters */
 WITH
-families_with_dummies AS (
-  SELECT
-    patent_id,
-    COALESCE(family_id,
-      "X-" || patent_id) AS family_id
-  FROM
-    unified_patents.links
-),
-
 clusters AS (
   SELECT DISTINCT
     family_id,
@@ -45,9 +36,9 @@ growth_tab AS (
     staging_patent_clusters.growth
 ),
 
-pri_country as (
-  SELECT
-    DISTINCT cluster_id,
+pri_country AS (
+  SELECT DISTINCT
+    cluster_id,
     country AS top_country
   FROM
     staging_patent_clusters.priority_country
@@ -56,7 +47,7 @@ pri_country as (
     AND country IS NOT NULL
 ),
 
-top_3_pri_countries as (
+top_3_pri_countries AS (
   SELECT
     cluster_id,
     ARRAY_AGG(country ORDER BY country_rank) AS top_3_country
@@ -75,21 +66,22 @@ country_dom_r AS ( /* null country is not included in ranking */
     cluster_id,
     top_country,
     top_3_country
-    FROM pri_country
-    LEFT JOIN top_3_pri_countries
+  FROM pri_country
+  LEFT JOIN top_3_pri_countries
     USING (cluster_id)
 ),
 
 /* Get AI and other predictions */
 predictions AS (
-  SELECT
-    DISTINCT cluster_id,
+  SELECT DISTINCT
+    cluster_id,
     pred_ai,
     nlp_pred,
-    Computer_Vision_pred as cv_pred,
-    pred_robotics as ro_pred,
-    pred_cybersecurity as cyber_pred,
-    pred_semiconductors as semiconductor_pred
+    Computer_Vision_pred AS cv_pred,
+    pred_robotics AS ro_pred,
+    pred_cybersecurity AS cyber_pred,
+    pred_semiconductors AS semiconductor_pred,
+    pred_biotech
   FROM
     staging_patent_clusters.ai_pred
   LEFT JOIN
@@ -100,6 +92,9 @@ predictions AS (
     USING (cluster_id)
   LEFT JOIN
     staging_patent_clusters.semiconductors_pred
+    USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.biotech_pred
     USING (cluster_id)
 ),
 
@@ -120,38 +115,38 @@ ind_sh AS (
     cluster_id,
     Company_incl_miss AS industry_share,
     Education_incl_miss AS education_share,
-    Nonprofit_incl_miss as nonprofit_share,
-    Government_incl_miss as government_share
+    Nonprofit_incl_miss AS nonprofit_share,
+    Government_incl_miss AS government_share
   FROM
     staging_patent_clusters.assignee_type
 ),
 
 /* top five CSET-extracted phrases */
 top_phrase AS (
-SELECT
-  cluster_id,
-  STRING_AGG(cset_extracted_phrase, ', ') AS cset_extracted_phrase
-FROM (
   SELECT
     cluster_id,
-    cset_extracted_phrase,
-    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY MIN(score) ASC) AS phrase_rank
-  FROM
-    staging_patent_clusters.phrases
+    STRING_AGG(cset_extracted_phrase, ', ') AS cset_extracted_phrase
+  FROM (
+    SELECT
+      cluster_id,
+      cset_extracted_phrase,
+      ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY MIN(score) ASC) AS phrase_rank
+    FROM
+      staging_patent_clusters.phrases
+    GROUP BY
+      cluster_id,
+      cset_extracted_phrase )
+  WHERE
+    phrase_rank < 6
   GROUP BY
-    cluster_id,
-    cset_extracted_phrase )
-WHERE
-  phrase_rank < 6
-GROUP BY
-  cluster_id
+    cluster_id
 ),
 
 cluster_mod AS (
-SELECT
-  *
-FROM
-  staging_patent_clusters.modularity
+  SELECT
+    *
+  FROM
+    staging_patent_clusters.modularity
 )
 
 SELECT
@@ -161,12 +156,13 @@ SELECT
   categories_agg,
   top_country,
   top_3_country,
-  pred_ai as ai_pred,
+  pred_ai AS ai_pred,
   nlp_pred,
   cv_pred,
   ro_pred,
   cyber_pred,
   semiconductor_pred,
+  pred_biotech AS biotech_pred,
   cset_extracted_phrase,
   age,
   patent_vit,
@@ -189,11 +185,11 @@ SELECT
   growth_5yr_p_rank,
   mean_growth_3_year_p_rank,
   cluster_modularity,
-  IF (industry_share IS NULL,0, industry_share) AS industry_share,
-  IF (education_share IS NULL,0, education_share) AS education_share,
-  IF (nonprofit_share IS NULL,0, nonprofit_share) AS nonprofit_share,
-  IF (government_share IS NULL,0, government_share) AS government_share,
-  staging_patent_clusters.mk_eto_link(cluster_id) as link
+  IF(industry_share IS NULL, 0, industry_share) AS industry_share,
+  IF(education_share IS NULL, 0, education_share) AS education_share,
+  IF(nonprofit_share IS NULL, 0, nonprofit_share) AS nonprofit_share,
+  IF(government_share IS NULL, 0, government_share) AS government_share,
+  staging_patent_clusters.mk_eto_link(cluster_id) AS link --noqa: L030
 FROM
   clusters
 LEFT JOIN

@@ -12,6 +12,18 @@
         "description": "Patent cluster ID."
         },
         {
+        "mode": "NULLABLE",
+        "name": "year",
+        "type": "STRING",
+        "description": "Priority year."
+        },
+        {
+        "mode": "REQUIRED",
+        "name": "patent_id",
+        "type": "STRING",
+        "description": "A sample patent id from the family."
+        },
+        {
         "mode": "REQUIRED",
         "name": "citations",
         "type": "INTEGER",

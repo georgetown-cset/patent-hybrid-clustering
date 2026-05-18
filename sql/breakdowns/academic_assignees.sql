@@ -11,6 +11,12 @@ families_with_dummies AS (
     unified_patents.links
 ),
 
+last_ten AS (
+  SELECT DISTINCT family_id
+  FROM
+    staging_patent_clusters.patents_last_10_years
+),
+
 -- Get patent clusters, with all patent ids in the families
 clusters AS (
   SELECT DISTINCT
@@ -23,13 +29,16 @@ clusters AS (
     families_with_dummies
     USING
       (family_id)
+  WHERE
+    family_id IN (SELECT family_id FROM last_ten)
 ),
+
 
 -- number of patent families in clust
 clust_size AS (
   SELECT
     cluster_id,
-    COUNT(DISTINCT family_id) AS NPF
+    COUNT(DISTINCT family_id) AS NPF_last_10_years
   FROM
     clusters
   GROUP BY
@@ -202,7 +211,7 @@ SELECT
   NPF_academic_assignee,
   NPF_top10_academic_assignees,
   NPF_missing_all_academic_assignees,
-  NPF
+  NPF_last_10_years
 FROM (
   SELECT
     *

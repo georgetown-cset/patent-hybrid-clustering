@@ -151,7 +151,7 @@ paper_titles AS (
   SELECT
     cluster_id,
     ARRAY_AGG(STRUCT(
-      most_cited_title as title,
+      most_cited_title AS title,
       citation_rank,
       citations
     )) AS paper_title_info
@@ -163,7 +163,7 @@ paper_titles AS (
 ),
 
 research_clusters AS (
-    SELECT
+  SELECT
     cluster_id,
     ARRAY_AGG(STRUCT(
       research_cluster_id,
@@ -183,7 +183,7 @@ research_clusters AS (
 SELECT
   cluster_ids.cluster_id,
   year_count.npf_info,
-  top_patent_stats.stats AS paper_stats,
+  top_patent_stats.stats AS patent_stats,
   # priority country
   country.priority_country_info,
   country.num_missing_priority_countries,
@@ -229,7 +229,7 @@ FROM
 LEFT JOIN
   year_count USING (cluster_id)
 LEFT JOIN
-  staging_map_of_patents.top_patent_stats USING (cluster_id)
+  staging_patent_clusters.top_patent_stats USING (cluster_id)
 LEFT JOIN
   country USING (cluster_id)
 LEFT JOIN
@@ -245,7 +245,7 @@ LEFT JOIN
 LEFT JOIN
   cross_file USING (cluster_id)
 LEFT JOIN
-  staging_map_of_patents.cluster_multi_country_filing_counts USING (cluster_id)
+  staging_patent_clusters.cluster_multi_country_filing_counts USING (cluster_id)
 LEFT JOIN
   cluster_metrics USING (cluster_id)
 LEFT JOIN

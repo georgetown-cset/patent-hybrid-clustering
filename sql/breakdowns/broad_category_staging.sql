@@ -52,8 +52,12 @@ percentages AS (
   SELECT
     cluster_id,
     SUM(IF(broad_category = "Food and Agriculture", 1, 0)) / NULLIF(COUNT(family_id), 0) AS food_and_agriculture,
-    SUM(IF(broad_category = "Chemicals and Waste Treatment", 1, 0)) / NULLIF(COUNT(family_id), 0) AS chemicals_and_waste_treatment,
-    SUM(IF(broad_category = "Services (Business, Education, Entertainment)", 1, 0)) / NULLIF(COUNT(family_id), 0) AS services,
+    SUM(
+      IF(broad_category = "Chemicals and Waste Treatment", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS chemicals_and_waste_treatment,
+    SUM(
+      IF(broad_category = "Services (Business, Education, Entertainment)", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS services,
     SUM(IF(broad_category = "Computing", 1, 0)) / NULLIF(COUNT(family_id), 0) AS computing,
     SUM(IF(broad_category = "Construction and Mining", 1, 0)) / NULLIF(COUNT(family_id), 0) AS construction_and_mining,
     SUM(IF(broad_category = "Energy", 1, 0)) / NULLIF(COUNT(family_id), 0) AS energy,
@@ -102,21 +106,22 @@ ordered_percentages AS (
     unpivoted
 ),
 
-category_cleanup as (
+category_cleanup AS (
   SELECT DISTINCT
     cluster_id,
     CASE WHEN broad_category = "food_and_agriculture" THEN "Food and Agriculture"
-    WHEN broad_category = "chemicals_and_waste_treatment" THEN "Chemicals and Waste Treatment"
-    WHEN broad_category = "services" THEN "Services (Business, Education, Entertainment)"
-    WHEN broad_category = "computing" THEN "Computing"
-    WHEN broad_category = "construction_and_mining" THEN "Construction and Mining"
-    WHEN broad_category = "energy" THEN "Energy"
-    WHEN broad_category = "life_sciences" THEN "Life Sciences"
-    WHEN broad_category = "manufacturing" THEN "Manufacturing"
-    WHEN broad_category = "scientific_and_technical_equipment" THEN "Scientific and Technical Equipment"
-    WHEN broad_category = "semiconductors_electronics_nanotechnology" THEN "Semiconductors, Electronics and Nanotechnology"
-    WHEN broad_category = "telecommunications" THEN "Telecommunications"
-    WHEN broad_category = "transportation" THEN "Transportation"
+      WHEN broad_category = "chemicals_and_waste_treatment" THEN "Chemicals and Waste Treatment"
+      WHEN broad_category = "services" THEN "Services (Business, Education, Entertainment)"
+      WHEN broad_category = "computing" THEN "Computing"
+      WHEN broad_category = "construction_and_mining" THEN "Construction and Mining"
+      WHEN broad_category = "energy" THEN "Energy"
+      WHEN broad_category = "life_sciences" THEN "Life Sciences"
+      WHEN broad_category = "manufacturing" THEN "Manufacturing"
+      WHEN broad_category = "scientific_and_technical_equipment" THEN "Scientific and Technical Equipment"
+      WHEN broad_category = "semiconductors_electronics_nanotechnology"
+        THEN "Semiconductors, Electronics and Nanotechnology"
+      WHEN broad_category = "telecommunications" THEN "Telecommunications"
+      WHEN broad_category = "transportation" THEN "Transportation"
     END AS broad_category,
     percentage,
     cat_rank

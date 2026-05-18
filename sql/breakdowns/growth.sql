@@ -9,7 +9,7 @@ patent_dates AS (
     MAX(EXTRACT(YEAR FROM CURRENT_DATE()) - EXTRACT(YEAR FROM dates.first_priority_date)) AS age
   FROM
     unified_patents.dates
-  GROUP BY 1
+  GROUP BY family_id
 ),
 
 --get patent family counts
@@ -74,7 +74,7 @@ global_shares AS (
 ),
 
 growth_calc AS ( /* calculate number of patents in each year */
-  SELECT DISTINCT
+  SELECT
     cluster_id,
     AVG(IF(age < 1, 0, age)) AS age,
     AVG(1 / (IF(age < 1, 1, age))) AS patent_vit,

@@ -1,5 +1,5 @@
 WITH
-  org_counts AS (
+org_counts AS (
   SELECT
     assignee AS org_name,
     COUNT(DISTINCT(cluster_id)) AS num_clusters
@@ -10,8 +10,7 @@ WITH
   GROUP BY
     assignee )
 
-SELECT
-  org_name
+SELECT org_name
 FROM
   org_counts
 ORDER BY

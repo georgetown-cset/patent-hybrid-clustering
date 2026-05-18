@@ -1,0 +1,40 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "class_cat",
+    "type": "STRING",
+    "description": "The top broad category of the cluster. This is the class category used to color the map."
+    },
+    {
+    "mode": "REPEATED",
+    "name": "categories",
+    "type": "RECORD",
+    "description": "Top categories for cluster. This will include the top 3, based on number of patent families in the category.",
+    "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "name",
+          "type": "STRING",
+          "description": "Category name."
+        },
+        {
+          "mode": "NULLABLE",
+          "name": "NPF",
+          "type": "INTEGER",
+          "description": "Number of patent families belonging to this category in the cluster."
+        }
+      ]
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "categories_agg",
+    "type": "STRING",
+    "description": "String showing top categories for cluster. This will include the top 3, based on number of patent families in the category, as well as the count of their patent families."
+    }
+]

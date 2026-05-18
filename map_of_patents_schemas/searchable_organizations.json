@@ -1,0 +1,8 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "org_name",
+    "type": "STRING",
+    "description": "Organization name."
+    }
+]

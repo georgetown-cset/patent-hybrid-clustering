@@ -1,6 +1,6 @@
 -- top exporting clusters *to* cluster_id
 WITH top_exporting_clusters AS (
-  SELECT DISTINCT
+  SELECT
     cluster_a AS cluster_id,
     cluster_b AS exporter,
     SUM(ct_ab) AS num_exports,

@@ -1,26 +1,26 @@
 WITH
 phrases AS (
-SELECT DISTINCT
-  cluster_id,
-  LOWER(TRIM(phrase)) as name,
-FROM
-  staging_patent_clusters.cluster_description
-CROSS JOIN
-  UNNEST(SPLIT(cset_extracted_phrase, ", ")) as phrase
+  SELECT DISTINCT
+    cluster_id,
+    LOWER(TRIM(phrase)) AS name --noqa: L029
+  FROM
+    staging_patent_clusters.cluster_description
+  CROSS JOIN
+    UNNEST(SPLIT(cset_extracted_phrase, ", ")) AS phrase
 ),
 
 broad_cat AS (
-SELECT
-  cluster_id,
-  class_cat as name
-FROM
-  staging_patent_clusters.patent_class
+  SELECT
+    cluster_id,
+    class_cat AS name --noqa: L029
+  FROM
+    staging_patent_clusters.patent_class
 ),
 
 cat AS (
   SELECT
     cluster_id,
-    category.name as name,
+    category.name AS name, --noqa: L029
     ROW_NUMBER() OVER(PARTITION BY cluster_id ORDER BY category.NPF DESC) AS ranking
   FROM
     staging_patent_clusters.patent_class
@@ -31,7 +31,7 @@ cat AS (
 ai AS (
   SELECT
     cluster_id,
-    field.name as name,
+    field.name AS name, --noqa: L029
     ROW_NUMBER() OVER(PARTITION BY cluster_id ORDER BY field.percentage DESC) AS ranking
   FROM
     staging_patent_clusters.ai_subfields
@@ -42,7 +42,7 @@ ai AS (
 robotics AS (
   SELECT
     cluster_id,
-    field.name as name,
+    field.name AS name, --noqa: L029
     ROW_NUMBER() OVER(PARTITION BY cluster_id ORDER BY field.percentage DESC) AS ranking
   FROM
     staging_patent_clusters.robotics_subfields
@@ -53,7 +53,7 @@ robotics AS (
 biotech AS (
   SELECT
     cluster_id,
-    field.name as name,
+    field.name AS name, --noqa: L029
     ROW_NUMBER() OVER(PARTITION BY cluster_id ORDER BY field.percentage DESC) AS ranking
   FROM
     staging_patent_clusters.biotech_subfields
@@ -64,7 +64,7 @@ biotech AS (
 cybersecurity AS (
   SELECT
     cluster_id,
-    field.name as name,
+    field.name AS name, --noqa: L029
     ROW_NUMBER() OVER(PARTITION BY cluster_id ORDER BY field.percentage DESC) AS ranking
   FROM
     staging_patent_clusters.cybersecurity_subfields
@@ -75,13 +75,13 @@ cybersecurity AS (
 search_tags_pre_concept AS (
   SELECT
     cluster_id,
-    STRUCT(name, "broad_category" as category) as tag
+    STRUCT(name, "broad_category" AS category) AS tag
   FROM
     broad_cat
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT(name, "category" as category) as tag
+    STRUCT(name, "category" AS category) AS tag
   FROM
     cat
   WHERE
@@ -89,31 +89,31 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT(name, "ai_subfield" as category) as tag
+    STRUCT(name, "ai_subfield" AS category) AS tag
   FROM
     ai
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT(name, "robotics_subfield" as category) as tag
+    STRUCT(name, "robotics_subfield" AS category) AS tag
   FROM
     robotics
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT(name, "biotech_subfield" as category) as tag
+    STRUCT(name, "biotech_subfield" AS category) AS tag
   FROM
     biotech
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT(name, "cybersecurity_subfield" as category) as tag
+    STRUCT(name, "cybersecurity_subfield" AS category) AS tag
   FROM
     cybersecurity
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Artificial Intelligence" as name, "field" as category) as tag
+    STRUCT("Artificial Intelligence" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.ai_pred
   WHERE
@@ -121,7 +121,7 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Robotics" as name, "field" as category) as tag
+    STRUCT("Robotics" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.robotics_pred
   WHERE
@@ -129,7 +129,7 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Natural Language Processing" as name, "field" as category) as tag
+    STRUCT("Natural Language Processing" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.ai_pred
   WHERE
@@ -137,7 +137,7 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Cybersecurity" as name, "field" as category) as tag
+    STRUCT("Cybersecurity" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.cybersecurity_pred
   WHERE
@@ -145,11 +145,19 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Semiconductors" as name, "classifier" as category) as tag
+    STRUCT("Semiconductors" AS name, "classifier" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.semiconductors_pred
   WHERE
     pred_semiconductors >= 0.1
+  UNION ALL
+  SELECT
+    cluster_id,
+    STRUCT("Biotechnology" AS name, "classifier" AS category) AS tag --noqa: L029
+  FROM
+    staging_patent_clusters.biotech_pred
+  WHERE
+    pred_biotech >= 0.1
 ),
 
 search_tags AS (
@@ -161,13 +169,13 @@ search_tags AS (
   UNION ALL
   SELECT
     phrases.cluster_id,
-    STRUCT(name, "phrase" as category) as tag
+    STRUCT(name, "phrase" AS category) AS tag
   FROM
     phrases
   LEFT JOIN
     search_tags_pre_concept
-  ON
-    LOWER(name) = LOWER(tag.name)
+    ON
+      LOWER(name) = LOWER(tag.name)
   WHERE
     tag.name IS NULL
 ),
@@ -175,7 +183,7 @@ search_tags AS (
 search_tags_aggregated AS (
   SELECT
     cluster_id,
-    ARRAY_AGG(tag) as tags
+    ARRAY_AGG(tag) AS tags
   FROM
     search_tags
   GROUP BY
@@ -225,6 +233,7 @@ meta AS (
     ROUND(100 * nlp_pred, 2) AS nlp_pred,
     ROUND(100 * cyber_pred, 2) AS cyber_pred,
     ROUND(100 * semiconductor_pred, 2) AS semiconductor_pred,
+    ROUND(100 * biotech_pred, 2) AS biotech_pred,
     ROUND(age, 2) AS age,
     ROUND(100 * mean_growth_3_year_p_rank, 2) AS mean_growth_3_year_p_rank,
     ROUND(100 * cross_filing_percentile, 2) AS cross_filing_percentile,
@@ -236,22 +245,22 @@ meta AS (
     grant_percentile
   FROM
     staging_patent_clusters.cluster_description
-LEFT JOIN
-  staging_patent_clusters.ai_subfields USING(cluster_id)
-LEFT JOIN
-  staging_patent_clusters.biotech_subfields USING(cluster_id)
-LEFT JOIN
-  staging_patent_clusters.cybersecurity_subfields USING(cluster_id)
-LEFT JOIN
-  staging_patent_clusters.robotics_subfields USING(cluster_id)
-LEFT JOIN
-  search_tags_aggregated USING(cluster_id)
-LEFT JOIN
-  staging_patent_clusters.cross_filing_percentage USING (cluster_id)
-LEFT JOIN
-  staging_patent_clusters.cluster_titles_summaries USING (cluster_id)
-LEFT JOIN
-  staging_patent_clusters.grant_rates USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.ai_subfields USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.biotech_subfields USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.cybersecurity_subfields USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.robotics_subfields USING (cluster_id)
+  LEFT JOIN
+    search_tags_aggregated USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.cross_filing_percentage USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.cluster_titles_summaries USING (cluster_id)
+  LEFT JOIN
+    staging_patent_clusters.grant_rates USING (cluster_id)
 )
 
 SELECT DISTINCT

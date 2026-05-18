@@ -1,0 +1,34 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REPEATED",
+    "name": "cybersecurity_fields",
+    "type": "RECORD",
+    "description": "Top cybersecurity subfields for cluster, if patent is at least 1% cybersecurity-relevant. Subfields are included if they are in top 3 for cluster or 10% of patents in cluster belong to them.",
+    "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "name",
+          "type": "STRING",
+          "description": "Cybersecurity subfield name."
+        },
+        {
+          "mode": "NULLABLE",
+          "name": "percentage",
+          "type": "FLOAT",
+          "description": "Percentage of patents in cluster belonging to the subfield."
+        }
+      ]
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cybersecurity_fields_agg",
+    "type": "STRING",
+    "description": "Top cybersecurity subfields for a cluster, formatted as a string."
+    }
+]

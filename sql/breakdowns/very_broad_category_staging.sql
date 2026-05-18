@@ -52,10 +52,18 @@ percentages AS (
   SELECT
     cluster_id,
     SUM(IF(very_broad_category = "Food and Agriculture", 1, 0)) / NULLIF(COUNT(family_id), 0) AS food_and_agriculture,
-    SUM(IF(very_broad_category = "Chemicals and Waste Treatment", 1, 0)) / NULLIF(COUNT(family_id), 0) AS chemicals_and_waste_treatment,
-    SUM(IF(very_broad_category = "Services (Business, Education, Entertainment)", 1, 0)) / NULLIF(COUNT(family_id), 0) AS services,
-    SUM(IF(very_broad_category = "Information and Communications Technology", 1, 0)) / NULLIF(COUNT(family_id), 0) AS information_and_communications_technology,
-    SUM(IF(very_broad_category = "Manufacturing, Construction and Transportation", 1, 0)) / NULLIF(COUNT(family_id), 0) AS manufacturing_construction_transportation,
+    SUM(
+      IF(very_broad_category = "Chemicals and Waste Treatment", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS chemicals_and_waste_treatment,
+    SUM(
+      IF(very_broad_category = "Services (Business, Education, Entertainment)", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS services,
+    SUM(
+      IF(very_broad_category = "Information and Communications Technology", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS information_and_communications_technology,
+    SUM(
+      IF(very_broad_category = "Manufacturing, Construction and Transportation", 1, 0)
+    ) / NULLIF(COUNT(family_id), 0) AS manufacturing_construction_transportation,
     SUM(IF(very_broad_category = "Energy", 1, 0)) / NULLIF(COUNT(family_id), 0) AS energy,
     SUM(IF(very_broad_category = "Life Sciences", 1, 0)) / NULLIF(COUNT(family_id), 0) AS life_sciences,
     SUM(
@@ -92,17 +100,19 @@ ordered_percentages AS (
     unpivoted
 ),
 
-category_cleanup as (
+category_cleanup AS (
   SELECT DISTINCT
     cluster_id,
     CASE WHEN very_broad_category = "food_and_agriculture" THEN "Food and Agriculture"
-    WHEN very_broad_category = "chemicals_and_waste_treatment" THEN "Chemicals and Waste Treatment"
-    WHEN very_broad_category = "services" THEN "Services (Business, Education, Entertainment)"
-    WHEN very_broad_category = "information_and_communications_technology" THEN "Information and Communications Technology"
-    WHEN very_broad_category = "manufacturing_construction_transportation" THEN "Manufacturing, Construction and Transportation"
-    WHEN very_broad_category = "energy" THEN "Energy"
-    WHEN very_broad_category = "life_sciences" THEN "Life Sciences"
-    WHEN very_broad_category = "scientific_and_technical_equipment" THEN "Scientific and Technical Equipment"
+      WHEN very_broad_category = "chemicals_and_waste_treatment" THEN "Chemicals and Waste Treatment"
+      WHEN very_broad_category = "services" THEN "Services (Business, Education, Entertainment)"
+      WHEN very_broad_category = "information_and_communications_technology"
+        THEN "Information and Communications Technology"
+      WHEN very_broad_category = "manufacturing_construction_transportation"
+        THEN "Manufacturing, Construction and Transportation"
+      WHEN very_broad_category = "energy" THEN "Energy"
+      WHEN very_broad_category = "life_sciences" THEN "Life Sciences"
+      WHEN very_broad_category = "scientific_and_technical_equipment" THEN "Scientific and Technical Equipment"
     END AS very_broad_category,
     percentage,
     cat_rank
