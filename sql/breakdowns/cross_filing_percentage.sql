@@ -53,17 +53,17 @@ cross_filings AS (
   SELECT DISTINCT
     cluster_id,
     family_id,
-    priority_country_name AS country_a,
-    publication_country_name AS country_b,
+    metadata.publication_country_name AS country_a,
+    metadata_b.publication_country_name AS country_b,
     year
   FROM
-    unified_patents.priority_country
+    unified_patents.metadata
   INNER JOIN
     clusters
     USING
       (family_id)
   INNER JOIN
-    unified_patents.metadata
+    unified_patents.metadata AS metadata_b
     USING
       (family_id)
   WHERE
@@ -71,7 +71,7 @@ cross_filings AS (
       SELECT family_id
       FROM
         last_ten))
-    AND ((priority_country_name != publication_country_name))
+    AND ((metadata.publication_country_name != metadata_b.publication_country_name))
 ),
 
 has_cross_filing AS (
@@ -88,7 +88,7 @@ SELECT
   cluster_id,
   COALESCE(cross_filing_count, 0) AS cross_filing_count,
   NPF,
-  cross_filing_count / NPF AS cross_filing_percent,
+  COALESCE(cross_filing_count, 0) / NPF AS cross_filing_percent,
   PERCENT_RANK() OVER (ORDER BY cross_filing_count / NPF) AS cross_filing_percentile
 FROM
   clust_size

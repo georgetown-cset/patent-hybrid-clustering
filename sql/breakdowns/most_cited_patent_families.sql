@@ -192,6 +192,7 @@ SELECT DISTINCT
   family_id,
   cit_rank.cluster_id,
   priority_year AS year,
+  -- including a patent id here so we can make a google patent link later
   COALESCE(family_title_date.patent_id, clusters.patent_id) AS patent_id,
   citations,
   citation_rank,

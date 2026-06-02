@@ -32,7 +32,7 @@ citing AS (
 )
 
 --link patents and their clusters to their references and link the references to their respective clusters
-SELECT
+SELECT DISTINCT
   citing.family_id,
   year,
   citing_cluster,

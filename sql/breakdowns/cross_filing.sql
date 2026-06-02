@@ -55,18 +55,18 @@ single_country_patents AS (
 cross_filings AS (
   SELECT
     cluster_id,
-    priority_country_name AS country_a,
-    publication_country_name AS country_b,
+    metadata.publication_country_name AS country_a,
+    metadata_b.publication_country_name AS country_b,
     year,
-    COUNT(DISTINCT metadata.patent_id) AS num_patents
+    COUNT(DISTINCT metadata_b.patent_id) AS num_patents
   FROM
-    unified_patents.priority_country
+    unified_patents.metadata
   INNER JOIN
     clusters
     USING
       (family_id)
   INNER JOIN
-    unified_patents.metadata
+    unified_patents.metadata AS metadata_b
     USING
       (family_id)
   WHERE
@@ -74,7 +74,7 @@ cross_filings AS (
       SELECT family_id
       FROM
         last_ten))
-    AND ((priority_country_name != publication_country_name)
+    AND ((metadata.publication_country_name != metadata_b.publication_country_name)
       OR (family_id IN (
         SELECT family_id
         FROM
@@ -83,8 +83,8 @@ cross_filings AS (
           country_count = 1)))
   GROUP BY
     cluster_id,
-    priority_country_name,
-    publication_country_name,
+    metadata.publication_country_name,
+    metadata_b.publication_country_name,
     year
 )
 
