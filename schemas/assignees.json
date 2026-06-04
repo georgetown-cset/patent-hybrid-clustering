@@ -19,6 +19,12 @@
     },
     {
     "mode": "REQUIRED",
+    "name": "country",
+    "type": "STRING",
+    "description": "Country of patent family assignee."
+    },
+    {
+    "mode": "REQUIRED",
     "name": "NPF_assignee",
     "type": "INTEGER",
     "description": "Number of patent families from assignee in a cluster."
@@ -34,5 +40,11 @@
     "name": "NPF_missing_all_assignees",
     "type": "INTEGER",
     "description": "Number of patent families in a cluster where all assignees are missing."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_last_10_years",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster from the last ten years by first priority date."
     }
 ]

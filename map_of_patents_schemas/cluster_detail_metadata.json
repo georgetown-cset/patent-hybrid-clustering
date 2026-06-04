@@ -1,0 +1,840 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+      "mode": "REPEATED",
+      "name": "npf_info",
+      "type": "RECORD",
+      "description": "Number of patent families in cluster by year.",
+      "fields": [
+          {
+            "mode": "NULLABLE",
+            "name": "NPF",
+            "type": "INTEGER",
+            "description": "Number of patent families."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "year",
+            "type": "INTEGER",
+            "description": "Priority year."
+          }
+        ]
+    },
+    {
+      "mode": "REPEATED",
+      "name": "patent_stats",
+      "type": "RECORD",
+      "description": "Stats about core or most cited patent families.",
+      "fields": [
+          {
+            "mode": "REQUIRED",
+            "name": "family_id",
+            "type": "STRING",
+            "description": "Patent family id."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "title",
+            "type": "STRING",
+            "description": "Title and priority year in one string."
+          },
+          {
+            "mode": "REQUIRED",
+            "name": "google_patent",
+            "type": "STRING",
+            "description": "A Google patents link to a sample patent id from the family."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "year",
+            "type": "STRING",
+            "description": "Priority year."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "core_stat",
+            "type": "INTEGER",
+            "description": "Core patent family score: N_in_cluster * patent_family_share_in_cluster_connections * Ln(weight links + 1)/(age+1)"
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "citations",
+            "type": "INTEGER",
+            "description": "Number of citations."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "citation_rank",
+            "type": "INTEGER",
+            "description": "Rank of a patent family based on the number of patent family-to-patent-family citations."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "core_rank",
+            "type": "INTEGER",
+            "description": "Rank of a patent family based on the cluster core patent family score."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "is_most_cited",
+            "type": "BOOLEAN",
+            "description": "True if the patent family is one of the top ten most cited in the cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "is_core",
+            "type": "BOOLEAN",
+            "description": "True if the patent family is one of the ten most core patent families in the cluster."
+          }
+      ]
+    },
+    {
+        "mode": "REPEATED",
+        "name": "priority_country_info",
+        "type": "RECORD",
+        "description": "Patent family counts by priority country.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "country",
+              "type": "STRING",
+              "description": "Priority country."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families."
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_missing_priority_countries",
+      "type": "INTEGER",
+      "description": "Number of patent families without a priority country."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_in_top_10_priority_countries",
+      "type": "INTEGER",
+      "description": "Number of patent families whose priority country is one of the top 10."
+    },
+    {
+        "mode": "REPEATED",
+        "name": "industry_org_info",
+        "type": "RECORD",
+        "description": "Patent family counts by top industry assignees.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "industry_assignee",
+              "type": "STRING",
+              "description": "Industry assignee."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "country",
+              "type": "STRING",
+              "description": "Assignee country."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families."
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_missing_industry_org",
+      "type": "INTEGER",
+      "description": "Number of patent families without an industry assignee."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_in_top_10_industry_orgs",
+      "type": "INTEGER",
+      "description": "Number of patent families whose industry assignee is one of the top 10."
+    },
+    {
+        "mode": "REPEATED",
+        "name": "academic_org_info",
+        "type": "RECORD",
+        "description": "Patent family counts by top academic assignees.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "academic_assignee",
+              "type": "STRING",
+              "description": "Academic assignee."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "country",
+              "type": "STRING",
+              "description": "Assignee country."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families."
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_missing_academic_org",
+      "type": "INTEGER",
+      "description": "Number of patent families without an academic assignee."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_in_top_10_academic_orgs",
+      "type": "INTEGER",
+      "description": "Number of patent families whose academic assignee is one of the top 10."
+    },
+    {
+        "mode": "REPEATED",
+        "name": "inventor_info",
+        "type": "RECORD",
+        "description": "Patent family counts by top inventors.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "inventor",
+              "type": "STRING",
+              "description": "Inventor."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "inventor_country",
+              "type": "STRING",
+              "description": "Inventor country."
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_missing_inventors",
+      "type": "INTEGER",
+      "description": "Number of patent families without an inventor."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_in_top_10_inventors",
+      "type": "INTEGER",
+      "description": "Number of patent families whose inventor is one of the top 10."
+    },
+    {
+        "mode": "REPEATED",
+        "name": "assignee_org_info",
+        "type": "RECORD",
+        "description": "Patent family counts by top assignees.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "assignee",
+              "type": "STRING",
+              "description": "Assignee."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "country",
+              "type": "STRING",
+              "description": "Assignee country."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families."
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_missing_assignees",
+      "type": "INTEGER",
+      "description": "Number of patent families without an assignee."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "num_in_top_10_assignees",
+      "type": "INTEGER",
+      "description": "Number of patent families whose assignee is one of the top 10."
+    },
+    {
+      "mode": "REPEATED",
+      "name": "assignee_type_info",
+      "type": "RECORD",
+      "description": "Assignee type percentages; missing data not included in denominator.",
+      "fields": [
+          {
+            "mode": "NULLABLE",
+            "name": "Company",
+            "type": "FLOAT",
+            "description": "Percentage of assignees with type info that are companies."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "Education",
+            "type": "FLOAT",
+            "description": "Percentage of assignees with type info that are education."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "Nonprofit",
+            "type": "FLOAT",
+            "description": "Percentage of assignees with type info that are nonprofit."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "Government",
+            "type": "FLOAT",
+            "description": "Percentage of assignees with type info that are government."
+          }
+      ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "assignee_type_missing",
+      "type": "INTEGER",
+      "description": "Number of patent families without an assignee type."
+    },
+    {
+      "mode": "REPEATED",
+      "name": "cross_filings",
+      "type": "RECORD",
+      "description": "Cross-filings by country pair.",
+      "fields": [
+          {
+            "mode": "NULLABLE",
+            "name": "country_a",
+            "type": "STRING",
+            "description": "The priority country."
+          },
+          {
+            "mode": "REPEATED",
+            "name": "cross_filings_w_counts",
+            "type": "RECORD",
+            "description": "Counts of how many cross-filings there have been for that country.",
+            "fields": [
+                {
+                  "mode": "NULLABLE",
+                  "name": "country_b",
+                  "type": "STRING",
+                  "description": "The publication country the patent family was cross-filed in."
+                },
+                {
+                  "mode": "NULLABLE",
+                  "name": "num_patents",
+                  "type": "INTEGER",
+                  "description": "The number of patents that were cross-filed in that jurisdiction."
+                },
+                {
+                  "mode": "NULLABLE",
+                  "name": "year",
+                  "type": "INTEGER",
+                  "description": "Priority year."
+                }
+              ]
+            }
+        ]
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "multi_country_count",
+      "type": "INTEGER",
+      "description": "Number of patent families filed in multiple countries."
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "ten_year_count",
+      "type": "INTEGER",
+      "description": "Number of patent families from the past ten years."
+    },
+    {
+      "mode": "REPEATED",
+      "name": "metrics",
+      "type": "RECORD",
+      "description": "Cluster metrics.",
+      "fields": [
+          {
+            "mode": "NULLABLE",
+            "name": "class_cat",
+            "type": "STRING",
+            "description": "The top broad category of the cluster. This is the class category used to color the map."
+          },
+          {
+          "mode": "REPEATED",
+          "name": "categories",
+          "type": "RECORD",
+          "description": "Top categories for cluster. This will include the top 3, based on number of patent families in the category.",
+          "fields": [
+              {
+                "mode": "NULLABLE",
+                "name": "name",
+                "type": "STRING",
+                "description": "Category name."
+              },
+              {
+                "mode": "NULLABLE",
+                "name": "NPF",
+                "type": "INTEGER",
+                "description": "Number of patent families belonging to this category in the cluster."
+              }
+            ]
+          },
+          {
+            "mode": "REPEATED",
+            "name": "tags",
+            "type": "RECORD",
+            "description": "Tags for a cluster. These can be broad categories, categories, fields, subfields, or phrases.",
+            "fields": [
+                {
+                  "mode": "NULLABLE",
+                  "name": "name",
+                  "type": "STRING",
+                  "description": "Tag name."
+                },
+                {
+                  "mode": "NULLABLE",
+                  "name": "category",
+                  "type": "INTEGER",
+                  "description": "Tag type."
+                }
+              ]
+          },
+          {
+            "mode": "REPEATED",
+            "name": "top_3_country",
+            "type": "STRING",
+            "description": "Top 3 priority countries in a cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "NPF_all_years",
+            "type": "INTEGER",
+            "description": "Total number of patent families in the cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "NPF",
+            "type": "INTEGER",
+            "description": "Number of patent families in the cluster from the last 10 years."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cset_extracted_phrase",
+            "type": "STRING",
+            "description": "Keywords extracted from cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cluster_title",
+            "type": "STRING",
+            "description": "Title of the cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cluster_summary",
+            "type": "STRING",
+            "description": "Summary of the cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "categories_agg",
+            "type": "STRING",
+            "description": "String showing top categories for cluster. This will include the top 3, based on number of patent families in the category, as well as the count of their patent families."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "ai_fields_agg",
+            "type": "STRING",
+            "description": "Top AI subfields for a cluster, formatted as a string, if patent is at least 1% AI-relevant. Subfields are included if they are in top 3 for cluster or 10% of patents in cluster belong to them."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "biotech_fields_agg",
+            "type": "STRING",
+            "description": "Top biotech subfields for a cluster, formatted as a string, if patent is at least 1% biotech-relevant. Subfields are included if they are in top 3 for cluster or 10% of patents in cluster belong to them."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cybersecurity_fields_agg",
+            "type": "STRING",
+            "description": "Top cybersecurity subfields for a cluster, formatted as a string, if patent is at least 1% cybersecurity-relevant. Subfields are included if they are in top 3 for cluster or 10% of patents in cluster belong to them."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "robotics_fields_agg",
+            "type": "STRING",
+            "description": "Top robotics subfields for a cluster, formatted as a string, if patent is at least 1% robotics-relevant. Subfields are included if they are in top 3 for cluster or 10% of patents in cluster belong to them."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "ai_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered AI-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "nlp_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered NLP-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cv_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered computer vision-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "ro_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered robotics-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cyber_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered cybersecurity-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "semiconductor_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered semiconductor-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "biotech_pred",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in a cluster considered biotech-relevant."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "age",
+            "type": "FLOAT",
+            "description": "Mean cluster age."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "mean_growth_3_year_p_rank",
+            "type": "FLOAT",
+            "description": "Cluster's growth percentile based on past 3 years."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "cross_filing_percentile",
+            "type": "FLOAT",
+            "description": "Cluster's cross filing percentile. Based on what percentage of patents families in the cluster are filing in multiple jurisdictions."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "industry_share",
+            "type": "FLOAT",
+            "description": "Industry share; includes organizations with no data in denominator."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "education_share",
+            "type": "FLOAT",
+            "description": "Education share; includes organizations with no data in denominator."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "nonprofit_share",
+            "type": "FLOAT",
+            "description": "Nonprofit share; includes organizations with no data in denominator."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "government_share",
+            "type": "FLOAT",
+            "description": "Government share; includes organizations with no data in denominator."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "grant_percentage",
+            "type": "FLOAT",
+            "description": "Percentage of patent families in the cluster that are grants; based on past ten years but excludes recent (past 3 years) patents, to avoid pending patents."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "grant_percentile",
+            "type": "FLOAT",
+            "description": "Cluster's grant percentile. Grant percentage ranked over the full set of clusters."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "n_pubs",
+            "type": "INTEGER",
+            "description": "The number of publications cited by patent families in the cluster."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "frac_citing_pubs",
+            "type": "FLOAT",
+            "description": "The proportion of patent families in the cluster that cite at least one publication."
+          },
+          {
+            "mode": "NULLABLE",
+            "name": "n_pubs_percentile",
+            "type": "FLOAT",
+            "description": "The percentile rank of the cluster based on the proportion of patent families in it that cite at least one publication, normalized by the cluster's class_cat."
+          },
+          {
+            "mode": "REQUIRED",
+            "name": "x",
+            "type": "INTEGER",
+            "description": "Cluster x coordinate on chart."
+          },
+          {
+            "mode": "REQUIRED",
+            "name": "y",
+            "type": "INTEGER",
+            "description": "Cluster y coordinate on chart."
+          }
+      ]
+  },
+  {
+        "mode": "REPEATED",
+        "name": "paper_affiliation_info",
+        "type": "RECORD",
+        "description": "Top affiliations of cited research papers, by patent families citing the affiliations.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "org_name",
+              "type": "STRING",
+              "description": "Paper affiliation org name."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "affiliation_rank",
+              "type": "STRING",
+              "description": "Rank of affiliation in the cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "NPF",
+              "type": "INTEGER",
+              "description": "Number of patent families citing a paper with the affiliation."
+            }
+        ]
+    },
+    {
+        "mode": "REPEATED",
+        "name": "paper_title_info",
+        "type": "RECORD",
+        "description": "Titles of most-cited research papers.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "title",
+              "type": "STRING",
+              "description": "Paper title."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "citation_rank",
+              "type": "STRING",
+              "description": "Rank of paper by citations within the cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "citations",
+              "type": "INTEGER",
+              "description": "Number of citations of the paper by patent families in the cluster."
+            }
+        ]
+    },
+    {
+        "mode": "REPEATED",
+        "name": "research_cluster_info",
+        "type": "RECORD",
+        "description": "Most cited research clusters.",
+        "fields": [
+            {
+              "mode": "REQUIRED",
+              "name": "research_cluster_id",
+              "type": "STRING",
+              "description": "Cluster id of reseach cluster in the map of science."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_title",
+              "type": "STRING",
+              "description": "Title of the research cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_summary",
+              "type": "STRING",
+              "description": "Summary of the research cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "keywords",
+              "type": "STRING",
+              "description": "List of keyword phrases for the research cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "citation_rank",
+              "type": "INTEGER",
+              "description": "Rank of the research cluster based on the number of patent family-to-paper citations of papers within that cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "citations",
+              "type": "INTEGER",
+              "description": "Number of citations."
+            }
+        ]
+    },
+    {
+        "mode": "REPEATED",
+        "name": "exporting_cluster_counts",
+        "type": "RECORD",
+        "description": "Most common exporting clusters and their counts by year.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "exporter",
+              "type": "INTEGER",
+              "description": "Exporting cluster id."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cset_extracted_phrase",
+              "type": "STRING",
+              "description": "Exporting cluster keywords."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_title",
+              "type": "STRING",
+              "description": "Title of the exporting cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_summary",
+              "type": "STRING",
+              "description": "Summary of the exporting cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "num_exports",
+              "type": "INTEGER",
+              "description": "Number of exports."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "exporter_rank",
+              "type": "INTEGER",
+              "description": "Overall exporter rank."
+            },
+            {
+              "mode": "REPEATED",
+              "name": "export_counts",
+              "type": "RECORD",
+              "description": "Export counts by year.",
+              "fields": [
+                  {
+                      "mode": "NULLABLE",
+                      "name": "year",
+                      "type": "INTEGER",
+                      "description": "Priority year."
+                    },
+                    {
+                      "mode": "NULLABLE",
+                      "name": "export_count",
+                      "type": "STRING",
+                      "description": "Export count."
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "mode": "REPEATED",
+        "name": "importing_cluster_counts",
+        "type": "RECORD",
+        "description": "Most common importing clusters and their counts by year.",
+        "fields": [
+            {
+              "mode": "NULLABLE",
+              "name": "importer",
+              "type": "INTEGER",
+              "description": "Importing cluster id."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cset_extracted_phrase",
+              "type": "STRING",
+              "description": "Importing cluster keywords."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_title",
+              "type": "STRING",
+              "description": "Title of the importing cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "cluster_summary",
+              "type": "STRING",
+              "description": "Summary of the importing cluster."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "num_imports",
+              "type": "INTEGER",
+              "description": "Number of imports."
+            },
+            {
+              "mode": "NULLABLE",
+              "name": "importer_rank",
+              "type": "INTEGER",
+              "description": "Overall importer rank."
+            },
+            {
+              "mode": "REPEATED",
+              "name": "import_counts",
+              "type": "RECORD",
+              "description": "Import counts by year.",
+              "fields": [
+                  {
+                      "mode": "NULLABLE",
+                      "name": "year",
+                      "type": "INTEGER",
+                      "description": "Priority year."
+                    },
+                    {
+                      "mode": "NULLABLE",
+                      "name": "import_count",
+                      "type": "STRING",
+                      "description": "Import count."
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -47,10 +47,10 @@ biotech_tab AS (
     CAST(Energy AS INT64) AS Energy,
     CAST(Military_Defense AS INT64) AS Military_Defense
   FROM
-    staging_unified_patents.biotech_patents
+    unified_patents.biotech_patents
 ),
 
-/* Merge clusters and robotics predictions, including each only once per family id */
+/* Merge clusters and biotech predictions, including each only once per family id */
 merged AS (
   SELECT DISTINCT
     clusters.family_id,

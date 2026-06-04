@@ -1,0 +1,25 @@
+-- Find top three broad patent categories for each cluster and their percentages
+
+/* aggregate patent category names and percentages into a string for presentation */
+WITH
+ca_tab AS (
+  SELECT
+    *
+  FROM
+    staging_patent_clusters.broad_category_staging
+  ORDER BY
+    cluster_id,
+    category_rank
+)
+
+SELECT
+  cluster_id,
+  MAX(class_cat) AS main_category,
+  STRING_AGG(CONCAT(broad_category, ' (',
+    ROUND(percentage * 100, 1), '%)'), ', ') AS top_categories
+FROM
+  ca_tab
+GROUP BY
+  cluster_id
+ORDER BY
+  cluster_id

@@ -138,6 +138,12 @@
     },
     {
     "mode": "NULLABLE",
+    "name": "nlp_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be NLP-relevant. For our purposes, NLP is Language Processing or Speech Processing. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
     "name": "Knowledge_Representation_pred",
     "type": "FLOAT",
     "description": "Proportion of patent families considered to be Knowledge Representation-relevant based on 1790 categorization. Only AI-relevant patents considered."
@@ -186,9 +192,15 @@
     },
     {
     "mode": "NULLABLE",
-    "name": "Logic_Programming_pred",
+    "name": "Spatial_and_Physical_Reasoning_pred",
     "type": "FLOAT",
-    "description": "Proportion of patent families considered to be Logic Programming-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    "description": "Proportion of patent families considered to be Spatial and Physical Reasoning-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Logic_Based_Knowledge_Systems_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Logic-Based Knowledge Systems-relevant based on 1790 categorization. Only AI-relevant patents considered."
     },
     {
     "mode": "NULLABLE",
@@ -198,9 +210,15 @@
     },
     {
     "mode": "NULLABLE",
-    "name": "Probabilistic_Reasoning_pred",
+    "name": "Bio_Inspired_Computing_pred",
     "type": "FLOAT",
-    "description": "Proportion of patent families considered to be Probabilistic Reasoning-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    "description": "Proportion of patent families considered to be Bio-Inspired Computing-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "Markov_and_Bayesian_Models_pred",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Markov and Bayesian Models-relevant based on 1790 categorization. Only AI-relevant patents considered."
     },
     {
     "mode": "NULLABLE",
@@ -210,9 +228,9 @@
     },
     {
     "mode": "NULLABLE",
-    "name": "Machine_Learning_pred",
+    "name": "Neural_Networks_pred",
     "type": "FLOAT",
-    "description": "Proportion of patent families considered to be Machine Learning-relevant based on 1790 categorization. Only AI-relevant patents considered."
+    "description": "Proportion of patent families considered to be Neural Networks-relevant based on 1790 categorization. Only AI-relevant patents considered."
     },
     {
     "mode": "NULLABLE",

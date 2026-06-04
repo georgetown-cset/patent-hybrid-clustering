@@ -53,6 +53,7 @@ ai_tab AS (
     CAST(Semiconductors AS INT64) AS Semiconductors,
     CAST(Language_Processing AS INT64) AS Language_Processing,
     CAST(Speech_Processing AS INT64) AS Speech_Processing,
+    CAST((Language_Processing OR Speech_Processing) AS INT64) AS nlp,
     CAST(Knowledge_Representation AS INT64) AS Knowledge_Representation,
     CAST(Planning_and_Scheduling AS INT64) AS Planning_and_Scheduling,
     CAST(Control AS INT64) AS Control,
@@ -61,12 +62,15 @@ ai_tab AS (
     CAST(Computer_Vision AS INT64) AS Computer_Vision,
     CAST(Analytics_and_Algorithms AS INT64) AS Analytics_and_Algorithms,
     CAST(Measuring_and_Testing AS INT64) AS Measuring_and_Testing,
-    CAST(Logic_Programming AS INT64) AS Logic_Programming,
+    CAST(Spatial_and_Physical_Reasoning AS INT64) AS Spatial_and_Physical_Reasoning,
+    CAST(Logic_Based_Knowledge_Systems AS INT64) AS Logic_Based_Knowledge_Systems,
     CAST(Fuzzy_Logic AS INT64) AS Fuzzy_Logic,
-    CAST(Probabilistic_Reasoning AS INT64) AS Probabilistic_Reasoning,
+    CAST(Bio_Inspired_Computing AS INT64) AS Bio_Inspired_Computing,
+    CAST(Markov_and_Bayesian_Models AS INT64) AS Markov_and_Bayesian_Models,
     CAST(Ontology_Engineering AS INT64) AS Ontology_Engineering,
-    CAST(Machine_Learning AS INT64) AS Machine_Learning,
-    CAST(Search_Methods AS INT64) AS Search_Methods
+    CAST(Neural_Networks AS INT64) AS Neural_Networks,
+    CAST(Search_Methods AS INT64) AS Search_Methods,
+    CAST(Other_and_Unspecified AS INT64) AS Other_and_Unspecified
   FROM
     unified_patents.ai_patents
 ),
@@ -98,6 +102,7 @@ merged AS (
     Semiconductors,
     Language_Processing,
     Speech_Processing,
+    nlp,
     Knowledge_Representation,
     Planning_and_Scheduling,
     Control,
@@ -106,12 +111,15 @@ merged AS (
     Computer_Vision,
     Analytics_and_Algorithms,
     Measuring_and_Testing,
-    Logic_Programming,
+    Spatial_and_Physical_Reasoning,
+    Logic_Based_Knowledge_Systems,
     Fuzzy_Logic,
-    Probabilistic_Reasoning,
+    Bio_Inspired_Computing,
+    Markov_and_Bayesian_Models,
     Ontology_Engineering,
-    Machine_Learning,
-    Search_Methods
+    Neural_Networks,
+    Search_Methods,
+    Other_and_Unspecified
   FROM
     clusters
   LEFT JOIN
@@ -144,6 +152,7 @@ SELECT
   SUM(Semiconductors) / NULLIF(COUNT(family_id), 0) AS Semiconductors_pred,
   SUM(Language_Processing) / NULLIF(COUNT(family_id), 0) AS Language_Processing_pred,
   SUM(Speech_Processing) / NULLIF(COUNT(family_id), 0) AS Speech_Processing_pred,
+  SUM(nlp) / NULLIF(COUNT(family_id), 0) AS nlp_pred,
   SUM(Knowledge_Representation) / NULLIF(COUNT(family_id), 0) AS Knowledge_Representation_pred,
   SUM(Planning_and_Scheduling) / NULLIF(COUNT(family_id), 0) AS Planning_and_Scheduling_pred,
   SUM(Control) / NULLIF(COUNT(family_id), 0) AS Control_pred,
@@ -152,12 +161,15 @@ SELECT
   SUM(Computer_Vision) / NULLIF(COUNT(family_id), 0) AS Computer_Vision_pred,
   SUM(Analytics_and_Algorithms) / NULLIF(COUNT(family_id), 0) AS Analytics_and_Algorithms_pred,
   SUM(Measuring_and_Testing) / NULLIF(COUNT(family_id), 0) AS Measuring_and_Testing_pred,
-  SUM(Logic_Programming) / NULLIF(COUNT(family_id), 0) AS Logic_Programming_pred,
+  SUM(Spatial_and_Physical_Reasoning) / NULLIF(COUNT(family_id), 0) AS Spatial_and_Physical_Reasoning_pred,
+  SUM(Logic_Based_Knowledge_Systems) / NULLIF(COUNT(family_id), 0) AS Logic_Based_Knowledge_Systems_pred,
   SUM(Fuzzy_Logic) / NULLIF(COUNT(family_id), 0) AS Fuzzy_Logic_pred,
-  SUM(Probabilistic_Reasoning) / NULLIF(COUNT(family_id), 0) AS Probabilistic_Reasoning_pred,
+  SUM(Bio_Inspired_Computing) / NULLIF(COUNT(family_id), 0) AS Bio_Inspired_Computing_pred,
+  SUM(Markov_and_Bayesian_Models) / NULLIF(COUNT(family_id), 0) AS Markov_and_Bayesian_Models_pred,
   SUM(Ontology_Engineering) / NULLIF(COUNT(family_id), 0) AS Ontology_Engineering_pred,
-  SUM(Machine_Learning) / NULLIF(COUNT(family_id), 0) AS Machine_Learning_pred,
-  SUM(Search_Methods) / NULLIF(COUNT(family_id), 0) AS Search_Methods_pred
+  SUM(Neural_Networks) / NULLIF(COUNT(family_id), 0) AS Neural_Networks_pred,
+  SUM(Search_Methods) / NULLIF(COUNT(family_id), 0) AS Search_Methods_pred,
+  SUM(Other_and_Unspecified) / NULLIF(COUNT(family_id), 0) AS Other_and_Unspecified_pred
 FROM
   merged
 GROUP BY

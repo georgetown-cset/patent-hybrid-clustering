@@ -11,6 +11,12 @@ families_with_dummies AS (
     unified_patents.links
 ),
 
+last_ten AS (
+  SELECT DISTINCT family_id
+  FROM
+    staging_patent_clusters.patents_last_10_years
+),
+
 -- Get patent clusters, with all patent ids in the families
 clusters AS (
   SELECT DISTINCT
@@ -23,13 +29,15 @@ clusters AS (
     families_with_dummies
     USING
       (family_id)
+  WHERE
+    family_id IN (SELECT family_id FROM last_ten)
 ),
 
 -- number of patent families in clust
 clust_size AS (
   SELECT
     cluster_id,
-    COUNT(DISTINCT family_id) AS NPF
+    COUNT(DISTINCT family_id) AS NPF_last_10_years
   FROM
     clusters
   GROUP BY
@@ -42,18 +50,24 @@ inventors AS (
     patent_id,
     family_id,
     cluster_id,
-    inventor
+    INITCAP(inventor) AS inventor,
+    standard_name AS inventor_country
   FROM
     clusters
   LEFT JOIN (
     SELECT
       patent_id,
-      inventor
+      inventor,
+      inventor_country
     FROM
       unified_patents.inventors
     )
     USING
       (patent_id)
+  LEFT JOIN
+    countries.country_code
+    ON
+      raw_alpha_2 = inventor_country
 ),
 
 -- Aggregate.
@@ -62,13 +76,15 @@ inventor_rank_tab AS (
     cluster_id,
     inventor,
     COUNT(DISTINCT family_id) AS NPF_inventor,
-    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS inventor_rank
+    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS inventor_rank,
+    inventor_country
   FROM (
     SELECT
       patent_id,
       family_id,
       cluster_id,
-      inventor
+      inventor,
+      inventor_country
     FROM
       inventors
     )
@@ -76,7 +92,8 @@ inventor_rank_tab AS (
     inventor IS NOT NULL
   GROUP BY
     cluster_id,
-    inventor
+    inventor,
+    inventor_country
 ),
 
 -- Get top 10 inventors.
@@ -127,9 +144,11 @@ SELECT
   cluster_id,
   inventor,
   inventor_rank,
+  inventor_country,
   NPF_inventor,
   NPF_top10_inventors,
-  NPF_missing_all_inventors
+  NPF_missing_all_inventors,
+  NPF_last_10_years
 FROM (
   SELECT
     *

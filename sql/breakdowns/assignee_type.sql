@@ -1,17 +1,8 @@
 -- Find assignee type proportions by cluster
 
--- Get dummy families
-WITH
-families_with_dummies AS (
-  SELECT
-    patent_id,
-    COALESCE(family_id,
-      "X-" || patent_id) AS family_id
-  FROM
-    unified_patents.links
-),
-
 -- Get patent clusters, with all patent ids in the families
+-- patents_last_10_years handles the dummy_family linkage to patents for us
+WITH
 clusters AS (
   SELECT DISTINCT
     patent_id,
@@ -19,8 +10,8 @@ clusters AS (
     cluster_assignment.cluster_id
   FROM
     staging_patent_clusters.cluster_assignment
-  LEFT JOIN
-    families_with_dummies
+  INNER JOIN
+    staging_patent_clusters.patents_last_10_years
     USING
       (family_id)
 ),
@@ -91,11 +82,10 @@ assignee_ror AS (
 ),
 
 org_type AS (
-  SELECT
+  SELECT DISTINCT
     *
   FROM (
     SELECT
-      patent_id,
       family_id,
       cluster_id,
       ror_id
@@ -124,7 +114,8 @@ org_type AS (
 add_miss_org AS (
   SELECT
     cluster_id,
-    SUM(missing_type) AS NPF_missing_all_assignee_types
+    COUNT(DISTINCT(CASE
+      WHEN missing_type = 1 THEN family_id END)) AS NPF_missing_all_assignee_types
   FROM (
     SELECT DISTINCT
       family_id,
@@ -149,27 +140,20 @@ add_miss_org AS (
 
 agg_org AS (
   -- export data
-  SELECT DISTINCT
+  SELECT
     cluster_id,
-    Company / check_sum AS Company,
-    Education / check_sum AS Education,
-    Nonprofit / check_sum AS Nonprofit,
-    Government / check_sum AS Government
-  FROM (
-    SELECT
-      cluster_id,
-      SUM(Company_auth) AS Company,
-      SUM(Education_auth) AS Education,
-      SUM(Nonprofit_auth) AS Nonprofit,
-      SUM(Government_auth) AS Government,
-      SUM(Company_auth + Education_auth + Nonprofit_auth + Government_auth) AS check_sum
-    FROM
-      org_type
-    GROUP BY
-      cluster_id
-    )
-  WHERE
-    check_sum > 0
+    SUM(Company_auth) / COUNT(Company_auth) AS Company,
+    SUM(Education_auth) / COUNT(Education_auth) AS Education,
+    SUM(Nonprofit_auth) / COUNT(Nonprofit_auth) AS Nonprofit,
+    SUM(Government_auth) / COUNT(Government_auth) AS Government,
+    SUM(Company_auth) / COUNT(*) AS Company_incl_miss,
+    SUM(Education_auth) / COUNT(*) AS Education_incl_miss,
+    SUM(Nonprofit_auth) / COUNT(*) AS Nonprofit_incl_miss,
+    SUM(Government_auth) / COUNT(*) AS Government_incl_miss
+  FROM
+    org_type
+  GROUP BY
+    cluster_id
 )
 
 SELECT

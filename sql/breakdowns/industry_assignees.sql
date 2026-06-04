@@ -11,6 +11,12 @@ families_with_dummies AS (
     unified_patents.links
 ),
 
+last_ten AS (
+  SELECT DISTINCT family_id
+  FROM
+    staging_patent_clusters.patents_last_10_years
+),
+
 -- Get patent clusters, with all patent ids in the families
 clusters AS (
   SELECT DISTINCT
@@ -23,13 +29,15 @@ clusters AS (
     families_with_dummies
     USING
       (family_id)
+  WHERE
+    family_id IN (SELECT family_id FROM last_ten)
 ),
 
 -- number of patent families in clust
 clust_size AS (
   SELECT
     cluster_id,
-    COUNT(DISTINCT family_id) AS NPF
+    COUNT(DISTINCT family_id) AS NPF_last_10_years
   FROM
     clusters
   GROUP BY
@@ -41,7 +49,8 @@ family_assignees AS (
   SELECT
     patent_id,
     clusters.family_id,
-    assignee,
+    INITCAP(assignee) AS assignee,
+    country,
     ror_id
   FROM
     clusters
@@ -72,6 +81,7 @@ priority_assignees AS (
     patent_id,
     family_assignees.family_id,
     assignee,
+    country,
     ror_id
   FROM
     family_assignees
@@ -95,6 +105,7 @@ assignees AS (
     clusters.family_id,
     cluster_id,
     assignee AS industry_assignee,
+    country,
     ror_id
   FROM
     clusters
@@ -103,6 +114,7 @@ assignees AS (
       patent_id,
       family_id,
       assignee,
+      country,
       ror_id
     FROM
       priority_assignees
@@ -113,7 +125,7 @@ assignees AS (
           gcp_cset_ror.ror,
           UNNEST(types) AS org_type
         WHERE
-          org_type = "Company")
+          org_type = "company")
     )
     USING
       (patent_id)
@@ -125,13 +137,15 @@ assignee_rank_tab AS (
     cluster_id,
     industry_assignee,
     COUNT(DISTINCT family_id) AS NPF_industry_assignee,
-    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS industry_assignee_rank
+    ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(DISTINCT family_id) DESC) AS industry_assignee_rank,
+    country
   FROM (
     SELECT
       patent_id,
       family_id,
       cluster_id,
       industry_assignee,
+      country,
       ror_id
     FROM
       assignees
@@ -140,7 +154,8 @@ assignee_rank_tab AS (
     industry_assignee IS NOT NULL
   GROUP BY
     cluster_id,
-    industry_assignee
+    industry_assignee,
+    country
 ),
 
 -- get top 10 assignees
@@ -191,10 +206,11 @@ SELECT
   cluster_id,
   industry_assignee,
   industry_assignee_rank,
+  country,
   NPF_industry_assignee,
   NPF_top10_industry_assignees,
   NPF_missing_all_industry_assignees,
-  NPF
+  NPF_last_10_years
 FROM (
   SELECT
     *

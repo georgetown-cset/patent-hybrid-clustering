@@ -28,5 +28,17 @@
     "name": "keywords",
     "type": "STRING",
     "description": "List of keyword phrases for the research cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cluster_title",
+    "type": "STRING",
+    "description": "Title of the research cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cluster_summary",
+    "type": "STRING",
+    "description": "Summary of the research cluster."
     }
 ]

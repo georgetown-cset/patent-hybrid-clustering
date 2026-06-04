@@ -1,0 +1,238 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "class_cat",
+    "type": "STRING",
+    "description": "The top broad category of the cluster. This is the class category used to color the map."
+    },
+    {
+    "mode": "REPEATED",
+    "name": "categories",
+    "type": "RECORD",
+    "description": "Top categories for cluster. This will include the top 3, based on number of patent families in the category.",
+    "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "name",
+          "type": "STRING",
+          "description": "Category name."
+        },
+        {
+          "mode": "NULLABLE",
+          "name": "NPF",
+          "type": "INTEGER",
+          "description": "Number of patent families belonging to this category in the cluster."
+        }
+      ]
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "categories_agg",
+    "type": "STRING",
+    "description": "String showing top categories for cluster. This will include the top 3, based on number of patent families in the category, as well as the count of their patent families."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "top_country",
+    "type": "STRING",
+    "description": "Top priority country in a cluster."
+    },
+    {
+    "mode": "REPEATED",
+    "name": "top_3_country",
+    "type": "STRING",
+    "description": "Top 3 priority countries in a cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "ai_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered AI-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "nlp_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered NLP-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cv_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered computer vision-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "ro_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered robotics-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cyber_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered cybersecurity-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "semiconductor_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered semiconductor-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "biotech_pred",
+    "type": "FLOAT",
+    "description": "Percentage of patent families in a cluster considered biotech-relevant."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cset_extracted_phrase",
+    "type": "STRING",
+    "description": "Keywords extracted from cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "age",
+    "type": "FLOAT",
+    "description": "Mean cluster age."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "patent_vit",
+    "type": "FLOAT",
+    "description": "Cluster vitality."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_all_years",
+    "type": "INTEGER",
+    "description": "Total number of patent families in the cluster."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "NPF_last_10_year",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from the last 10 years."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from the last year."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n_1",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from year n to year n-1."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n_2",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from year n-1 to year n-2."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n_3",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from year n-2 to year n-3."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n_4",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from year n-3 to year n-4."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "year_n_5",
+    "type": "INTEGER",
+    "description": "Number of patent families in the cluster from year n-4 to year n-5."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "share_growth_1_year",
+    "type": "FLOAT",
+    "description": "Share of growth in most recent year."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "share_growth_3_year",
+    "type": "FLOAT",
+    "description": "Share of growth in 3 most recent years."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "share_growth_5_year",
+    "type": "FLOAT",
+    "description": "Share of growth in 5 most recent years."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "growth_1yr_p_rank",
+    "type": "FLOAT",
+    "description": "Cluster's growth percentile in 1 year."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "growth_3yr_p_rank",
+    "type": "FLOAT",
+    "description": "Cluster's growth percentile in 3 years."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "growth_5yr_p_rank",
+    "type": "FLOAT",
+    "description": "Cluster's growth percentile in 5 years."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "mean_growth_3_year_p_rank",
+    "type": "FLOAT",
+    "description": "Cluster's mean growth percentile in 3 years. This is the growth measure we are using in production; for more detail see documentation."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "cluster_modularity",
+    "type": "FLOAT",
+    "description": "Cluster modularity."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "industry_share",
+    "type": "FLOAT",
+    "description": "Industry share; includes organizations with no data in denominator."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "education_share",
+    "type": "FLOAT",
+    "description": "Education share; includes organizations with no data in denominator."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "nonprofit_share",
+    "type": "FLOAT",
+    "description": "Nonprofit share; includes organizations with no data in denominator."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "government_share",
+    "type": "FLOAT",
+    "description": "Government share; includes organizations with no data in denominator."
+    },
+    {
+    "mode": "NULLABLE",
+    "name": "link",
+    "type": "STRING",
+    "description": "Link to Map of Patents cluster detail view."
+    }
+]

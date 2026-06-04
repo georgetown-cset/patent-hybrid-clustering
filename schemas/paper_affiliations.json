@@ -1,0 +1,26 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "org_name",
+    "type": "STRING",
+    "description": "Name of affiliated organization referenced."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "affiliation_rank",
+    "type": "INTEGER",
+    "description": "Rank of affiliation based on how many times it was referenced by the cluster."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_ref_affiliation",
+    "type": "INTEGER",
+    "description": "Number of patent families that reference a publication with this affiliation."
+    }
+]

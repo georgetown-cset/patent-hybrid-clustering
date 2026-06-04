@@ -185,14 +185,32 @@ cit_keyword AS (
     cit_keyword_corp
     USING
       (research_cluster_id)
+),
+
+title_summary AS (
+  SELECT DISTINCT
+    research_cluster_id,
+    cluster_title,
+    cluster_summary
+  FROM cit_rank
+  LEFT JOIN
+    map_of_science.cluster_titles_summaries
+    ON research_cluster_id = cluster_titles_summaries.cluster_id
 )
 
 SELECT DISTINCT
-  * EXCEPT(keywords),
+  research_cluster_id,
+  cluster_id,
+  citations,
   ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY citations DESC) AS citation_rank,
-  keywords
+  keywords,
+  cluster_title,
+  cluster_summary
 FROM
   cit_keyword
+LEFT JOIN
+  title_summary
+  USING (research_cluster_id)
 ORDER BY
   cluster_id,
   citation_rank

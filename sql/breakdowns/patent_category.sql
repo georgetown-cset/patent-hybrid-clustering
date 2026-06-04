@@ -15,7 +15,7 @@ ca_tab AS (
 SELECT
   cluster_id,
   MAX(class_cat) AS main_category,
-  STRING_AGG(CONCAT(category, ' (',
+  STRING_AGG(CONCAT(category_name, ' (',
     ROUND(percentage * 100, 1), '%)'), ', ') AS top_categories
 FROM
   ca_tab

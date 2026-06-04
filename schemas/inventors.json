@@ -19,6 +19,12 @@
     },
     {
     "mode": "REQUIRED",
+    "name": "inventor_country",
+    "type": "STRING",
+    "description": "Inventor country."
+    },
+    {
+    "mode": "REQUIRED",
     "name": "NPF_inventor",
     "type": "INTEGER",
     "description": "Number of patent families from the inventor in a cluster."
@@ -34,5 +40,11 @@
     "name": "NPF_missing_all_inventors",
     "type": "INTEGER",
     "description": "Number of patent families in a cluster where all inventors are missing."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "NPF_last_10_years",
+    "type": "INTEGER",
+    "description": "Number of patent families in a cluster from the last ten years by first priority date."
     }
 ]

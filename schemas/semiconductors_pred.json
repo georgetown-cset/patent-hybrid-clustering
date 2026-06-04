@@ -1,0 +1,14 @@
+[
+    {
+    "mode": "REQUIRED",
+    "name": "cluster_id",
+    "type": "INTEGER",
+    "description": "Patent cluster ID."
+    },
+    {
+    "mode": "REQUIRED",
+    "name": "pred_semiconductors",
+    "type": "FLOAT",
+    "description": "Proportion of patent families considered to be Semiconductors-relevant based on 1790 categorization."
+    }
+]
