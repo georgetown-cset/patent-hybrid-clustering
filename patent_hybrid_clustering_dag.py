@@ -912,8 +912,8 @@ with DAG(
         )
 
     trigger_mop = TriggerDagRunOperator(
-        task_id="trigger_eto_mop_bq_to_bq_metadata",
-        trigger_dag_id="eto_mop_bq_to_bq_metadata",
+        task_id="trigger_mop_bq_to_bq_metadata",
+        trigger_dag_id="mop_bq_to_bq_metadata",
     )
 
     success_alert >> trigger_mop
