@@ -20,8 +20,7 @@ get_dummy_families AS (
 -- their clusters if the patents with dummy families have actually been assigned
 -- to families that already exist
 current_real_families AS (
-  SELECT DISTINCT
-    family_id
+  SELECT DISTINCT family_id
   FROM
     patent_clusters.cluster_assignment
   WHERE
@@ -170,7 +169,7 @@ non_duplicated AS (
       (family_id)
   LEFT JOIN
     current_real_families
-      USING (family_id)
+    USING (family_id)
   WHERE
     link_to_clusters.family_id IS NULL
     AND current_real_families.family_id IS NULL
