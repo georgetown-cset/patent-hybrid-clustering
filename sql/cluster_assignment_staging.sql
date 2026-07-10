@@ -11,9 +11,21 @@ get_dummy_families AS (
     cluster_id,
     SUBSTRING(family_id, 3) AS patent_id
   FROM
-    staging_patent_clusters.cluster_assignment
+    patent_clusters.cluster_assignment
   WHERE
     REGEXP_CONTAINS(family_id, r'^X')
+),
+
+-- we need the real families because we don't want to replace dummy families into
+-- their clusters if the patents with dummy families have actually been assigned
+-- to families that already exist
+current_real_families AS (
+  SELECT DISTINCT
+    family_id
+  FROM
+    patent_clusters.cluster_assignment
+  WHERE
+    NOT REGEXP_CONTAINS(family_id, r'^X')
 ),
 
 -- find the new families that we could replace them with
@@ -126,6 +138,7 @@ get_ordered AS (
 ),
 
 -- link our chosen single entry back to the clusters
+-- so long as it isn't already there in some cluster
 link_to_clusters AS (
   SELECT
     cluster_id,
@@ -133,9 +146,13 @@ link_to_clusters AS (
   FROM
     get_ordered
   INNER JOIN
-    staging_patent_clusters.cluster_assignment_archived
+    patent_clusters.cluster_assignment
     ON
-      dummy_family_to_remove = cluster_assignment_archived.family_id
+      dummy_family_to_remove = cluster_assignment.family_id
+  LEFT JOIN
+    current_real_families
+    ON get_ordered.family_id = current_real_families.family_id
+  WHERE current_real_families.family_id IS NULL
 ),
 
 -- find non-duplicated dummies
@@ -151,8 +168,12 @@ non_duplicated AS (
     link_to_clusters
     USING
       (family_id)
+  LEFT JOIN
+    current_real_families
+      USING (family_id)
   WHERE
     link_to_clusters.family_id IS NULL
+    AND current_real_families.family_id IS NULL
 ),
 
 original_assignments_minus_replacements AS (
@@ -160,7 +181,7 @@ original_assignments_minus_replacements AS (
     cluster_assignment.cluster_id,
     cluster_assignment.family_id
   FROM
-    staging_patent_clusters.cluster_assignment
+    patent_clusters.cluster_assignment
   LEFT JOIN
     dummy_replacement_families
     ON cluster_assignment.family_id = dummy_replacement_families.dummy_family_to_remove
