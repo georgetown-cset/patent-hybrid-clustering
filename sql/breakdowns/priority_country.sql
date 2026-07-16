@@ -14,11 +14,14 @@ families_with_dummies AS (
 -- Get patent clusters, with all patent ids in the families
 clusters AS (
   SELECT DISTINCT
-    patent_id,
+    families_with_dummies.patent_id,
     family_id,
     cluster_assignment.cluster_id
   FROM
     staging_patent_clusters.cluster_assignment
+  INNER JOIN
+    staging_patent_clusters.patents_last_10_years
+    USING (family_id)
   LEFT JOIN
     families_with_dummies
     USING
