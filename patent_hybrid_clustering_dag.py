@@ -9,6 +9,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import BranchPythonOperator, PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.apache.beam.operators.beam import BeamRunPythonPipelineOperator
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
@@ -909,3 +910,10 @@ with DAG(
             >> table_backup
             >> wait_for_production_backups
         )
+
+    trigger_mop = TriggerDagRunOperator(
+        task_id="trigger_mop_bq_to_bq_metadata",
+        trigger_dag_id="mop_bq_to_bq_metadata",
+    )
+
+    success_alert >> trigger_mop
