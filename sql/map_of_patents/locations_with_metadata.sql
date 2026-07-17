@@ -145,7 +145,7 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Semiconductors" AS name, "classifier" AS category) AS tag --noqa: L029
+    STRUCT("Semiconductors" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.semiconductors_pred
   WHERE
@@ -153,7 +153,7 @@ search_tags_pre_concept AS (
   UNION ALL
   SELECT
     cluster_id,
-    STRUCT("Biotechnology" AS name, "classifier" AS category) AS tag --noqa: L029
+    STRUCT("Biotechnology" AS name, "field" AS category) AS tag --noqa: L029
   FROM
     staging_patent_clusters.biotech_pred
   WHERE
@@ -241,8 +241,8 @@ meta AS (
     ROUND(100 * education_share, 2) AS education_share,
     ROUND(100 * nonprofit_share, 2) AS nonprofit_share,
     ROUND(100 * government_share, 2) AS government_share,
-    grant_percentage,
-    grant_percentile
+    ROUND(100 * grant_percentage, 2) AS grant_percentage,
+    ROUND(100 * grant_percentile, 2) AS grant_percentile
   FROM
     staging_patent_clusters.cluster_description
   LEFT JOIN
