@@ -40,9 +40,9 @@ def run(ground_truth: str, comparison: str):
     cmp_top_n, cmp_top_n_1 = get_scores(comparison)
     top_n_overlap = get_overlap(gt_top_n, cmp_top_n)
     top_n_1_overlap = get_overlap(gt_top_n_1, cmp_top_n_1)
-    print(f"Average top n overlap: {round(sum(top_n_overlap)/len(top_n_overlap))}%")
+    print(f"Average top n overlap: {round(sum(top_n_overlap) / len(top_n_overlap))}%")
     print(
-        f"Average top n overlap, excluding first result: {round(sum(top_n_1_overlap)/len(top_n_1_overlap))}%"
+        f"Average top n overlap, excluding first result: {round(sum(top_n_1_overlap) / len(top_n_1_overlap))}%"
     )
     print(f"Median top n overlap: {statistics.median(top_n_overlap)}%")
     print(
