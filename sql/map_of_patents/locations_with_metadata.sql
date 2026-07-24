@@ -228,9 +228,9 @@ meta AS (
       SELECT STRING_AGG(name, ", ") FROM (SELECT name FROM UNNEST(robotics_fields) ORDER BY percentage DESC)
     ) AS robotics_fields_agg,
     ROUND(100 * ai_pred, 2) AS ai_pred,
-    ROUND(100 * cv_pred, 2) AS cv_pred,
+    ROUND(100 * COALESCE(cv_pred, 0), 2) AS cv_pred,
     ROUND(100 * ro_pred, 2) AS ro_pred,
-    ROUND(100 * nlp_pred, 2) AS nlp_pred,
+    ROUND(100 * COALESCE(nlp_pred, 0), 2) AS nlp_pred,
     ROUND(100 * cyber_pred, 2) AS cyber_pred,
     ROUND(100 * semiconductor_pred, 2) AS semiconductor_pred,
     ROUND(100 * biotech_pred, 2) AS biotech_pred,
