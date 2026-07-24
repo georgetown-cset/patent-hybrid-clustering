@@ -5,7 +5,7 @@ overall_filter AS (
     *
   FROM
     staging_patent_clusters.robotics_pred
-  WHERE pred_robotics >= 0.01
+  WHERE pred_robotics >= 0.1
 ),
 
 unpivoted AS (
