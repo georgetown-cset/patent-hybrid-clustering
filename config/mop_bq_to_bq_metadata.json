@@ -1,12 +1,12 @@
 {
     "staging_dataset": "staging_map_of_patents",
-    "backup_dataset": "staging_map_of_patent_backups",
+    "backup_dataset": "staging_map_of_patents_backups",
     "sequence": [
-        {"table_name": "locations_with_metadata"},
-        {"table_name": "top_exporting_clusters_aggregated"},
-        {"table_name": "top_importing_clusters_aggregated"},
-        {"table_name": "searchable_organizations"},
-        {"table_name": "cluster_detail_metadata"}
+        {"table_name": "locations_with_metadata", "production_dataset": "map_of_patents"},
+        {"table_name": "top_exporting_clusters_aggregated", "production_dataset": "map_of_patents"},
+        {"table_name": "top_importing_clusters_aggregated", "production_dataset": "map_of_patents"},
+        {"table_name": "searchable_organizations", "production_dataset": "map_of_patents"},
+        {"table_name": "cluster_detail_metadata", "production_dataset": "map_of_patents"}
     ],
     "downstream_dags": ["eto_mop_bq_to_cloud_sql"],
     "pocs": ["Shruti"]

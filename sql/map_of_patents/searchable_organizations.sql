@@ -13,6 +13,8 @@ org_counts AS (
 SELECT org_name
 FROM
   org_counts
+WHERE
+  REGEXP_CONTAINS(org_name, r'[A-Za-z]')
 ORDER BY
   num_clusters DESC
 LIMIT
