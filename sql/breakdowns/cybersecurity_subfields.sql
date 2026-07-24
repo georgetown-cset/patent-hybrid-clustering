@@ -5,7 +5,7 @@ overall_filter AS (
     *
   FROM
     staging_patent_clusters.cybersecurity_pred
-  WHERE pred_cybersecurity >= 0.01
+  WHERE pred_cybersecurity >= 0.1
 ),
 
 unpivoted AS (

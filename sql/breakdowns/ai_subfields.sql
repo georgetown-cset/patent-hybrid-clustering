@@ -5,7 +5,7 @@ overall_filter AS (
     *
   FROM
     staging_patent_clusters.ai_pred
-  WHERE pred_ai >= 0.01
+  WHERE pred_ai >= 0.1
 ),
 
 unpivoted AS (

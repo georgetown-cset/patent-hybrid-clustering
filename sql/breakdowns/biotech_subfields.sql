@@ -5,7 +5,7 @@ overall_filter AS (
     *
   FROM
     staging_patent_clusters.biotech_pred
-  WHERE pred_biotech >= 0.01
+  WHERE pred_biotech >= 0.1
 ),
 
 unpivoted AS (
