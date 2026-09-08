@@ -10,7 +10,7 @@ WITH all_ids AS (
     staging_patent_clusters.new_most_similar_cpc
 )
 
-SELECT
+SELECT DISTINCT
   COALESCE(most_similar_cpc.most_similar, new_most_similar_cpc.most_similar) AS most_similar,
   family_id
 FROM
